@@ -1,0 +1,7 @@
+import { redirect } from "next/navigation";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+export default async function TransactionsPage(){
+ const supabase=await createSupabaseServerClient();const {data:{user}}=await supabase.auth.getUser();if(!user)redirect("/login");
+ const {data:rows}=await supabase.from("transactions").select("id,type,amount,status,created_at,reference").order("created_at",{ascending:false}).limit(50);
+ return <main className="shell"><aside className="sidebar"><div className="brand"><span className="brand-mark">Z</span><span>ZYNTH</span></div><div className="side-label">PERSONAL</div><nav><a className="nav-item" href="/dashboard">Overview</a><a className="nav-item" href="/dashboard/vaults">Vaults</a><a className="nav-item active" href="/dashboard/transactions">Transactions</a></nav></aside><section className="content"><header className="topbar"><div><span className="eyebrow">ZYNTH / LEDGER</span><h1>Transaction history.</h1></div></header><section className="panel"><div className="vault-list">{rows?.length?rows.map(r=><div className="vault-row" key={r.id}><div><b>{r.type.replaceAll("_"," ")}</b><small>{new Date(r.created_at).toLocaleString("en-NG")} · {r.status}</small></div><strong>₦{Number(r.amount).toLocaleString("en-NG",{minimumFractionDigits:2})}</strong></div>):<p className="copy">No transactions yet.</p>}</div></section></section></main>
+}
