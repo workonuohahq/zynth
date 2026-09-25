@@ -19,7 +19,7 @@ export default function DashboardNav() {
       <nav className="dashboard-links">{links.map(({href,label,icon:Icon}) => <Link key={href} href={href} className={"nav-item " + (pathname === href ? "active" : "")}><Icon size={17}/><span>{label}</span></Link>)}</nav>
       <div className="side-section-label">ACCOUNT</div>
       <nav className="dashboard-links">
-        <Link href="/dashboard/transactions" className="nav-item"><Settings size={17}/><span>Account</span></Link>
+        <Link href="/dashboard/account" className="nav-item"><Settings size={17}/><span>Account</span></Link>
         <a href="mailto:support@zynthhq.com" className="nav-item"><CircleHelp size={17}/><span>Support</span></a>
       </nav>
       <div className="side-bottom">
