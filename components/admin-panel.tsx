@@ -57,7 +57,7 @@ export default function AdminPanel({initialData,adminEmail}:{initialData:AdminDa
       <nav className="admin-horizontal-nav" aria-label="Admin navigation">
         {navItems.map(({key,label,icon:Icon,badge})=>
           <button key={key} onClick={()=>setTab(key)} className={tab===key?"admin-nav active":"admin-nav"}>
-            <Icon size={15}/><span>{label}</span>{badge>0?<em>{badge}</em>:null}
+            <Icon size={15}/><span>{label}</span>{badge && badge>0?<em>{badge}</em>:null}
           </button>
         )}
         <span className="admin-nav-divider"/>
