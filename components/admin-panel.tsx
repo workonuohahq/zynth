@@ -20,7 +20,8 @@ export default function AdminPanel({initialData,adminEmail}:{initialData:AdminDa
   const [tab,setTab]=useState("overview");
   const [busy,setBusy]=useState("");
   const [notice,setNotice]=useState("");
-  const [queue,setQueue]=useState<any[]>(initialData.recent_withdrawals||[]);\n  const [settings,setSettings]=useState({
+  const [queue,setQueue]=useState<any[]>(initialData.recent_withdrawals||[]);
+  const [settings,setSettings]=useState({
     minDeposit:Number(data.settings?.global_min_deposit||5500),
     yieldPct:Number(data.settings?.current_yield_pct||0),
     exitFeePct:Number(data.settings?.exit_fee_pct||10),
