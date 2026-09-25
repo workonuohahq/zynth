@@ -19,6 +19,7 @@ export default function AdminPanel({initialData,adminEmail}:{initialData:AdminDa
   const [tab,setTab]=useState("overview");
   const [busy,setBusy]=useState("");
   const [notice,setNotice]=useState("");
+  const [sidebarOpen,setSidebarOpen]=useState(false);
   const [settings,setSettings]=useState({
     minDeposit:Number(data.settings?.global_min_deposit||5500),
     yieldPct:Number(data.settings?.current_yield_pct||0),
@@ -44,7 +45,7 @@ export default function AdminPanel({initialData,adminEmail}:{initialData:AdminDa
 
   const sections: Array<{key:string;label:string;icon:LucideIcon}>=[{key:"overview",label:"Overview",icon:Gauge},{key:"withdrawals",label:"Withdrawals",icon:ArrowDownToLine},{key:"users",label:"Users",icon:Users},{key:"agents",label:"ZPA",icon:ShieldCheck},{key:"settings",label:"Settings",icon:Settings2}];
   return <div className="admin-frame">
-    <aside className="admin-sidebar">
+    <aside className={`admin-sidebar ${sidebarOpen?"open":""}`}>
       <Link href="/dashboard" className="brand"><span className="brand-mark">Z</span><span>ZYNTH</span></Link>
       <div className="admin-caption">CONTROL PLANE</div>
       <div className="admin-nav-group"><span>COMMAND</span>
@@ -66,29 +67,39 @@ export default function AdminPanel({initialData,adminEmail}:{initialData:AdminDa
       </div>
     </aside>
 
+    <button className="admin-mobile-toggle" onClick={()=>setSidebarOpen(!sidebarOpen)} aria-label="Toggle admin navigation"><span/><span/><span/></button>
     <main className="admin-main">
       <header className="admin-topbar">
         <div><div className="eyebrow-row"><span className="eyebrow">ZYNTH / ADMIN</span><span className="live-dot"><i/>CONTROL ONLINE</span></div><h1>{tab==="overview"?"System overview":sections.find(x=>x.key===tab)?.label}</h1><p>Operational controls, liquidity visibility and account administration.</p></div>
-        <button className="ghost admin-refresh" onClick={refresh} disabled={busy==="refresh"}><RefreshCw size={15}/> {busy==="refresh"?"Refreshing":"Refresh"}</button>
+        <div className="admin-top-actions"><span className="admin-session"><i/> Admin session</span><button className="ghost admin-refresh" onClick={refresh} disabled={busy==="refresh"}><RefreshCw size={15}/> {busy==="refresh"?"Refreshing":"Refresh"}</button>
       </header>
       {notice&&<div className="admin-notice">{notice}</div>}
 
       {tab==="overview"&&<section className="admin-section">
         {((data.pending_withdrawals||0)>0||(data.pending_deposits||0)>0)&&<div className="admin-priority"><div><span className="admin-priority-dot"/><div><b>Attention required</b><small>{data.pending_withdrawals||0} withdrawal{data.pending_withdrawals===1?"":"s"} and {data.pending_deposits||0} deposit{data.pending_deposits===1?"":"s"} waiting for review · {naira(data.pending_withdrawal_amount||0)} withdrawals · {naira(data.pending_deposit_amount||0)} deposits</small></div></div><div style={{display:"flex",gap:12}}>{(data.pending_withdrawals||0)>0&&<button className="text-action" onClick={()=>setTab("withdrawals")}>Withdrawals <ChevronRight size={13}/></button>}{(data.pending_deposits||0)>0&&<Link className="text-action" href="/admin/deposits">Deposits <ChevronRight size={13}/></Link>}</div></div>}
         <div className="admin-kpis">
-          {[[CircleDollarSign,"Wallet liquidity",naira(data.wallet_liquidity)], [WalletCards,"Active vault principal",naira(data.vaulted_principal)], [Users,"Total users",data.users], [ArrowDownToLine,"Pending withdrawals",data.pending_withdrawals],[WalletCards,"Pending deposits",data.pending_deposits||0]].map(([Icon,label,value]:any)=><div className="admin-kpi" key={label}><span className="admin-kpi-icon"><Icon size={17}/></span><small>{label}</small><b>{value}</b></div>)}
+          {[
+            [CircleDollarSign,"Wallet liquidity",naira(data.wallet_liquidity),"LIQUIDITY"],
+            [WalletCards,"Vault principal",naira(data.vaulted_principal),"LOCKED"],
+            [Users,"Total users",data.users,"CUSTOMERS"],
+            [ArrowDownToLine,"Pending withdrawals",data.pending_withdrawals,"ACTION"],
+            [WalletCards,"Pending deposits",data.pending_deposits||0,"ACTION"]
+          ].map(([Icon,label,value,tag]:any)=><div className="admin-kpi" key={label}>
+            <div className="admin-kpi-top"><span className="admin-kpi-icon"><Icon size={16}/></span><em>{tag}</em></div>
+            <small>{label}</small><b>{value}</b>
+          </div>)}
         </div>
         <div className="admin-grid">
-          <section className="admin-card"><div className="admin-card-head"><div><span className="muted">OPERATIONS</span><h2>Platform health</h2></div><span className="status-badge"><i/>LIVE</span></div>
+          <section className="admin-card admin-feature-card"><div className="admin-card-head"><div><span className="muted">SYSTEM PULSE</span><h2>Platform health</h2><p>Live operating indicators across the ZYNTH financial engine.</p></div><span className="status-badge"><i/>LIVE</span></div>
             <div className="health-grid">{[
               ["Users funded",data.funded_users],["Active vaults",data.vaults_active],["Pending withdrawal value",naira(data.pending_withdrawal_amount)],["ZPA active",data.active_zpa_agents+"/"+data.zpa_agents]
             ].map(([a,b])=><div key={a as string}><span>{a}</span><b>{b}</b></div>)}</div>
           </section>
-          <section className="admin-card"><div className="admin-card-head"><div><span className="muted">CONFIGURATION</span><h2>Current rules</h2></div><button className="text-action" onClick={()=>setTab("settings")}>Manage <ChevronRight size={13}/></button></div>
+          <section className="admin-card admin-feature-card"><div className="admin-card-head"><div><span className="muted">CONTROL SETTINGS</span><h2>Current rules</h2><p>The active parameters currently governing the platform.</p></div><button className="text-action" onClick={()=>setTab("settings")}>Manage <ChevronRight size={13}/></button></div>
             <div className="rule-list"><div><span>Minimum deposit</span><b>{naira(data.settings?.global_min_deposit||0)}</b></div><div><span>Configured yield</span><b>{data.settings?.current_yield_pct||0}%</b></div><div><span>Exit fee</span><b>{data.settings?.exit_fee_pct||0}%</b></div><div><span>Instant ZPA commission</span><b>{data.settings?.instant_commission_pct||0}%</b></div><div><span>Deposits</span><b className={data.settings?.deposits_enabled?"ok":"pending"}>{data.settings?.deposits_enabled?"Enabled":"Paused"}</b></div></div>
           </section>
         </div>
-        <section className="admin-card admin-wide-card"><div className="admin-card-head"><div><span className="muted">MONEY MOVEMENT</span><h2>Recent withdrawal activity</h2><p>Review the latest requests and act on anything still pending.</p></div><button className="text-action" onClick={()=>setTab("withdrawals")}>Open queue <ChevronRight size={13}/></button></div><AdminWithdrawals rows={data.recent_withdrawals.slice(0,5)} busy={busy} onProcess={processWithdrawal}/></section>
+        <section className="admin-card admin-wide-card"><div className="admin-card-head"><div><span className="muted">OPERATIONS QUEUE</span><h2>Recent withdrawal activity</h2><p>Review the latest requests and act on anything still pending.</p></div><button className="text-action" onClick={()=>setTab("withdrawals")}>Open queue <ChevronRight size={13}/></button></div><AdminWithdrawals rows={data.recent_withdrawals.slice(0,5)} busy={busy} onProcess={processWithdrawal}/></section>
       </section>}
 
       {tab==="withdrawals"&&<section className="admin-section"><section className="admin-card"><div className="admin-card-head"><div><span className="muted">MONEY MOVEMENT</span><h2>Withdrawal queue</h2><p>Pending requests require manual operational approval.</p></div><span className="admin-count">{data.pending_withdrawals} pending</span></div><AdminWithdrawals rows={data.recent_withdrawals} busy={busy} onProcess={processWithdrawal}/></section></section>}
