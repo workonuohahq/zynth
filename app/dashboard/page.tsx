@@ -71,7 +71,8 @@ export default async function DashboardPage() {
         </div>
         <div className="wealth-side">
           <div><span>Active cycles</span><b>{activeVaults.length}</b></div>
-          <div><span>Expected active yield</span><b>+{money(expectedActiveYield)}</b></div>
+          <div><span>Projected profit</span><b>+{money(expectedActiveYield)}</b></div>
+          <div><span>Projected after maturity</span><b>{money(totalPosition + expectedActiveYield)}</b></div>
           <Link href="/dashboard/vaults">Manage portfolio <ArrowUpRight size={14}/></Link>
         </div>
       </section>
