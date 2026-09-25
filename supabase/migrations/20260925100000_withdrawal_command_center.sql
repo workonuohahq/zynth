@@ -194,3 +194,8 @@ $$;
 
 revoke all on function public.get_withdrawal_policy() from public;
 grant execute on function public.get_withdrawal_policy() to authenticated;
+
+
+-- Security hardening: the user withdrawal policy RPC must never be callable anonymously.
+revoke execute on function public.get_withdrawal_policy() from public;
+grant execute on function public.get_withdrawal_policy() to authenticated;
