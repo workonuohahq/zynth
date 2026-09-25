@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, ArrowUpRight, CalendarDays, CheckCircle2, LockKeyhole, ShieldCheck, WalletCards } from "lucide-react";
 
 export default function VaultsPage(){
-  const [amount,setAmount]=useState("5500"),[message,setMessage]=useState(""),[busy,setBusy]=useState(false);
+  const [amount,setAmount]=useState("5500"),[message,setMessage]=useState(""),[busy,setBusy]=useState(false),[vaults,setVaults]=useState<any[]>([]);
+  useEffect(()=>{fetch("/api/account/vaults").then(r=>r.ok?r.json():null).then(d=>d&&setVaults(d.vaults||[])).catch(()=>{});},[]);
   async function create(){
     setBusy(true);setMessage("");
     try{
@@ -35,6 +36,7 @@ export default function VaultsPage(){
         <section className="panel vault-safety"><ShieldCheck size={18}/><div><b>Protected execution</b><p>Vault creation and balance checks are enforced server-side.</p></div></section>
       </aside>
     </div>
+    <section className="panel vault-history-panel"><div className="panel-head"><div><span className="muted">YOUR POSITIONS</span><h2>Vault history</h2></div></div>{vaults.length?<div className="vault-history-list">{vaults.map(v=><Link className="vault-history-row" href={"/dashboard/vaults/"+v.id} key={v.id}><span><b>₦{Number(v.principal_amount).toLocaleString("en-NG",{minimumFractionDigits:2})}</b><small>{v.status} · matures {new Date(v.maturity_date).toLocaleDateString("en-NG")}</small></span><strong>+₦{Number(v.expected_yield).toLocaleString("en-NG",{minimumFractionDigits:2})}</strong><ArrowUpRight size={15}/></Link>)}</div>:<p className="copy">No vault positions yet.</p>}</section>
     <section className="vault-expectations">
       <div><CalendarDays size={17}/><span><b>5 days</b><small>Cycle duration</small></span>
       <WalletCards size={17}/><span><b>₦5,500 minimum</b><small>Minimum configured deposit</small></span>
