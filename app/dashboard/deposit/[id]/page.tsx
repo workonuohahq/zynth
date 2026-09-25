@@ -70,6 +70,7 @@ export default function DepositPaymentPage({params}:{params:{id:string}}){
       .payment-hero p{max-width:650px;color:#64748b;margin:0;line-height:1.6}
       .payment-amount{margin-top:22px;padding:18px 20px;border-radius:16px;background:#101827;color:#fff;display:flex;justify-content:space-between;align-items:center}
       .payment-amount span{color:#aab4c4;font-size:12px}.payment-amount strong{font-size:25px}
+      .payment-reference{margin-top:14px;padding:14px 15px;border:1px dashed #cbd5e1;border-radius:14px;background:#f8fafc;display:flex;justify-content:space-between;align-items:center;gap:14px}.payment-reference-copy{min-width:0}.payment-reference-label{display:block;color:#64748b;font-size:10px;font-weight:800;letter-spacing:.12em}.payment-reference-value{display:block;margin-top:5px;font:800 16px/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.08em;color:#0f172a}.payment-reference-help{display:block;margin-top:5px;color:#64748b;font-size:11px;line-height:1.4}.payment-reference .copy-btn{flex:0 0 auto;border:1px solid #dbe3ec;background:#fff;border-radius:9px;padding:8px 10px;margin:0;font-weight:700}
       .payment-body{padding:26px 30px}
       .payment-notice{display:flex;gap:10px;padding:14px 15px;border-radius:14px;background:#f7f9fc;border:1px solid #e7ebf0;color:#526074;font-size:13px;line-height:1.55}
       .payment-section-title{margin:25px 0 12px;font-size:12px;letter-spacing:.13em;color:#64748b;font-weight:800}
@@ -98,6 +99,7 @@ export default function DepositPaymentPage({params}:{params:{id:string}}){
           <h1>{settings.deposit_page_title}</h1>
           <p>{settings.deposit_page_subtitle}</p>
           <div className="payment-amount"><span>AMOUNT TO PAY</span><strong>{money(request.amount)}</strong></div>
+          {request.payment_reference&&<div className="payment-reference"><div className="payment-reference-copy"><span className="payment-reference-label">PAYMENT REFERENCE</span><span className="payment-reference-value">{request.payment_reference}</span><span className="payment-reference-help">Copy this reference and paste it into your bank transfer description / narration.</span></div><button className="copy-btn" onClick={()=>copy(request.payment_reference!,"payment-reference")}><Copy size={13}/>{copied==="payment-reference"?"Copied":"Copy"}</button></div>}
         </section>
         <section className="payment-body">
           <div className="payment-notice"><ShieldCheck size={18}/><span>{settings.deposit_page_notice}</span></div>
@@ -113,7 +115,7 @@ export default function DepositPaymentPage({params}:{params:{id:string}}){
           <p className="copy" style={{color:"#64748b",fontSize:13,lineHeight:1.6,whiteSpace:"pre-line"}}>{settings.deposit_instructions}</p>
           <div className="payment-steps">
             <div className="step"><span className="step-num">01</span><b>Pay the exact amount</b><span>Use one of the configured payment channels above.</span></div>
-            <div className="step"><span className="step-num">02</span><b>Keep your proof</b><span>Keep the transfer receipt or payment reference for your records.</span></div>
+            <div className="step"><span className="step-num">02</span><b>Use your reference</b><span>Paste the payment reference above into your bank transfer description / narration.</span></div>
             <div className="step"><span className="step-num">03</span><b>Complete your payment</b><span>Once your payment is verified, the funds are automatically placed into a new 5-day vault.</span></div>
           </div>
           <div className={`status-box status-${request.status}`}>
