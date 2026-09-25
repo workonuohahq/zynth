@@ -71,7 +71,7 @@ export default function AdminPanel({initialData,adminEmail}:{initialData:AdminDa
     <main className="admin-main">
       <header className="admin-topbar">
         <div><div className="eyebrow-row"><span className="eyebrow">ZYNTH / ADMIN</span><span className="live-dot"><i/>CONTROL ONLINE</span></div><h1>{tab==="overview"?"System overview":sections.find(x=>x.key===tab)?.label}</h1><p>Operational controls, liquidity visibility and account administration.</p></div>
-        <div className="admin-top-actions"><span className="admin-session"><i/> Admin session</span><button className="ghost admin-refresh" onClick={refresh} disabled={busy==="refresh"}><RefreshCw size={15}/> {busy==="refresh"?"Refreshing":"Refresh"}</button>
+        <div className="admin-top-actions"><span className="admin-session"><i/> Admin session</span><button className="ghost admin-refresh" onClick={refresh} disabled={busy==="refresh"}><RefreshCw size={15}/> {busy==="refresh"?"Refreshing":"Refresh"}</button></div>
       </header>
       {notice&&<div className="admin-notice">{notice}</div>}
 
