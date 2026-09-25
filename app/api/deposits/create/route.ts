@@ -6,8 +6,6 @@ export async function POST(request: Request) {
     const body = await request.json();
     const amount = Number(body?.amount);
     const method = String(body?.method || "manual");
-    const paymentReference = String(body?.paymentReference || "");
-    const userNote = String(body?.userNote || "");
 
     if (!Number.isFinite(amount) || amount <= 0) {
       return NextResponse.json({ error: "Enter a valid amount." }, { status: 400 });
@@ -20,9 +18,7 @@ export async function POST(request: Request) {
     const { data, error } = await client.rpc("create_deposit_request", {
       p_user_id: user.id,
       p_amount: amount,
-      p_method: method,
-      p_payment_reference: paymentReference || null,
-      p_user_note: userNote || null
+      p_method: method
     });
 
     if (error) {
