@@ -162,3 +162,35 @@ grant execute on function public.cancel_withdrawal_request(uuid,uuid) to authent
 grant execute on function public.process_withdrawal_action(uuid,text,uuid,text) to authenticated;
 grant execute on function public.admin_withdrawal_queue() to authenticated;
 grant execute on function public.admin_set_withdrawal_settings(uuid,numeric,boolean,text) to authenticated;
+
+
+-- User-safe read path for withdrawal policy. system_settings is intentionally deny-all under RLS.
+create or replace function public.get_withdrawal_policy()
+returns table(
+  exit_fee_pct numeric,
+  global_min_withdrawal numeric,
+  withdrawals_enabled boolean,
+  withdrawal_processing_notice text
+)
+language plpgsql
+security definer
+set search_path=public,pg_temp
+as $$
+begin
+  if auth.uid() is null then
+    raise exception 'AUTH_REQUIRED';
+  end if;
+
+  return query
+  select
+    s.exit_fee_pct,
+    s.global_min_withdrawal,
+    s.withdrawals_enabled,
+    s.withdrawal_processing_notice
+  from public.system_settings s
+  limit 1;
+end;
+$$;
+
+revoke all on function public.get_withdrawal_policy() from public;
+grant execute on function public.get_withdrawal_policy() to authenticated;
