@@ -20,17 +20,17 @@ export default function AdminDeposits({initialData}:{initialData:any}){
       const d=await r.json();
       if(!r.ok){setNotice(d.error ? `${d.error}${d.code ? ` (${d.code})` : ""}` : "Unable to process payment.");return;}
       setRows(rows.map(x=>x.id===id?{...x,status:approved?"confirmed":"rejected",admin_note:note}:x));
-      setNotice(approved?"Payment confirmed and wallet credited.":"Payment request rejected.");
+      setNotice(approved?"Payment confirmed and vault funded.":"Payment request rejected.");
     }catch{setNotice("Unable to connect.");}
     finally{setBusy("");}
   }
 
   return <main className="admin-main">
-    <header className="admin-topbar"><div><div className="eyebrow-row"><span className="eyebrow">ZYNTH / ADMIN</span><span className="live-dot"><i/>CONTROL ONLINE</span></div><h1>Deposits</h1><p>Review manual payment requests before crediting user wallets.</p></div><button className="ghost admin-refresh" onClick={()=>location.reload()}><RefreshCw size={15}/> Refresh</button></header>
+    <header className="admin-topbar"><div><div className="eyebrow-row"><span className="eyebrow">ZYNTH / ADMIN</span><span className="live-dot"><i/>CONTROL ONLINE</span></div><h1>Deposits</h1><p>Review manual payment requests before opening funded vaults.</p></div><button className="ghost admin-refresh" onClick={()=>location.reload()}><RefreshCw size={15}/> Refresh</button></header>
     {notice&&<div className="admin-notice">{notice}</div>}
     <section className="admin-section">
       <section className="admin-card">
-        <div className="admin-card-head"><div><span className="muted">MANUAL FUNDING</span><h2>Payment queue</h2><p>Only confirmed payments increase a user's wallet balance.</p></div><span className="admin-count">{pending} pending</span></div>
+        <div className="admin-card-head"><div><span className="muted">MANUAL FUNDING</span><h2>Payment queue</h2><p>Only confirmed payments open a new vault; deposits do not enter spendable wallet balance.</p></div><span className="admin-count">{pending} pending</span></div>
         <div className="admin-table withdrawal-table">
           {rows.map(r=><div className="admin-row" key={r.id}>
             <div className="admin-person"><span className="avatar"><Clock3 size={14}/></span><span><b>{money(r.amount)}</b><small>{r.full_name||r.email||r.user_id} · {date(r.created_at)}</small>{r.payment_reference&&<small>Payment ref: {r.payment_reference}</small>}{r.user_note&&<small>Note: {r.user_note}</small>}</span></div>
