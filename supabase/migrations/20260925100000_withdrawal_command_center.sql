@@ -149,6 +149,8 @@ begin
  return (select jsonb_build_object('global_min_withdrawal',global_min_withdrawal,'withdrawals_enabled',withdrawals_enabled,'withdrawal_processing_notice',withdrawal_processing_notice) from public.system_settings where id='00000000-0000-0000-0000-000000000001');
 end;$$;
 
+revoke execute on function public.request_withdrawal(uuid,numeric,uuid) from public,anon;
+revoke execute on function public.cancel_withdrawal_request(uuid,uuid) from public,anon;
 revoke execute on function public.process_withdrawal_action(uuid,text,uuid,text) from public,anon;
 revoke execute on function public.admin_withdrawal_queue() from public,anon;
 revoke execute on function public.admin_set_withdrawal_settings(uuid,numeric,boolean,text) from public,anon;
