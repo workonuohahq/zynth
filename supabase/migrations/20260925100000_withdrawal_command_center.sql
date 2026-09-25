@@ -199,3 +199,20 @@ grant execute on function public.get_withdrawal_policy() to authenticated;
 -- Security hardening: the user withdrawal policy RPC must never be callable anonymously.
 revoke execute on function public.get_withdrawal_policy() from public;
 grant execute on function public.get_withdrawal_policy() to authenticated;
+
+
+-- Admin withdrawal inspection: destination, account context and recent financial history.
+create or replace function public.admin_withdrawal_detail(p_withdrawal_id uuid)
+returns jsonb
+language plpgsql
+security definer
+set search_path=public,pg_temp
+as $$
+declare result jsonb;
+begin
+ if auth.uid() is null or not exists(select 1 from public.users where id=auth.uid() and role='admin') then raise exception 'ADMIN_AUTHORIZATION_REQUIRED'; end if;
+ select jsonb_build_object('withdrawal',to_jsonb(w),'user',jsonb_build_object('id',u.id,'email',u.email,'full_name',u.full_name,'account_status',u.account_status,'kyc_verified',u.kyc_verified,'main_wallet_balance',u.main_wallet_balance,'locked_vault_balance',u.locked_vault_balance,'referred_by',u.referred_by,'created_at',u.created_at,'updated_at',u.updated_at),'beneficiaries',coalesce((select jsonb_agg(jsonb_build_object('id',b.id,'bank_name',b.bank_name,'account_number',b.account_number,'account_name',b.account_name,'is_verified',b.is_verified,'is_default',b.is_default) order by b.is_default desc,b.created_at desc) from public.withdrawal_beneficiaries b where b.user_id=w.user_id),'[]'::jsonb),'history',coalesce((select jsonb_agg(to_jsonb(h) order by h.created_at desc) from (select id,type,amount,status,reference,metadata,created_at,processed_at,failure_reason from public.transactions where user_id=w.user_id order by created_at desc limit 25) h),'[]'::jsonb),'withdrawal_history',coalesce((select jsonb_agg(jsonb_build_object('id',x.id,'reference',x.reference,'gross_amount',x.gross_amount,'fee_amount',x.fee_amount,'net_amount',x.net_amount,'status',x.status,'bank_name',x.bank_name,'account_number',x.account_number,'created_at',x.created_at,'failure_reason',x.failure_reason) order by x.created_at desc) from public.withdrawal_requests x where x.user_id=w.user_id limit 20),'[]'::jsonb)) into result from public.withdrawal_requests w join public.users u on u.id=w.user_id where w.id=p_withdrawal_id;
+ if result is null then raise exception 'WITHDRAWAL_NOT_FOUND'; end if; return result;
+end; $$;
+revoke all on function public.admin_withdrawal_detail(uuid) from public;
+grant execute on function public.admin_withdrawal_detail(uuid) to authenticated;
