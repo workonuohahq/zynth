@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Activity, ArrowDownToLine, ArrowLeft, CheckCircle2, ChevronRight, CircleDollarSign, Clock3, Database, Gauge, LogOut, RefreshCw, Settings2, ShieldCheck, Users, WalletCards, XCircle } from "lucide-react";
+import { ArrowDownToLine, ArrowLeft, CheckCircle2, ChevronRight, CircleDollarSign, Clock3, Gauge, RefreshCw, Settings2, ShieldCheck, Users, WalletCards, XCircle, type LucideIcon } from "lucide-react";
 
 type AdminData = {
   settings?: { global_min_deposit:number; current_yield_pct:number; exit_fee_pct:number; instant_commission_pct:number; deposits_enabled:boolean };
@@ -42,12 +42,12 @@ export default function AdminPanel({initialData,adminEmail}:{initialData:AdminDa
     setNotice(approved?"Withdrawal approved.":"Withdrawal rejected and funds returned.");setBusy("");
   };
 
-  const sections=[["overview","Overview",Gauge],["withdrawals","Withdrawals",ArrowDownToLine],["users","Users",Users],["agents","ZPA",ShieldCheck],["settings","Settings",Settings2]];
+  const sections: Array<{key:string;label:string;icon:LucideIcon}>=[{key:"overview",label:"Overview",icon:Gauge},{key:"withdrawals",label:"Withdrawals",icon:ArrowDownToLine},{key:"users",label:"Users",icon:Users},{key:"agents",label:"ZPA",icon:ShieldCheck},{key:"settings",label:"Settings",icon:Settings2}];
   return <div className="admin-frame">
     <aside className="admin-sidebar">
       <Link href="/dashboard" className="brand"><span className="brand-mark">Z</span><span>ZYNTH</span></Link>
       <div className="admin-caption">CONTROL PLANE</div>
-      <nav>{sections.map(([key,label,Icon]:any)=><button key={key} onClick={()=>setTab(key)} className={tab===key?"admin-nav active":"admin-nav"}><Icon size={17}/><span>{label}</span></button>)}</nav>
+      <nav>{sections.map(({key,label,icon:Icon})=><button key={key} onClick={()=>setTab(key)} className={tab===key?"admin-nav active":"admin-nav"}><Icon size={17}/><span>{label}</span></button>)}</nav>
       <div className="admin-sidebar-bottom">
         <div className="secure"><ShieldCheck size={15}/><span>Founder access</span></div>
         <div className="admin-identity"><span className="avatar">A</span><span><b>Administrator</b><small>{adminEmail}</small></span></div>
@@ -57,7 +57,7 @@ export default function AdminPanel({initialData,adminEmail}:{initialData:AdminDa
 
     <main className="admin-main">
       <header className="admin-topbar">
-        <div><div className="eyebrow-row"><span className="eyebrow">ZYNTH / ADMIN</span><span className="live-dot"><i/>CONTROL ONLINE</span></div><h1>{tab==="overview"?"System overview":sections.find(x=>x[0]===tab)?.[1]}</h1><p>Operational controls, liquidity visibility and account administration.</p></div>
+        <div><div className="eyebrow-row"><span className="eyebrow">ZYNTH / ADMIN</span><span className="live-dot"><i/>CONTROL ONLINE</span></div><h1>{tab==="overview"?"System overview":sections.find(x=>x.key===tab)?.label}</h1><p>Operational controls, liquidity visibility and account administration.</p></div>
         <button className="ghost admin-refresh" onClick={refresh} disabled={busy==="refresh"}><RefreshCw size={15}/> {busy==="refresh"?"Refreshing":"Refresh"}</button>
       </header>
       {notice&&<div className="admin-notice">{notice}</div>}
