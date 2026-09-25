@@ -27,7 +27,7 @@ export default function AdminPanel({initialData,adminEmail}:{initialData:AdminDa
     exitFeePct:Number(data.settings?.exit_fee_pct||10),
     commissionPct:Number(data.settings?.instant_commission_pct||5),
     depositsEnabled:Boolean(data.settings?.deposits_enabled),
-    minWithdrawal:Number(data.settings?.global_min_withdrawal||1000),
+    minWithdrawal:Number(data.settings?.global_min_withdrawal),
     withdrawalsEnabled:data.settings?.withdrawals_enabled!==false,
     withdrawalNotice:String(data.settings?.withdrawal_processing_notice||"Withdrawals are reviewed manually. Most requests are processed during normal operations.")
   });
