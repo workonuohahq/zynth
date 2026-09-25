@@ -30,7 +30,7 @@ export async function PATCH(request: Request) {
       p_flutterwave_enabled: values.fwEnabled, p_flutterwave_title: values.fwTitle, p_flutterwave_account_name: values.fwName, p_flutterwave_account_number: values.fwNumber, p_flutterwave_bank_name: values.fwBank, p_flutterwave_extra: values.fwExtra,
       p_paystack_enabled: values.psEnabled, p_paystack_title: values.psTitle, p_paystack_account_name: values.psName, p_paystack_account_number: values.psNumber, p_paystack_bank_name: values.psBank, p_paystack_extra: values.psExtra });
     if (error) return NextResponse.json({ error: "Unable to update settings.", code: error.message }, { status: 400 });
-    const { data: withdrawalSettings, error: withdrawalError } = await client.rpc("admin_set_withdrawal_settings", { p_admin_user_id: user.id, p_min_withdrawal: Number(body?.minWithdrawal || 1000), p_enabled: body?.withdrawalsEnabled !== false, p_notice: String(body?.withdrawalNotice || "") });
+    const { data: withdrawalSettings, error: withdrawalError } = await client.rpc("admin_set_withdrawal_settings", { p_admin_user_id: user.id, p_min_withdrawal: Number(body?.minWithdrawal), p_enabled: body?.withdrawalsEnabled === true, p_notice: String(body?.withdrawalNotice ?? "") });
     if (withdrawalError) return NextResponse.json({ error: "Core settings saved, but withdrawal settings could not be updated.", code: withdrawalError.message }, { status: 400 });
     return NextResponse.json({ ok: true, settings: { ...data, ...withdrawalSettings } });
   } catch (error) { console.error(error); return NextResponse.json({ error: "Unable to update settings." }, { status: 500 }); }
