@@ -33,7 +33,7 @@ export default async function DashboardPage() {
   const [{ data: profile }, { data: vaults }, { data: transactions }, { data: settings }] = await Promise.all([
     supabase.from("users").select("full_name,role,main_wallet_balance,locked_vault_balance,kyc_verified").eq("id", user!.id).single(),
     supabase.from("vaults").select("id,principal_amount,expected_yield,start_date,maturity_date,status").eq("user_id", user!.id).order("created_at", { ascending: false }).limit(6),
-    supabase.from("transactions").select("id,type,amount,status,created_at,reference").eq("user_id", user!.id).order("created_at", { ascending: false }).limit(6),
+    supabase.from("transactions").select("id,type,amount,status,created_at,reference,metadata").eq("user_id", user!.id).order("created_at", { ascending: false }).limit(6),
     supabase.from("system_settings").select("global_min_deposit,current_yield_pct,exit_fee_pct,deposits_enabled").single(),
   ]);
 
@@ -65,8 +65,8 @@ export default async function DashboardPage() {
           <div className="wealth-label"><span>Total position</span><span className="secure-chip"><ShieldCheck size={13}/> Protected account</span></div>
           <strong>{money(totalPosition)}</strong>
           <div className="wealth-breakdown">
-            <span><i className="dot available" /> Available {money(available)}</span>
-            <span><i className="dot locked" /> In vaults {money(locked)}</span>
+            <span><i className="dot available" /> Available to withdraw {money(available)}</span>
+            <span><i className="dot locked" /> Locked in vaults {money(locked)}</span>
           </div>
         </div>
         <div className="wealth-side">
@@ -100,7 +100,7 @@ export default async function DashboardPage() {
               ))}
             </div>
           ) : (
-            <div className="premium-empty"><div className="empty-icon"><Sparkles size={21}/></div><h3>Build your first position</h3><p>Move available funds into a 5-day vault and track the cycle from this dashboard.</p><Link className="primary" href="/dashboard/vaults">Open your first vault <ArrowUpRight size={15}/></Link></div>
+            <div className="premium-empty"><div className="empty-icon"><Sparkles size={21}/></div><h3>Build your first position</h3><p>Deposits are automatically placed into a 5-day vault. Your available balance stays separate and withdrawable.</p><Link className="primary" href="/dashboard/vaults">Open your first vault <ArrowUpRight size={15}/></Link></div>
           )}
         </section>
 
@@ -123,7 +123,9 @@ export default async function DashboardPage() {
         <div className="panel-head"><div><span className="muted">RECENT ACTIVITY</span><h2>Latest movements</h2></div><Link className="text-action" href="/dashboard/transactions">Full activity <ArrowUpRight size={14}/></Link></div>
         {transactions?.length ? <div className="activity-list">{transactions.slice(0,5).map((tx) => {
           const positive = ["deposit","cycle_payout","zpa_commission"].includes(tx.type);
-          return <div className="activity-row" key={tx.id}><span className={`activity-icon ${positive ? "positive" : "neutral"}`}>{positive ? <ArrowDownLeft size={16}/> : <ArrowUpRight size={16}/>}</span><span className="activity-info"><b>{tx.type.replaceAll("_"," ")}</b><small>{date(tx.created_at)} · {tx.status}</small></span><strong className={positive ? "amount-positive" : ""}>{positive ? "+" : "-"}{money(tx.amount)}</strong></div>;
+          const autoVaultDeposit = tx.type === "deposit" && (tx.metadata as Record<string, unknown> | null)?.auto_vault === true;
+          const activityLabel = autoVaultDeposit ? "vault funded" : tx.type.replaceAll("_"," ");
+          return <div className="activity-row" key={tx.id}><span className={`activity-icon ${positive ? "positive" : "neutral"}`}>{positive ? <ArrowDownLeft size={16}/> : <ArrowUpRight size={16}/>}</span><span className="activity-info"><b>{activityLabel}</b><small>{date(tx.created_at)} · {tx.status}</small></span><strong className={positive ? "amount-positive" : ""}>{positive ? "+" : "-"}{money(tx.amount)}</strong></div>;
         })}</div> : <div className="activity-empty"><CircleDollarSign size={18}/><span>No account activity yet.</span></div>}
       </section>
 
