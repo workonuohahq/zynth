@@ -19,14 +19,14 @@ export default function VaultsPage(){
   }
   return <section className="dashboard-content">
     <header className="dashboard-header">
-      <div><span className="eyebrow">ZYNTH / VAULTS</span><h1>Build your position.</h1><p>Put available funds into a 5-day cycle and track it from one place.</p></div>
+      <div><span className="eyebrow">ZYNTH / VAULTS</span><h1>Build your position.</h1><p>Fund a 5-day cycle and track your principal, projected profit and maturity from one place.</p></div>
       <Link className="fund-btn secondary-dark" href="/dashboard"><ArrowLeft size={16}/> Overview</Link>
     </header>
     <div className="vault-page-grid">
       <section className="panel vault-create-panel">
         <div className="vault-icon-large"><LockKeyhole size={21}/></div>
         <span className="muted">OPEN A NEW CYCLE</span><h2>5-day yield vault</h2>
-        <p className="copy">Choose the amount you want to place into a vault. ZYNTH will take you to the built-in payment page first if the funds need to be deposited manually.</p>
+        <p className="copy">Choose the amount for your next cycle. If new funds are required, ZYNTH will take you through secure payment first; once confirmed, the amount is placed into the vault automatically.</p>
         <label className="input-label">AMOUNT</label>
         <div className="money-input"><span>₦</span><input inputMode="decimal" value={amount} onChange={e=>setAmount(e.target.value)} aria-label="Vault amount"/></div>
         <div className="amount-presets">{["5500","10000","25000","50000"].map(v=><button key={v} onClick={()=>setAmount(v)} className={amount===v?"selected":""}>₦{Number(v).toLocaleString("en-NG")}</button>)}</div>
@@ -34,7 +34,7 @@ export default function VaultsPage(){
         {message&&<div className="form-feedback"><CheckCircle2 size={15}/>{message}</div>}
       </section>
       <aside className="vault-info-stack">
-        <section className="panel vault-info-card"><span className="muted">HOW IT WORKS</span><div className="info-step"><span>01</span><div><b>Choose amount</b><small>Enter the amount you want to fund into your vault.</small></div></div><div className="info-step"><span>02</span><div><b>Complete payment</b><small>Use the built-in payment page and follow the configured manual instructions.</small></div></div><div className="info-step"><span>03</span><div><b>Open the vault</b><small>After confirmation, your wallet is credited and you can start the 5-day cycle.</small></div></div></section>
+        <section className="panel vault-info-card"><span className="muted">HOW IT WORKS</span><div className="info-step"><span>01</span><div><b>Choose amount</b><small>Enter the amount you want to fund into your vault.</small></div></div><div className="info-step"><span>02</span><div><b>Complete payment</b><small>Use the built-in payment page and follow the configured manual instructions.</small></div></div><div className="info-step"><span>03</span><div><b>Open the vault</b><small>After confirmation, the funds are placed directly into a new 5-day vault. They do not become available wallet balance.</small></div></div></section>
         <section className="panel vault-safety"><ShieldCheck size={18}/><div><b>Protected execution</b><p>Payment confirmation and vault creation are validated server-side.</p></div></section>
       </aside>
     </div>
