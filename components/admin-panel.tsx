@@ -47,7 +47,18 @@ export default function AdminPanel({initialData,adminEmail}:{initialData:AdminDa
     <aside className="admin-sidebar">
       <Link href="/dashboard" className="brand"><span className="brand-mark">Z</span><span>ZYNTH</span></Link>
       <div className="admin-caption">CONTROL PLANE</div>
-      <nav>{sections.map(({key,label,icon:Icon})=><button key={key} onClick={()=>setTab(key)} className={tab===key?"admin-nav active":"admin-nav"}><Icon size={17}/><span>{label}</span></button>)}</nav>
+      <div className="admin-nav-group"><span>COMMAND</span>
+        <nav>{sections.filter(x=>x.key==="overview").map(({key,label,icon:Icon})=><button key={key} onClick={()=>setTab(key)} className={tab===key?"admin-nav active":"admin-nav"}><Icon size={17}/><span>{label}</span></button>)}</nav>
+      </div>
+      <div className="admin-nav-group"><span>OPERATIONS</span>
+        <nav>{sections.filter(x=>x.key==="withdrawals").map(({key,label,icon:Icon})=><button key={key} onClick={()=>setTab(key)} className={tab===key?"admin-nav active":"admin-nav"}><Icon size={17}/><span>{label}</span>{key==="withdrawals"&&data.pending_withdrawals>0?<em>{data.pending_withdrawals}</em>:null}</button>)}</nav>
+      </div>
+      <div className="admin-nav-group"><span>NETWORK</span>
+        <nav>{sections.filter(x=>["users","agents"].includes(x.key)).map(({key,label,icon:Icon})=><button key={key} onClick={()=>setTab(key)} className={tab===key?"admin-nav active":"admin-nav"}><Icon size={17}/><span>{label}</span></button>)}</nav>
+      </div>
+      <div className="admin-nav-group"><span>CONFIGURATION</span>
+        <nav>{sections.filter(x=>x.key==="settings").map(({key,label,icon:Icon})=><button key={key} onClick={()=>setTab(key)} className={tab===key?"admin-nav active":"admin-nav"}><Icon size={17}/><span>{label}</span></button>)}</nav>
+      </div>
       <div className="admin-sidebar-bottom">
         <div className="secure"><ShieldCheck size={15}/><span>Founder access</span></div>
         <div className="admin-identity"><span className="avatar">A</span><span><b>Administrator</b><small>{adminEmail}</small></span></div>
@@ -63,6 +74,7 @@ export default function AdminPanel({initialData,adminEmail}:{initialData:AdminDa
       {notice&&<div className="admin-notice">{notice}</div>}
 
       {tab==="overview"&&<section className="admin-section">
+        {data.pending_withdrawals>0&&<div className="admin-priority"><div><span className="admin-priority-dot"/><div><b>Attention required</b><small>{data.pending_withdrawals} withdrawal request{data.pending_withdrawals===1?"":"s"} waiting for review · {naira(data.pending_withdrawal_amount)} total</small></div></div><button className="text-action" onClick={()=>setTab("withdrawals")}>Review queue <ChevronRight size={13}/></button></div>}
         <div className="admin-kpis">
           {[[CircleDollarSign,"Wallet liquidity",naira(data.wallet_liquidity)], [WalletCards,"Active vault principal",naira(data.vaulted_principal)], [Users,"Total users",data.users], [ArrowDownToLine,"Pending withdrawals",data.pending_withdrawals]].map(([Icon,label,value]:any)=><div className="admin-kpi" key={label}><span className="admin-kpi-icon"><Icon size={17}/></span><small>{label}</small><b>{value}</b></div>)}
         </div>
@@ -76,7 +88,7 @@ export default function AdminPanel({initialData,adminEmail}:{initialData:AdminDa
             <div className="rule-list"><div><span>Minimum deposit</span><b>{naira(data.settings?.global_min_deposit||0)}</b></div><div><span>Configured yield</span><b>{data.settings?.current_yield_pct||0}%</b></div><div><span>Exit fee</span><b>{data.settings?.exit_fee_pct||0}%</b></div><div><span>Instant ZPA commission</span><b>{data.settings?.instant_commission_pct||0}%</b></div><div><span>Deposits</span><b className={data.settings?.deposits_enabled?"ok":"pending"}>{data.settings?.deposits_enabled?"Enabled":"Paused"}</b></div></div>
           </section>
         </div>
-        <section className="admin-card"><div className="admin-card-head"><div><span className="muted">RECENT ACTIVITY</span><h2>Withdrawals</h2></div><button className="text-action" onClick={()=>setTab("withdrawals")}>Open queue <ChevronRight size={13}/></button></div><AdminWithdrawals rows={data.recent_withdrawals.slice(0,5)} busy={busy} onProcess={processWithdrawal}/></section>
+        <section className="admin-card admin-wide-card"><div className="admin-card-head"><div><span className="muted">MONEY MOVEMENT</span><h2>Recent withdrawal activity</h2><p>Review the latest requests and act on anything still pending.</p></div><button className="text-action" onClick={()=>setTab("withdrawals")}>Open queue <ChevronRight size={13}/></button></div><AdminWithdrawals rows={data.recent_withdrawals.slice(0,5)} busy={busy} onProcess={processWithdrawal}/></section>
       </section>}
 
       {tab==="withdrawals"&&<section className="admin-section"><section className="admin-card"><div className="admin-card-head"><div><span className="muted">MONEY MOVEMENT</span><h2>Withdrawal queue</h2><p>Pending requests require manual operational approval.</p></div><span className="admin-count">{data.pending_withdrawals} pending</span></div><AdminWithdrawals rows={data.recent_withdrawals} busy={busy} onProcess={processWithdrawal}/></section></section>}
