@@ -392,3 +392,140 @@
 @media(max-width:500px){
   .admin-main{padding:20px 12px 30px}
 }
+
+/* Admin mobile-first usability pass */
+@media(max-width:800px){
+  .admin-sidebar{
+    position:sticky;
+    top:0;
+    left:auto;
+    right:auto;
+    bottom:auto;
+    z-index:60;
+    width:100%!important;
+    min-height:58px;
+    height:auto;
+    display:flex;
+    flex-direction:row;
+    align-items:center;
+    gap:10px;
+    padding:9px 12px;
+    overflow:hidden;
+    border-right:0;
+    border-bottom:1px solid #1f2823;
+    box-shadow:0 8px 24px #0006;
+  }
+  .admin-sidebar .admin-brand{
+    flex:0 0 auto;
+    width:auto;
+    height:40px;
+    margin:0;
+    padding:0 4px;
+    border:0;
+  }
+  .admin-sidebar .admin-brand span:not(.brand-mark){display:none}
+  .admin-sidebar .admin-brand small{display:none}
+  .admin-sidebar .admin-brand .brand-mark{width:30px;height:30px}
+  .admin-nav-label,.admin-sidebar-bottom{display:none!important}
+  .admin-list-nav{
+    flex:1 1 auto;
+    min-width:0;
+    display:flex;
+    flex-direction:row;
+    gap:4px;
+    overflow-x:auto;
+    overflow-y:hidden;
+    scrollbar-width:none;
+    -webkit-overflow-scrolling:touch;
+  }
+  .admin-list-nav::-webkit-scrollbar{display:none}
+  .admin-list-item{
+    flex:0 0 auto;
+    width:auto;
+    min-width:max-content;
+    min-height:38px;
+    padding:0 10px;
+    gap:7px;
+    font-size:9px;
+    white-space:nowrap;
+  }
+  .admin-list-icon{width:20px;height:20px}
+  .admin-list-item em{min-width:16px;height:16px;font-size:7px}
+  .admin-list-separator{flex:0 0 1px;width:1px;height:22px;margin:0 3px}
+  .admin-main{
+    margin-left:0!important;
+    width:100%!important;
+    padding:24px 18px 40px;
+  }
+  .admin-main > *,.admin-topbar{max-width:none}
+  .admin-topbar{
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    gap:14px;
+    margin-bottom:20px;
+  }
+  .admin-topbar h1{font-size:32px}
+  .admin-topbar p{font-size:10px;line-height:1.5}
+  .admin-top-actions{
+    width:100%;
+    display:flex;
+    justify-content:space-between;
+  }
+  .admin-session{display:none}
+  .admin-refresh{width:auto;min-width:100px;justify-content:center}
+  .admin-kpis{grid-template-columns:1fr 1fr;gap:8px}
+  .admin-kpi{padding:13px}
+  .admin-kpi b{font-size:17px;overflow-wrap:anywhere}
+  .admin-grid{grid-template-columns:1fr;gap:10px}
+  .admin-card{padding:16px}
+  .admin-card-head{gap:12px}
+  .admin-card-head h2{font-size:17px}
+  .admin-card-head p{line-height:1.45}
+  .admin-priority{align-items:flex-start;flex-direction:column}
+  .admin-priority>div{width:100%}
+  .admin-priority small{white-space:normal;line-height:1.45}
+  .admin-priority .text-action{width:auto}
+  .admin-table{overflow:hidden}
+  .admin-row{
+    grid-template-columns:minmax(0,1fr) auto;
+    gap:8px;
+    padding:13px 0;
+  }
+  .admin-row>span:nth-child(2),.admin-row>span:nth-child(3){display:none}
+  .row-actions{
+    grid-column:1/-1;
+    width:100%;
+    justify-content:stretch;
+  }
+  .row-actions button{flex:1;justify-content:center}
+  .settings-grid{grid-template-columns:1fr}
+}
+@media(max-width:500px){
+  .admin-sidebar{padding:8px 9px;min-height:54px}
+  .admin-list-item{min-height:36px;padding:0 9px}
+  .admin-list-label{display:inline}
+  .admin-main{padding:18px 12px 90px}
+  .admin-topbar h1{font-size:28px}
+  .admin-kpis{grid-template-columns:1fr}
+  .admin-kpi{padding:14px}
+  .admin-kpi-top{margin-bottom:12px}
+  .admin-card{padding:14px;border-radius:12px}
+  .admin-card-head{align-items:flex-start}
+  .admin-card-head .text-action,.admin-count{align-self:flex-start}
+  .health-grid{grid-template-columns:1fr}
+  .health-grid div:nth-child(odd){padding-right:0;border-right:0}
+  .health-grid div:nth-child(even){padding-left:0}
+  .toggle-row{align-items:flex-start;padding:12px;gap:12px}
+  .toggle-row small{max-width:230px;line-height:1.4}
+  .admin-person b{max-width:180px}
+  .admin-person small{max-width:180px}
+}
+@media(max-width:360px){
+  .admin-main{padding-left:10px;padding-right:10px}
+  .admin-list-item{padding:0 8px}
+  .admin-list-label{display:none}
+  .admin-list-icon{width:22px}
+  .admin-top-actions{justify-content:flex-end}
+  .admin-refresh{width:100%}
+}
