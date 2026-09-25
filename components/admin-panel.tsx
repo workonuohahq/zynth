@@ -7,7 +7,7 @@ import { ArrowDownToLine, ArrowLeft, CheckCircle2, ChevronRight, CircleDollarSig
 type AdminData = {
   settings?: { global_min_deposit:number; current_yield_pct:number; exit_fee_pct:number; instant_commission_pct:number; deposits_enabled:boolean };
   users:number; funded_users:number; vaults_active:number; vaulted_principal:number; wallet_liquidity:number;
-  pending_withdrawals:number; pending_withdrawal_amount:number; zpa_agents:number; active_zpa_agents:number;
+  pending_withdrawals:number; pending_withdrawal_amount:number; pending_deposits?:number; pending_deposit_amount?:number; zpa_agents:number; active_zpa_agents:number;
   recent_withdrawals:Array<any>; recent_users:Array<any>; zpa:Array<any>; audit:Array<any>;
 };
 
@@ -74,9 +74,9 @@ export default function AdminPanel({initialData,adminEmail}:{initialData:AdminDa
       {notice&&<div className="admin-notice">{notice}</div>}
 
       {tab==="overview"&&<section className="admin-section">
-        {data.pending_withdrawals>0&&<div className="admin-priority"><div><span className="admin-priority-dot"/><div><b>Attention required</b><small>{data.pending_withdrawals} withdrawal request{data.pending_withdrawals===1?"":"s"} waiting for review · {naira(data.pending_withdrawal_amount)} total</small></div></div><button className="text-action" onClick={()=>setTab("withdrawals")}>Review queue <ChevronRight size={13}/></button></div>}
+        {((data.pending_withdrawals||0)>0||(data.pending_deposits||0)>0)&&<div className="admin-priority"><div><span className="admin-priority-dot"/><div><b>Attention required</b><small>{data.pending_withdrawals||0} withdrawal{data.pending_withdrawals===1?"":"s"} and {data.pending_deposits||0} deposit{data.pending_deposits===1?"":"s"} waiting for review · {naira(data.pending_withdrawal_amount||0)} withdrawals · {naira(data.pending_deposit_amount||0)} deposits</small></div></div><div style={{display:"flex",gap:12}}>{(data.pending_withdrawals||0)>0&&<button className="text-action" onClick={()=>setTab("withdrawals")}>Withdrawals <ChevronRight size={13}/></button>}{(data.pending_deposits||0)>0&&<Link className="text-action" href="/admin/deposits">Deposits <ChevronRight size={13}/></Link>}</div></div>}
         <div className="admin-kpis">
-          {[[CircleDollarSign,"Wallet liquidity",naira(data.wallet_liquidity)], [WalletCards,"Active vault principal",naira(data.vaulted_principal)], [Users,"Total users",data.users], [ArrowDownToLine,"Pending withdrawals",data.pending_withdrawals]].map(([Icon,label,value]:any)=><div className="admin-kpi" key={label}><span className="admin-kpi-icon"><Icon size={17}/></span><small>{label}</small><b>{value}</b></div>)}
+          {[[CircleDollarSign,"Wallet liquidity",naira(data.wallet_liquidity)], [WalletCards,"Active vault principal",naira(data.vaulted_principal)], [Users,"Total users",data.users], [ArrowDownToLine,"Pending withdrawals",data.pending_withdrawals],[WalletCards,"Pending deposits",data.pending_deposits||0]].map(([Icon,label,value]:any)=><div className="admin-kpi" key={label}><span className="admin-kpi-icon"><Icon size={17}/></span><small>{label}</small><b>{value}</b></div>)}
         </div>
         <div className="admin-grid">
           <section className="admin-card"><div className="admin-card-head"><div><span className="muted">OPERATIONS</span><h2>Platform health</h2></div><span className="status-badge"><i/>LIVE</span></div>
