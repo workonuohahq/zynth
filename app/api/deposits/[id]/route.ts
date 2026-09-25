@@ -9,7 +9,7 @@ export async function GET(_request: Request, { params }: { params: { id: string 
 
     const [{ data: requestRow, error: requestError }, { data: settings, error: settingsError }] = await Promise.all([
       client.from("deposit_requests").select("id,amount,method,status,reference,payment_reference,user_note,admin_note,created_at,processed_at").eq("id", params.id).eq("user_id", user.id).single(),
-      client.from("system_settings").select("global_min_deposit,deposits_enabled,deposit_page_title,deposit_page_subtitle,deposit_page_notice,deposit_instructions,flutterwave_enabled,flutterwave_title,flutterwave_account_name,flutterwave_account_number,flutterwave_bank_name,flutterwave_extra,paystack_enabled,paystack_title,paystack_account_name,paystack_account_number,paystack_bank_name,paystack_extra").single()
+      client.rpc("get_deposit_payment_config").single()
     ]);
 
     if (requestError || !requestRow) return NextResponse.json({ error: "Payment request not found." }, { status: 404 });
