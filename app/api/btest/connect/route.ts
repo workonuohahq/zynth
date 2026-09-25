@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -36,6 +37,11 @@ export async function POST(request: Request) {
     }
 
     const snapshot = await waitForSnapshot(token, accountId);
+    const supabase = createSupabaseAdminClient();
+    const { data: connection, error: connectionError } = await supabase.from("btest_connections").upsert({ metaapi_account_id: accountId, mt5_login: snapshot.login || login, mt5_server: snapshot.server || server, platform: snapshot.platform || "mt5", status: "connected", last_seen_at: new Date().toISOString() }, { onConflict: "metaapi_account_id" }).select("id").single();
+    if (connectionError) throw connectionError;
+    const { error: snapshotError } = await supabase.from("btest_snapshots").insert({ connection_id: connection.id, balance: snapshot.balance, equity: snapshot.equity, credit: snapshot.credit, margin: snapshot.margin, free_margin: snapshot.freeMargin, currency: snapshot.currency, trade_mode: snapshot.tradeMode });
+    if (snapshotError) throw snapshotError;
     const response = NextResponse.json({ accountId, snapshot });
     response.cookies.set("zynth_btest_metaapi", token, { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "strict", path: "/api/btest", maxAge: 60 * 60 * 8 });
     return response;
