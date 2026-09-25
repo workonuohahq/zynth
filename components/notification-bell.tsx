@@ -10,19 +10,34 @@ export default function NotificationBell() {
 
   useEffect(() => {
     const supabase = createSupabaseBrowserClient();
+    let cancelled = false;
 
     const loadUnread = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        if (!cancelled) setUnread(0);
+        return;
+      }
+
       const { count } = await supabase
         .from("notifications")
         .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id)
         .is("read_at", null);
 
-      setUnread(count ?? 0);
+      if (!cancelled) setUnread(count ?? 0);
     };
 
     loadUnread();
     const timer = window.setInterval(loadUnread, 30000);
-    return () => window.clearInterval(timer);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
   }, []);
 
   return (
