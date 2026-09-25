@@ -38,10 +38,12 @@ export default function TransactionsPage(){
    {loading?<div className="activity-empty"><Clock3 size={18}/><span>Loading activity…</span></div>:rows.length?<div className="ledger-list">{rows.map(r=>{
      const positive=["deposit","cycle_payout","zpa_commission"].includes(r.type), pending=r.status==="pending";
      const isDeposit=r.type==="deposit",isWithdrawal=r.type==="withdrawal";
+     const autoVaultDeposit=isDeposit && (r.metadata?.auto_vault===true || r.metadata?.source==="deposit_confirmation");
+     const activityLabel=autoVaultDeposit?"vault funded":r.type.replaceAll("_"," ");
      const depositId=String(r.metadata?.deposit_request_id||"");
      return <div className="ledger-row" key={r.id}>
        <span className={`ledger-icon ${positive?"positive":"neutral"}`}>{positive?<ArrowDownLeft size={16}/>:<ArrowUpRight size={16}/>}</span>
-       <div className="ledger-main"><b>{r.type.replaceAll("_"," ")}</b><small>{new Date(r.created_at).toLocaleString("en-NG",{dateStyle:"medium",timeStyle:"short"})}</small>{r.reference&&<small className="ledger-ref">Ref: {r.reference}</small>}
+       <div className="ledger-main"><b>{activityLabel}</b><small>{new Date(r.created_at).toLocaleString("en-NG",{dateStyle:"medium",timeStyle:"short"})}</small>{r.reference&&<small className="ledger-ref">Ref: {r.reference}</small>}
          {pending&&<div className="ledger-actions">
            {isDeposit&&depositId&&<Link className="ledger-action primary" href={`/dashboard/deposit/${depositId}`}>Payment details <ChevronRight size={12}/></Link>}
            {isDeposit&&depositId&&<button className="ledger-action danger" onClick={()=>cancelDeposit(depositId)} disabled={busy===r.id}>{busy===r.id?"Cancelling…":<><X size={13}/> Cancel</>}</button>}
