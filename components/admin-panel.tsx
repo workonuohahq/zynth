@@ -44,30 +44,33 @@ export default function AdminPanel({initialData,adminEmail}:{initialData:AdminDa
   };
 
   const sections: Array<{key:string;label:string;icon:LucideIcon}>=[{key:"overview",label:"Overview",icon:Gauge},{key:"withdrawals",label:"Withdrawals",icon:ArrowDownToLine},{key:"users",label:"Users",icon:Users},{key:"agents",label:"ZPA",icon:ShieldCheck},{key:"settings",label:"Settings",icon:Settings2}];
+  const navItems = [
+    {key:"overview",label:"Overview",icon:Gauge},
+    {key:"withdrawals",label:"Withdrawals",icon:ArrowDownToLine,badge:data.pending_withdrawals},
+    {key:"users",label:"Users",icon:Users},
+    {key:"agents",label:"ZPA",icon:ShieldCheck},
+    {key:"settings",label:"Settings",icon:Settings2}
+  ];
   return <div className="admin-frame">
-    <aside className={`admin-sidebar ${sidebarOpen?"open":""}`}>
-      <Link href="/dashboard" className="brand"><span className="brand-mark">Z</span><span>ZYNTH</span></Link>
-      <div className="admin-caption">CONTROL PLANE</div>
-      <div className="admin-nav-group"><span>COMMAND</span>
-        <nav>{sections.filter(x=>x.key==="overview").map(({key,label,icon:Icon})=><button key={key} onClick={()=>setTab(key)} className={tab===key?"admin-nav active":"admin-nav"}><Icon size={17}/><span>{label}</span></button>)}</nav>
-      </div>
-      <div className="admin-nav-group"><span>OPERATIONS</span>
-        <nav>{sections.filter(x=>x.key==="withdrawals").map(({key,label,icon:Icon})=><button key={key} onClick={()=>setTab(key)} className={tab===key?"admin-nav active":"admin-nav"}><Icon size={17}/><span>{label}</span>{key==="withdrawals"&&data.pending_withdrawals>0?<em>{data.pending_withdrawals}</em>:null}</button>)}<Link href="/admin/deposits" className="admin-nav"><ArrowDownToLine size={17}/><span>Deposits</span>{(data as any).pending_deposits>0?<em>{(data as any).pending_deposits}</em>:null}</Link><Link href="/admin/payments" className="admin-nav"><Settings2 size={17}/><span>Payment settings</span></Link></nav>
-      </div>
-      <div className="admin-nav-group"><span>NETWORK</span>
-        <nav>{sections.filter(x=>["users","agents"].includes(x.key)).map(({key,label,icon:Icon})=><button key={key} onClick={()=>setTab(key)} className={tab===key?"admin-nav active":"admin-nav"}><Icon size={17}/><span>{label}</span></button>)}</nav>
-      </div>
-      <div className="admin-nav-group"><span>CONFIGURATION</span>
-        <nav>{sections.filter(x=>x.key==="settings").map(({key,label,icon:Icon})=><button key={key} onClick={()=>setTab(key)} className={tab===key?"admin-nav active":"admin-nav"}><Icon size={17}/><span>{label}</span></button>)}</nav>
-      </div>
-      <div className="admin-sidebar-bottom">
-        <div className="secure"><ShieldCheck size={15}/><span>Founder access</span></div>
+    <header className="admin-commandbar">
+      <Link href="/dashboard" className="admin-brand"><span className="brand-mark">Z</span><span>ZYNTH</span><small>ADMIN</small></Link>
+      <nav className="admin-horizontal-nav" aria-label="Admin navigation">
+        {navItems.map(({key,label,icon:Icon,badge})=>
+          <button key={key} onClick={()=>setTab(key)} className={tab===key?"admin-nav active":"admin-nav"}>
+            <Icon size={15}/><span>{label}</span>{badge>0?<em>{badge}</em>:null}
+          </button>
+        )}
+        <span className="admin-nav-divider"/>
+        <Link href="/admin/deposits" className="admin-nav"><ArrowDownToLine size={15}/><span>Deposits</span>{(data.pending_deposits||0)>0?<em>{data.pending_deposits}</em>:null}</Link>
+        <Link href="/admin/payments" className="admin-nav"><Settings2 size={15}/><span>Payments</span></Link>
+      </nav>
+      <div className="admin-command-actions">
+        <span className="admin-session"><i/>Online</span>
         <div className="admin-identity"><span className="avatar">A</span><span><b>Administrator</b><small>{adminEmail}</small></span></div>
-        <Link href="/dashboard" className="admin-back"><ArrowLeft size={14}/> User dashboard</Link>
+        <button className="ghost admin-refresh" onClick={refresh} disabled={busy==="refresh"} title="Refresh"><RefreshCw size={15}/></button>
       </div>
-    </aside>
+    </header>
 
-    <button className="admin-mobile-toggle" onClick={()=>setSidebarOpen(!sidebarOpen)} aria-label="Toggle admin navigation"><span/><span/><span/></button>
     <main className="admin-main">
       <header className="admin-topbar">
         <div><div className="eyebrow-row"><span className="eyebrow">ZYNTH / ADMIN</span><span className="live-dot"><i/>CONTROL ONLINE</span></div><h1>{tab==="overview"?"System overview":sections.find(x=>x.key===tab)?.label}</h1><p>Operational controls, liquidity visibility and account administration.</p></div>
