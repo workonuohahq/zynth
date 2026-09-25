@@ -18,7 +18,7 @@ export default function AdminDeposits({initialData}:{initialData:any}){
     try{
       const r=await fetch("/api/admin/deposits/process",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({depositId:id,approved,note})});
       const d=await r.json();
-      if(!r.ok){setNotice(d.error||"Unable to process payment.");return;}
+      if(!r.ok){setNotice(d.error ? `${d.error}${d.code ? ` (${d.code})` : ""}` : "Unable to process payment.");return;}
       setRows(rows.map(x=>x.id===id?{...x,status:approved?"confirmed":"rejected",admin_note:note}:x));
       setNotice(approved?"Payment confirmed and wallet credited.":"Payment request rejected.");
     }catch{setNotice("Unable to connect.");}
@@ -33,7 +33,7 @@ export default function AdminDeposits({initialData}:{initialData:any}){
         <div className="admin-card-head"><div><span className="muted">MANUAL FUNDING</span><h2>Payment queue</h2><p>Only confirmed payments increase a user's wallet balance.</p></div><span className="admin-count">{pending} pending</span></div>
         <div className="admin-table withdrawal-table">
           {rows.map(r=><div className="admin-row" key={r.id}>
-            <div className="admin-person"><span className="avatar"><Clock3 size={14}/></span><span><b>{money(r.amount)}</b><small>{r.full_name||r.email||r.user_id} · {date(r.created_at)}</small></span></div>
+            <div className="admin-person"><span className="avatar"><Clock3 size={14}/></span><span><b>{money(r.amount)}</b><small>{r.full_name||r.email||r.user_id} · {date(r.created_at)}</small>{r.payment_reference&&<small>Payment ref: {r.payment_reference}</small>}{r.user_note&&<small>Note: {r.user_note}</small>}</span></div>
             <span className={"status-text "+r.status}>{r.status}</span>
             <span title={r.reference}>{r.reference}<button className="text-action" style={{marginLeft:6}} onClick={()=>navigator.clipboard.writeText(r.reference)}><Copy size={12}/></button></span>
             <div className="row-actions">{r.status==="pending"?<><button className="approve" disabled={busy===r.id} onClick={()=>process(r.id,true)}><CheckCircle2 size={14}/><span>Confirm</span></button><button className="reject" disabled={busy===r.id} onClick={()=>process(r.id,false)}><XCircle size={14}/><span>Reject</span></button></>:<span className="muted">{r.admin_note||r.status}</span>}</div>
