@@ -154,6 +154,8 @@ revoke execute on function public.cancel_withdrawal_request(uuid,uuid) from publ
 revoke execute on function public.process_withdrawal_action(uuid,text,uuid,text) from public,anon;
 revoke execute on function public.admin_withdrawal_queue() from public,anon;
 revoke execute on function public.admin_set_withdrawal_settings(uuid,numeric,boolean,text) from public,anon;
+grant execute on function public.request_withdrawal(uuid,numeric,uuid) to authenticated;
+grant execute on function public.cancel_withdrawal_request(uuid,uuid) to authenticated;
 grant execute on function public.process_withdrawal_action(uuid,text,uuid,text) to authenticated;
 grant execute on function public.admin_withdrawal_queue() to authenticated;
 grant execute on function public.admin_set_withdrawal_settings(uuid,numeric,boolean,text) to authenticated;
