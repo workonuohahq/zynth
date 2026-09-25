@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { CheckCircle2, Clock3, Copy, XCircle, RefreshCw } from "lucide-react";
 
-const money=(n:number)=>`₦${Number(n||0).toLocaleString("en-NG",{minimumFractionDigits:2,maximumFractionDigits:2})`;
+const money=(n:number)=>`₦${Number(n||0).toLocaleString("en-NG",{minimumFractionDigits:2,maximumFractionDigits:2})}`;
 const date=(v:string)=>new Date(v).toLocaleString("en-NG",{dateStyle:"medium",timeStyle:"short"});
 
 export default function AdminDeposits({initialData}:{initialData:any}){
