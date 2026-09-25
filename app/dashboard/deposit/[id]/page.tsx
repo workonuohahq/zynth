@@ -91,7 +91,7 @@ export default function DepositPaymentPage({params}:{params:{id:string}}){
     `}</style>
 
     <div className="payment-wrap">
-      <div className="payment-top"><span className="payment-brand">ZYNTH</span><Link href="/dashboard/vaults" className="payment-back"><ArrowLeft size={14}/> Back to vault</Link></div>
+      <div className="payment-top"><span className="payment-brand">ZYNTH</span><Link href="/dashboard/transactions" className="payment-back"><ArrowLeft size={14}/> Back to activity</Link></div>
       <div className="payment-card">
         <section className="payment-hero">
           <div className="payment-eyebrow">SECURE PAYMENT</div>
@@ -114,14 +114,14 @@ export default function DepositPaymentPage({params}:{params:{id:string}}){
           <div className="payment-steps">
             <div className="step"><span className="step-num">01</span><b>Pay the exact amount</b><span>Use one of the configured payment channels above.</span></div>
             <div className="step"><span className="step-num">02</span><b>Keep your proof</b><span>Keep the transfer receipt or payment reference for your records.</span></div>
-            <div className="step"><span className="step-num">03</span><b>Complete your payment</b><span>Your wallet will be updated once your payment has been verified.</span></div>
+            <div className="step"><span className="step-num">03</span><b>Complete your payment</b><span>Once your payment is verified, the funds are automatically placed into a new 5-day vault.</span></div>
           </div>
           <div className={`status-box status-${request.status}`}>
             {confirmed?<CheckCircle2/>:rejected||cancelled?<ExternalLink/>:<Clock3/>}
-            <div><b>{confirmed?"Payment confirmed":rejected?"Payment request unavailable":cancelled?"Payment request cancelled":"Payment request received"}</b><span>Request {request.reference} · {new Date(request.created_at).toLocaleString("en-NG")}</span>{request.admin_note&&<span>{request.admin_note}</span>}</div>
+            <div><b>{confirmed?"Vault funded":rejected?"Payment request unavailable":cancelled?"Payment request cancelled":"Payment request received"}</b><span>Request {request.reference} · {new Date(request.created_at).toLocaleString("en-NG")}</span>{request.admin_note&&<span>{request.admin_note}</span>}</div>
           </div>
           <div className="payment-actions">
-            <Link className="payment-action payment-primary" href="/dashboard/vaults">{confirmed?"Continue to vault":"Return to vaults"} <ArrowRight size={15}/></Link>
+            <Link className="payment-action payment-primary" href="/dashboard/vaults">{confirmed?"View your vault":"Return to vaults"} <ArrowRight size={15}/></Link>
             {request.status==="pending"&&<button className="payment-action payment-secondary" onClick={cancelRequest}>Cancel request</button>}
             <Link className="payment-action payment-secondary" href="/dashboard/transactions">View activity</Link>
           </div>
