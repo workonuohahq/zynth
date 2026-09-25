@@ -1,0 +1,1 @@
+export default function Loading(){return <section className="dashboard-content"><div className="dashboard-skeleton"><div className="skeleton-line wide"/><div className="skeleton-line"/><div className="skeleton-block"/><div className="skeleton-block"/></div></section>}
