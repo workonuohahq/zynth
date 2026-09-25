@@ -26,7 +26,10 @@ export default function AdminPanel({initialData,adminEmail}:{initialData:AdminDa
     yieldPct:Number(data.settings?.current_yield_pct||0),
     exitFeePct:Number(data.settings?.exit_fee_pct||10),
     commissionPct:Number(data.settings?.instant_commission_pct||5),
-    depositsEnabled:Boolean(data.settings?.deposits_enabled)
+    depositsEnabled:Boolean(data.settings?.deposits_enabled),
+    minWithdrawal:Number(data.settings?.global_min_withdrawal||1000),
+    withdrawalsEnabled:data.settings?.withdrawals_enabled!==false,
+    withdrawalNotice:String(data.settings?.withdrawal_processing_notice||"Withdrawals are reviewed manually. Most requests are processed during normal operations.")
   });
 
   const refresh=async()=>{setBusy("refresh");setNotice("");try{location.reload()}finally{setBusy("")}};
