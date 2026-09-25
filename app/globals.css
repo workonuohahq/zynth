@@ -336,3 +336,59 @@
   .admin-list-item em{min-width:16px;height:16px}
   .admin-main{padding:20px 12px 30px}
 }
+
+/* Admin workspace balance */
+.admin-sidebar{
+  width:220px;
+  padding:22px 12px 16px;
+}
+.admin-main{
+  margin-left:220px!important;
+  width:calc(100% - 220px)!important;
+  max-width:none;
+  padding:34px clamp(24px,3.2vw,52px) 60px;
+}
+.admin-main > *{
+  width:100%;
+  max-width:1280px;
+  margin-left:auto;
+  margin-right:auto;
+}
+.admin-topbar{
+  width:100%;
+  max-width:1280px;
+}
+.admin-section{
+  width:100%;
+}
+.admin-kpis{
+  gap:12px;
+}
+.admin-kpi{
+  min-width:0;
+}
+.admin-grid{
+  width:100%;
+  gap:14px;
+}
+.admin-wide-card{
+  width:100%;
+}
+@media(max-width:1100px){
+  .admin-main{padding-left:24px;padding-right:24px}
+}
+@media(max-width:800px){
+  .admin-sidebar{
+    width:100%;
+    padding:10px 12px;
+  }
+  .admin-main{
+    margin-left:0!important;
+    width:100%!important;
+    padding:24px 18px 35px;
+  }
+  .admin-main > *,.admin-topbar{max-width:none}
+}
+@media(max-width:500px){
+  .admin-main{padding:20px 12px 30px}
+}
