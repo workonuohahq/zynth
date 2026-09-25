@@ -7,5 +7,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
+  const { data: profile } = await supabase.from("users").select("account_status").eq("id",user.id).single();
+  if(profile?.account_status==="suspended" || profile?.account_status==="deactivated") redirect("/account-disabled");
   return <div className="dashboard-frame"><DashboardNav /><NotificationBell /><main className="dashboard-main">{children}</main></div>;
 }
