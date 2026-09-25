@@ -1,0 +1,2 @@
+"use client";
+export default function Error({reset}:{error:Error&{digest?:string};reset:()=>void}){return <section className="dashboard-content"><div className="premium-empty"><div className="empty-icon">!</div><h3>We couldn't load this page</h3><p>Nothing was changed. Try again and your account data will be requested again.</p><button className="primary" onClick={()=>reset()}>Try again</button></div></section>}
