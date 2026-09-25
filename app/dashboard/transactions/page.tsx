@@ -30,7 +30,7 @@ export default function TransactionsPage(){
    const r=await fetch("/api/withdrawals/cancel",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({withdrawalId:id})});
    const d=await r.json();setBusy("");if(!r.ok){setMessage(d.error||"Unable to cancel request.");return;}setMessage("Withdrawal cancelled and funds returned.");load();
  }
- return <section className="dashboard-content">
+ return <section className="dashboard-content"><style jsx>{`\n .ledger-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}.ledger-action{display:inline-flex;align-items:center;gap:5px;padding:7px 10px;border-radius:9px;font-size:11px;font-weight:700;text-decoration:none;cursor:pointer}.ledger-action.primary{background:#111827;color:#fff}.ledger-action.danger{background:#fff;border:1px solid #e2e8f0;color:#b91c1c}.ledger-action:disabled{opacity:.55;cursor:not-allowed}\n `}</style>
    <header className="dashboard-header"><div><span className="eyebrow">ZYNTH / ACTIVITY</span><h1>Your activity.</h1><p>Track requests, payment details and every wallet movement.</p></div><Link className="fund-btn" href="/dashboard/vaults">Open vault <ArrowUpRight size={15}/></Link></header>
    {message&&<div className="form-feedback success">{message}</div>}
    <section className="activity-summary"><div><span>Records shown</span><b>{rows.length}</b></div><div><span>Pending requests</span><b>{rows.filter(r=>r.status==="pending").length}</b></div><div><span>Account</span><b>Protected</b></div></section>
