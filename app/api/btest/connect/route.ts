@@ -36,7 +36,9 @@ export async function POST(request: Request) {
     }
 
     const snapshot = await waitForSnapshot(token, accountId);
-    return NextResponse.json({ accountId, snapshot });
+    const response = NextResponse.json({ accountId, snapshot });
+    response.cookies.set("zynth_btest_metaapi", token, { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "strict", path: "/api/btest", maxAge: 60 * 60 * 8 });
+    return response;
   } catch (error) {
     console.error("ZYNTH BTest MetaApi error", error);
     return NextResponse.json({ error: safeError(error instanceof Error ? error.message : "MetaApi connection failed") }, { status: 502 });
