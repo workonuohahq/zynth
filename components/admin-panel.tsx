@@ -51,7 +51,7 @@ export default function AdminPanel({initialData,adminEmail}:{initialData:AdminDa
         <nav>{sections.filter(x=>x.key==="overview").map(({key,label,icon:Icon})=><button key={key} onClick={()=>setTab(key)} className={tab===key?"admin-nav active":"admin-nav"}><Icon size={17}/><span>{label}</span></button>)}</nav>
       </div>
       <div className="admin-nav-group"><span>OPERATIONS</span>
-        <nav>{sections.filter(x=>x.key==="withdrawals").map(({key,label,icon:Icon})=><button key={key} onClick={()=>setTab(key)} className={tab===key?"admin-nav active":"admin-nav"}><Icon size={17}/><span>{label}</span>{key==="withdrawals"&&data.pending_withdrawals>0?<em>{data.pending_withdrawals}</em>:null}</button>)}</nav>
+        <nav>{sections.filter(x=>x.key==="withdrawals").map(({key,label,icon:Icon})=><button key={key} onClick={()=>setTab(key)} className={tab===key?"admin-nav active":"admin-nav"}><Icon size={17}/><span>{label}</span>{key==="withdrawals"&&data.pending_withdrawals>0?<em>{data.pending_withdrawals}</em>:null}</button>)}<Link href="/admin/deposits" className="admin-nav"><ArrowDownToLine size={17}/><span>Deposits</span>{(data as any).pending_deposits>0?<em>{(data as any).pending_deposits}</em>:null}</Link><Link href="/admin/payments" className="admin-nav"><Settings2 size={17}/><span>Payment settings</span></Link></nav>
       </div>
       <div className="admin-nav-group"><span>NETWORK</span>
         <nav>{sections.filter(x=>["users","agents"].includes(x.key)).map(({key,label,icon:Icon})=><button key={key} onClick={()=>setTab(key)} className={tab===key?"admin-nav active":"admin-nav"}><Icon size={17}/><span>{label}</span></button>)}</nav>
