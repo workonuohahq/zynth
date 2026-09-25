@@ -1,6 +1,4 @@
 import { NextResponse } from "next/server";
-import MetaApi from "metaapi.cloud-sdk";
-
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
@@ -18,6 +16,7 @@ export async function POST(request: Request) {
   }
 
   try {
+    const { default: MetaApi } = await import("metaapi.cloud-sdk");
     const api = new MetaApi(token);
     const account = await api.metatraderAccountApi.createAccount({
       name: "ZYNTH BTest",
