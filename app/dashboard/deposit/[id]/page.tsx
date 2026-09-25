@@ -48,9 +48,11 @@ export default function DepositPaymentPage({params}:{params:{id:string}}){
   const rejected=request.status==="rejected";
   const cancelled=request.status==="cancelled";
   async function cancelRequest(){
+    const requestId=request?.id;
+    if(!requestId){setError("Payment request is unavailable.");return;}
     if(!confirm("Cancel this payment request? You can start a new request afterwards."))return;
     setError("");
-    try{const r=await fetch("/api/deposits/cancel",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({depositId:request.id})});const d=await r.json();if(!r.ok)throw new Error(d.error||"Unable to cancel request.");await load();}
+    try{const r=await fetch("/api/deposits/cancel",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({depositId:requestId})});const d=await r.json();if(!r.ok)throw new Error(d.error||"Unable to cancel request.");await load();}
     catch(e){setError(e instanceof Error?e.message:"Unable to cancel request.");}
   }
 
