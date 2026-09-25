@@ -10,3 +10,5 @@ ZYNTH is a premium web application foundation.
 
 ## Status
 The initial production deployment is live. The next phase is the application shell, authentication, database schema, and core product modules.
+
+<!-- Production deployment trigger -->
