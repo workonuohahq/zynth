@@ -1,6 +1,4 @@
 import { NextResponse } from "next/server";
-import MetaApi from "metaapi.cloud-sdk";
-
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
@@ -12,6 +10,7 @@ export async function GET(request: Request) {
   if (!accountId) return NextResponse.json({ error: "accountId is required." }, { status: 400 });
 
   try {
+    const { default: MetaApi } = await import("metaapi.cloud-sdk");
     const api = new MetaApi(token);
     const account = await api.metatraderAccountApi.getAccount(accountId);
     if (account.state !== "DEPLOYED") await account.deploy();
