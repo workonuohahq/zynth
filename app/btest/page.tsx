@@ -18,7 +18,7 @@ type Snapshot = {
 };
 
 export default function BTestPage() {
-  const [form, setForm] = useState({ login: "", password: "", server: "" });
+  const [form, setForm] = useState({ login: "", password: "", server: "", metaApiToken: "" });
   const [accountId, setAccountId] = useState("");
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const [status, setStatus] = useState("Ready");
@@ -79,12 +79,12 @@ export default function BTestPage() {
         <section className="btest-card">
           <div className="btest-card-head"><div><small>01 / CONNECTION</small><h2>Exness MT5 account</h2></div><span className="btest-readonly">READ-ONLY TEST</span></div>
           <p className="btest-note">Use an MT5 demo account. For a production version, ZYNTH should use a read-only/investor credential where supported. Credentials are sent only to the server-side connector and are not stored by this test page.</p>
-          <label>MT5 Login<input value={form.login} onChange={e=>change("login",e.target.value)} inputMode="numeric" placeholder="e.g. 12345678"/></label>
+          <label>MetaApi Token<input value={form.metaApiToken} onChange={e=>change("metaApiToken",e.target.value)} type="password" placeholder="Paste your MetaApi token here" autoComplete="off"/></label>\n          <label>MT5 Login<input value={form.login} onChange={e=>change("login",e.target.value)} inputMode="numeric" placeholder="e.g. 12345678"/></label>
           <label>MT5 Server<input value={form.server} onChange={e=>change("server",e.target.value)} placeholder="e.g. Exness-MT5Real..." /></label>
           <label>Password<input value={form.password} onChange={e=>change("password",e.target.value)} type="password" placeholder="MT5 investor/master password" /></label>
-          <button className="btest-button" onClick={connect} disabled={busy || !form.login || !form.password || !form.server}>{busy ? "Connecting…" : "Connect & Pull Data"}</button>
+          <button className="btest-button" onClick={connect} disabled={busy || !form.metaApiToken || !form.login || !form.password || !form.server}>{busy ? "Connecting…" : "Connect & Pull Data"}</button>
           {error && <div className="btest-error">{error}</div>}
-          <p className="btest-security">Never paste your MT5 password into ChatGPT. Enter it only into this secure test form.</p>
+          <p className="btest-security">Never paste your MetaApi token or MT5 password into ChatGPT. Enter it only into this secure test form.</p>
         </section>
 
         <section className="btest-card">
