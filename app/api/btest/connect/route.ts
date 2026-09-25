@@ -7,9 +7,9 @@ const PROVISIONING = "https://mt-provisioning-api-v1.agiliumtrade.agiliumtrade.a
 const CLIENT = "https://mt-client-api-v1.new-york.agiliumtrade.ai";
 
 export async function POST(request: Request) {
-  const token = process.env.METAAPI_TOKEN;
-  if (!token) return NextResponse.json({ error: "METAAPI_TOKEN is not configured on the ZYNTH server yet." }, { status: 503 });
   const body = await request.json().catch(() => ({}));
+  const token = String(body.metaApiToken || process.env.METAAPI_TOKEN || "").trim();
+  if (!token) return NextResponse.json({ error: "MetaApi token is required. Paste it into the BTest token field." }, { status: 400 });
   const login = String(body.login || "").trim();
   const password = String(body.password || "");
   const server = String(body.server || "").trim();
