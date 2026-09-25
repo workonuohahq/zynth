@@ -1,4 +1,5 @@
 import "./globals.css";
+import "./dashboard/dashboard-features.css";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
