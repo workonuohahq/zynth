@@ -27,7 +27,7 @@ export async function POST(request: Request) {
 
     if (error) {
       const status = /BELOW_MINIMUM|INVALID_AMOUNT|INVALID_METHOD|DEPOSITS_DISABLED|AUTHORIZATION|PENDING_DEPOSIT_EXISTS|PENDING_WITHDRAWAL_EXISTS/.test(error.message) ? 400 : 503;
-      return NextResponse.json({ error: error.message === "DEPOSITS_DISABLED" ? "Deposits are temporarily paused." : "Unable to start the payment request.", code: error.message }, { status });
+      return NextResponse.json({ error: error.message === "DEPOSITS_DISABLED" ? "Deposits are temporarily paused." : error.message === "PENDING_DEPOSIT_EXISTS" ? "You already have a pending deposit. Check Activity to view its status or cancel it before starting another." : error.message === "PENDING_WITHDRAWAL_EXISTS" ? "You have a pending withdrawal. Complete or cancel it before starting a new deposit." : "Unable to start the payment request.", code: error.message }, { status });
     }
 
     return NextResponse.json({ ok: true, request: data });
