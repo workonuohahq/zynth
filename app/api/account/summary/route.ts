@@ -16,7 +16,7 @@ export async function GET() {
       );
     }
 
-    const [{ data: u, error: userError }, { data: settings, error: settingsError }] =
+    const [{ data: u, error: userError }, { data: policyRows, error: settingsError }] =
       await Promise.all([
         s
           .from("users")
@@ -25,6 +25,8 @@ export async function GET() {
           .single(),
         s.rpc("get_withdrawal_policy"),
       ]);
+
+    const settings = Array.isArray(policyRows) ? policyRows[0] : policyRows;
 
     if (userError || settingsError || !u || !settings) {
       return NextResponse.json(
