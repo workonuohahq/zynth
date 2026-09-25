@@ -33,7 +33,7 @@ export default function VaultsPage(){
       </section>
       <aside className="vault-info-stack">
         <section className="panel vault-info-card"><span className="muted">HOW IT WORKS</span><div className="info-step"><span>01</span><div><b>Choose amount</b><small>Use funds already available in your wallet.</small></div></div><div className="info-step"><span>02</span><div><b>Cycle begins</b><small>Your 5-day maturity clock starts after successful creation.</small></div></div><div className="info-step"><span>03</span><div><b>Track maturity</b><small>Monitor principal and configured yield from your dashboard.</small></div></div></section>
-        <section className="panel vault-safety"><ShieldCheck size={18}/><div><b>Protected execution</b><p>Vault creation and balance checks are enforced server-side.</p></div></section>
+        <section className="panel vault-safety"><ShieldCheck size={18}/><div><b>Protected execution</b><p>Payment confirmation and vault creation are validated server-side.</p></div></section>
       </aside>
     </div>
     <section className="panel vault-history-panel"><div className="panel-head"><div><span className="muted">YOUR POSITIONS</span><h2>Vault history</h2></div></div>{vaults.length?<div className="vault-history-list">{vaults.map(v=><Link className="vault-history-row" href={"/dashboard/vaults/"+v.id} key={v.id}><span><b>₦{Number(v.principal_amount).toLocaleString("en-NG",{minimumFractionDigits:2})}</b><small>{v.status} · matures {new Date(v.maturity_date).toLocaleDateString("en-NG")}</small></span><strong>+₦{Number(v.expected_yield).toLocaleString("en-NG",{minimumFractionDigits:2})}</strong><ArrowUpRight size={15}/></Link>)}</div>:<p className="copy">No vault positions yet.</p>}</section>
