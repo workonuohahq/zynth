@@ -46,6 +46,13 @@ export default function DepositPaymentPage({params}:{params:{id:string}}){
 
   const confirmed=request.status==="confirmed";
   const rejected=request.status==="rejected";
+  const cancelled=request.status==="cancelled";
+  async function cancelRequest(){
+    if(!confirm("Cancel this payment request? You can start a new request afterwards."))return;
+    setError("");
+    try{const r=await fetch("/api/deposits/cancel",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({depositId:request.id})});const d=await r.json();if(!r.ok)throw new Error(d.error||"Unable to cancel request.");await load();}
+    catch(e){setError(e instanceof Error?e.message:"Unable to cancel request.");}
+  }
 
   return <main className="payment-shell">
     <style jsx global>{`
@@ -108,11 +115,12 @@ export default function DepositPaymentPage({params}:{params:{id:string}}){
             <div className="step"><span className="step-num">03</span><b>Complete your payment</b><span>Your wallet will be updated once your payment has been verified.</span></div>
           </div>
           <div className={`status-box status-${request.status}`}>
-            {confirmed?<CheckCircle2/>:rejected?<ExternalLink/>:<Clock3/>}
-            <div><b>{confirmed?"Payment confirmed":rejected?"Payment request unavailable":"Payment received"}</b><span>Request {request.reference} · {new Date(request.created_at).toLocaleString("en-NG")}</span>{request.admin_note&&<span>{request.admin_note}</span>}</div>
+            {confirmed?<CheckCircle2/>:rejected||cancelled?<ExternalLink/>:<Clock3/>}
+            <div><b>{confirmed?"Payment confirmed":rejected?"Payment request unavailable":cancelled?"Payment request cancelled":"Payment request received"}</b><span>Request {request.reference} · {new Date(request.created_at).toLocaleString("en-NG")}</span>{request.admin_note&&<span>{request.admin_note}</span>}</div>
           </div>
           <div className="payment-actions">
             <Link className="payment-action payment-primary" href="/dashboard/vaults">{confirmed?"Continue to vault":"Return to vaults"} <ArrowRight size={15}/></Link>
+            {request.status==="pending"&&<button className="payment-action payment-secondary" onClick={cancelRequest}>Cancel request</button>}
             <Link className="payment-action payment-secondary" href="/dashboard/transactions">View activity</Link>
           </div>
           <div className="payment-foot">Never share your password, OTP or authentication code with anyone claiming to be support.</div>
