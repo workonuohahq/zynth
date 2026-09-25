@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import AdminUsers from "@/components/admin-users";
 import { ArrowDownToLine, ArrowLeft, CheckCircle2, ChevronRight, CircleDollarSign, Clock3, Gauge, RefreshCw, Settings2, ShieldCheck, Users, WalletCards, XCircle, type LucideIcon } from "lucide-react";
 
 type AdminData = {
@@ -107,7 +108,7 @@ export default function AdminPanel({initialData,adminEmail}:{initialData:AdminDa
 
       {tab==="withdrawals"&&<section className="admin-section"><section className="admin-card"><div className="admin-card-head"><div><span className="muted">MONEY MOVEMENT</span><h2>Withdrawal queue</h2><p>Pending requests require manual operational approval.</p></div><span className="admin-count">{data.pending_withdrawals} pending</span></div><AdminWithdrawals rows={data.recent_withdrawals} busy={busy} onProcess={processWithdrawal}/></section></section>}
 
-      {tab==="users"&&<section className="admin-section"><section className="admin-card"><div className="admin-card-head"><div><span className="muted">CUSTOMERS</span><h2>User directory</h2><p>Account status and balances visible to the founder control plane.</p></div><span className="admin-count">{data.users} users</span></div><div className="admin-table">{data.recent_users.map(u=><div className="admin-row" key={u.id}><div className="admin-person"><span className="avatar">{(u.full_name||u.email||"U").slice(0,1).toUpperCase()}</span><span><b>{u.full_name||"Unnamed user"}</b><small>{u.email}</small></span></div><span>{u.role}</span><span>{u.kyc_verified?"Verified":"Unverified"}</span><strong>{naira(Number(u.main_wallet_balance)+Number(u.locked_vault_balance))}</strong></div>)}</div></section></section>}
+      {tab==="users"&&<section className="admin-section"><section className="admin-card admin-users-card"><div className="admin-card-head"><div><span className="muted">CUSTOMERS / COMMAND CENTER</span><h2>User directory</h2><p>Search, inspect and administer every account without bypassing the financial ledger.</p></div><span className="admin-count">{data.users} users</span></div><AdminUsers initialUsers={data.recent_users as any}/></section></section>}
 
       {tab==="agents"&&<section className="admin-section"><section className="admin-card"><div className="admin-card-head"><div><span className="muted">ZPA NETWORK</span><h2>Agent performance</h2><p>Activation activity and current status.</p></div><span className="admin-count">{data.zpa_agents} agents</span></div><div className="admin-table">{data.zpa.map(a=><div className="admin-row" key={a.zpa_id}><div className="admin-person"><span className="avatar">Z</span><span><b>{a.zpa_id}</b><small>{a.full_name||a.email}</small></span></div><span>{a.status}</span><span>{a.current_month_activations} this month</span><strong>{a.total_historical_activations} total</strong></div>)}{!data.zpa.length&&<div className="admin-empty"><Users size={22}/><p>No ZPA profiles yet.</p></div>}</div></section></section>}
 
