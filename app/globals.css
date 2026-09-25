@@ -61,3 +61,5 @@
 @keyframes notificationPulse{0%{box-shadow:0 0 0 0 #48e59a55}70%{box-shadow:0 0 0 9px #48e59a00}100%{box-shadow:0 0 0 0 #48e59a00}}
 @media(max-width:800px){.notification-bell{top:14px;right:14px;width:42px;height:42px;border-radius:12px}}
 @media(max-width:430px){.notification-bell{top:12px;right:12px;width:40px;height:40px}.notification-badge{right:-4px;top:-5px}}
+
+/* Dashboard notification experience */
