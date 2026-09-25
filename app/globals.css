@@ -708,3 +708,42 @@
 .details:hover{border-color:#59636e;background:#1a2026}
 @media(max-width:800px){.admin-detail-page{padding:20px 14px}.admin-withdrawal-summary{grid-template-columns:1fr 1fr}.admin-withdrawal-detail-grid{grid-template-columns:1fr}.admin-withdrawal-detail-grid .admin-wide-card{grid-column:auto}.admin-detail-hero{align-items:flex-start;flex-direction:column}.admin-detail-hero h1{font-size:28px}}
 @media(max-width:500px){.admin-withdrawal-summary{grid-template-columns:1fr}.admin-user-grid{grid-template-columns:1fr}.admin-detail-actions{flex-wrap:wrap}.admin-detail-actions button{flex:1}}
+
+/* ZYNTH motion system — subtle, consistent, accessible */
+@keyframes zynthFadeUp{from{opacity:0;transform:translate3d(0,14px,0)}to{opacity:1;transform:none}}
+@keyframes zynthFadeIn{from{opacity:0}to{opacity:1}}
+@keyframes zynthFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes zynthGlow{0%,100%{opacity:.45}50%{opacity:.9}}
+@keyframes zynthShimmer{from{background-position:200% 0}to{background-position:-200% 0}}
+@keyframes zynthPulse{0%,100%{transform:scale(1);opacity:.75}50%{transform:scale(1.12);opacity:1}}
+@keyframes zynthFooterRise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+
+.landing,.dashboard-content,.admin-frame,.admin-detail-page{animation:zynthFadeIn .5s ease both}
+.landing>*{animation:zynthFadeUp .65s cubic-bezier(.22,1,.36,1) both}
+.landing>*:nth-child(2){animation-delay:.08s}.landing>*:nth-child(3){animation-delay:.16s}.landing>*:nth-child(4){animation-delay:.24s}
+.dashboard-content>header,.dashboard-content>.stats,.dashboard-content>section,.dashboard-content>.dashboard-grid{animation:zynthFadeUp .55s cubic-bezier(.22,1,.36,1) both}
+.dashboard-content>section:nth-of-type(2){animation-delay:.06s}.dashboard-content>section:nth-of-type(3){animation-delay:.12s}
+.admin-main>*{animation:zynthFadeUp .45s cubic-bezier(.22,1,.36,1) both}
+.admin-main>*:nth-child(2){animation-delay:.05s}.admin-main>*:nth-child(3){animation-delay:.1s}.admin-main>*:nth-child(4){animation-delay:.15s}
+.admin-detail-page>*{animation:zynthFadeUp .5s cubic-bezier(.22,1,.36,1) both}
+.admin-detail-page>*:nth-child(2){animation-delay:.06s}.admin-detail-page>*:nth-child(3){animation-delay:.12s}.admin-detail-page>*:nth-child(4){animation-delay:.18s}
+
+.landing-visual .visual-glow{animation:zynthGlow 4s ease-in-out infinite}
+.vault-preview{animation:zynthFloat 5s ease-in-out infinite}
+.preview-dot,.live-dot i{animation:zynthPulse 2s ease-in-out infinite}
+.brand-mark{transition:transform .25s ease,box-shadow .25s ease}.brand:hover .brand-mark{transform:rotate(-6deg) scale(1.06);box-shadow:0 0 0 5px #48e59a12}
+button,.primary,.secondary-cta,.landing-cta,.fund-btn,.details,.nav-item,.ledger-action,.profile-mini{transition:transform .2s ease,box-shadow .2s ease,background-color .2s ease,border-color .2s ease,color .2s ease}
+button:hover,.primary:hover,.fund-btn:hover,.landing-cta:hover,.details:hover,.ledger-action:hover{transform:translateY(-2px)}
+button:active,.primary:active,.fund-btn:active,.landing-cta:active,.details:active,.ledger-action:active{transform:translateY(0) scale(.98)}
+.stat,.card,.vault-card,.admin-card,.admin-kpi,.admin-panel-card,.feature-card{transition:transform .28s cubic-bezier(.22,1,.36,1),border-color .28s ease,box-shadow .28s ease}
+.stat:hover,.card:hover,.vault-card:hover,.admin-card:hover,.admin-kpi:hover,.admin-panel-card:hover,.feature-card:hover{transform:translateY(-3px)}
+.nav-item:hover,.ledger-action:hover{transform:translateX(3px)}
+.landing-features>div{transition:transform .3s ease,border-color .3s ease,background .3s ease}.landing-features>div:hover{transform:translateY(-5px)}
+.landing-footer{animation:zynthFooterRise .8s .28s cubic-bezier(.22,1,.36,1) both;transition:color .3s ease,border-color .3s ease}
+.landing-footer:hover{color:#777;border-color:#343434}
+.landing-footer a{transition:color .2s ease,transform .2s ease}.landing-footer a:hover{color:#fff;transform:translateY(-1px)}
+.skeleton{background:linear-gradient(90deg,#111 25%,#191919 37%,#111 63%);background-size:400% 100%;animation:zynthShimmer 1.4s ease infinite}
+
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
