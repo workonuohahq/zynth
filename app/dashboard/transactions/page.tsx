@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ArrowDownLeft, ArrowUpRight, ChevronRight, Clock3, FileText, Search, X } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
-type Row={id:string;type:string;amount:number;status:string;created_at:string;reference:string|null;metadata?:Record<string,unknown>|null};
+type Row={id:string;type:string;amount:number;status:string;created_at:string;reference:string|null;metadata?:Record<string,any>|null};
 const money=(v:unknown)=>`₦${Number(v||0).toLocaleString("en-NG",{minimumFractionDigits:2,maximumFractionDigits:2})}`;
 
 export default function TransactionsPage(){
