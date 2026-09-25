@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Activity, CircleHelp, Home, LogOut, Settings, ShieldCheck, UserRound, Vault } from "lucide-react";
+import { Activity, Bell, CircleHelp, Flag, Home, LogOut, Settings, ShieldCheck, UserRound, Vault } from "lucide-react";
 
 const links = [
   { href: "/dashboard", label: "Overview", icon: Home },
   { href: "/dashboard/vaults", label: "Vaults", icon: Vault },
   { href: "/dashboard/transactions", label: "Activity", icon: Activity },
+  { href: "/dashboard/goals", label: "Goals", icon: Flag },
+  { href: "/dashboard/notifications", label: "Alerts", icon: Bell },
 ];
 
 export default function DashboardNav() {
