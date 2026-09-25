@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -6,8 +7,8 @@ export const runtime = "nodejs";
 const CLIENT = "https://mt-client-api-v1.new-york.agiliumtrade.ai";
 
 export async function GET(request: Request) {
-  const token = process.env.METAAPI_TOKEN;
-  if (!token) return NextResponse.json({ error: "METAAPI_TOKEN is not configured on the ZYNTH server." }, { status: 503 });
+  const token = cookies().get("zynth_btest_metaapi")?.value || process.env.METAAPI_TOKEN || "";
+  if (!token) return NextResponse.json({ error: "MetaApi session expired. Connect again from BTest." }, { status: 401 });
   const accountId = new URL(request.url).searchParams.get("accountId");
   if (!accountId) return NextResponse.json({ error: "accountId is required." }, { status: 400 });
   try {
