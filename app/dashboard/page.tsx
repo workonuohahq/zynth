@@ -54,7 +54,7 @@ export default async function DashboardPage() {
         </div>
         <div className="header-actions">
           <Link className="icon-button" href="/dashboard/transactions" aria-label="View activity"><Clock3 size={17} /></Link>
-          <Link className="fund-btn" href="/dashboard/vaults"><Plus size={17} /> Open a vault</Link>
+          <Link className="fund-btn" href="/dashboard/vaults"><Plus size={17} /> Open a vault</Link><Link className="fund-btn secondary-dark" href="/dashboard/withdraw">Withdraw</Link>
         </div>
       </header>
 
@@ -77,7 +77,7 @@ export default async function DashboardPage() {
       <section className="quick-actions">
         <Link href="/dashboard/vaults" className="quick-action"><span className="qa-icon green"><LockKeyhole size={17}/></span><span><b>Open vault</b><small>Start a 5-day cycle</small></span><ChevronRight size={16}/></Link>
         <Link href="/dashboard/transactions" className="quick-action"><span className="qa-icon blue"><BarChart3 size={17}/></span><span><b>View activity</b><small>Track every movement</small></span><ChevronRight size={16}/></Link>
-        <Link href="/dashboard/transactions" className="quick-action"><span className="qa-icon amber"><ArrowDownLeft size={17}/></span><span><b>Wallet history</b><small>Deposits & withdrawals</small></span><ChevronRight size={16}/></Link>
+        <Link href="/dashboard/withdraw" className="quick-action"><span className="qa-icon amber"><ArrowDownLeft size={17}/></span><span><b>Withdraw funds</b><small>Move available balance out</small></span><ChevronRight size={16}/></Link>
       </section>
 
       <div className="dashboard-grid">
