@@ -6,7 +6,7 @@ import AdminUsers from "@/components/admin-users";
 import { ArrowDownToLine, ArrowLeft, CheckCircle2, ChevronRight, CircleDollarSign, Clock3, Gauge, RefreshCw, Settings2, ShieldCheck, Users, WalletCards, XCircle, type LucideIcon } from "lucide-react";
 
 type AdminData = {
-  settings?: { global_min_deposit:number; current_yield_pct:number; exit_fee_pct:number; instant_commission_pct:number; deposits_enabled:boolean };
+  settings?: { global_min_deposit:number; global_min_withdrawal?:number; current_yield_pct:number; exit_fee_pct:number; instant_commission_pct:number; deposits_enabled:boolean; withdrawals_enabled?:boolean; withdrawal_processing_notice?:string };
   users:number; funded_users:number; vaults_active:number; vaulted_principal:number; wallet_liquidity:number;
   pending_withdrawals:number; pending_withdrawal_amount:number; pending_deposits?:number; pending_deposit_amount?:number; zpa_agents:number; active_zpa_agents:number;
   recent_withdrawals:Array<any>; recent_users:Array<any>; zpa:Array<any>; audit:Array<any>;
@@ -20,7 +20,7 @@ export default function AdminPanel({initialData,adminEmail}:{initialData:AdminDa
   const [tab,setTab]=useState("overview");
   const [busy,setBusy]=useState("");
   const [notice,setNotice]=useState("");
-  const [settings,setSettings]=useState({
+  const [queue,setQueue]=useState<any[]>(initialData.recent_withdrawals||[]);\n  const [settings,setSettings]=useState({
     minDeposit:Number(data.settings?.global_min_deposit||5500),
     yieldPct:Number(data.settings?.current_yield_pct||0),
     exitFeePct:Number(data.settings?.exit_fee_pct||10),
@@ -34,14 +34,16 @@ export default function AdminPanel({initialData,adminEmail}:{initialData:AdminDa
     const j=await r.json(); if(!r.ok){setNotice(j.error||"Settings update failed.");setBusy("");return}
     setData({...data,settings:j.settings});setNotice("System settings updated.");setBusy("");
   };
-  const processWithdrawal=async(id:string,approved:boolean)=>{
-    const reason=approved?null:window.prompt("Reason for rejecting this withdrawal:")||"Withdrawal rejected";
+  const loadQueue=async()=>{const r=await fetch("/api/admin/withdrawals");const j=await r.json();if(r.ok)setQueue(j.rows||[]);};
+  const processWithdrawal=async(id:string,action:string)=>{
+    const reason=action==="reject"?window.prompt("Reason for rejecting this withdrawal:")||"Withdrawal rejected":null;
     setBusy(id);setNotice("");
-    const r=await fetch("/api/admin/withdrawals/process",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({withdrawalId:id,approved,reason})});
+    const r=await fetch("/api/admin/withdrawals/process",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({withdrawalId:id,action,reason})});
     const j=await r.json(); if(!r.ok){setNotice(j.error||"Unable to process withdrawal.");setBusy("");return}
-    setData({...data,pending_withdrawals:Math.max(0,data.pending_withdrawals-1),recent_withdrawals:data.recent_withdrawals.map(x=>x.id===id?{...x,status:approved?"completed":"failed"}:x)});
-    setNotice(approved?"Withdrawal approved.":"Withdrawal rejected and funds returned.");setBusy("");
+    setNotice(action==="reject"?"Withdrawal rejected and gross funds returned.":action==="paid"?"Withdrawal marked paid.":action==="processing"?"Withdrawal moved to processing.":"Withdrawal is now under review.");
+    await loadQueue(); setBusy("");
   };
+  useEffect(()=>{if(tab==="withdrawals")loadQueue()},[tab]);
 
   const sections: Array<{key:string;label:string;icon:LucideIcon}>=[{key:"overview",label:"Overview",icon:Gauge},{key:"withdrawals",label:"Withdrawals",icon:ArrowDownToLine},{key:"users",label:"Users",icon:Users},{key:"agents",label:"ZPA",icon:ShieldCheck},{key:"settings",label:"Settings",icon:Settings2}];
   const navItems = [
@@ -103,10 +105,10 @@ export default function AdminPanel({initialData,adminEmail}:{initialData:AdminDa
             <div className="rule-list"><div><span>Minimum deposit</span><b>{naira(data.settings?.global_min_deposit||0)}</b></div><div><span>Configured yield</span><b>{data.settings?.current_yield_pct||0}%</b></div><div><span>Exit fee</span><b>{data.settings?.exit_fee_pct||0}%</b></div><div><span>Instant ZPA commission</span><b>{data.settings?.instant_commission_pct||0}%</b></div><div><span>Deposits</span><b className={data.settings?.deposits_enabled?"ok":"pending"}>{data.settings?.deposits_enabled?"Enabled":"Paused"}</b></div></div>
           </section>
         </div>
-        <section className="admin-card admin-wide-card"><div className="admin-card-head"><div><span className="muted">OPERATIONS QUEUE</span><h2>Recent withdrawal activity</h2><p>Review the latest requests and act on anything still pending.</p></div><button className="text-action" onClick={()=>setTab("withdrawals")}>Open queue <ChevronRight size={13}/></button></div><AdminWithdrawals rows={data.recent_withdrawals.slice(0,5)} busy={busy} onProcess={processWithdrawal}/></section>
+        <section className="admin-card admin-wide-card"><div className="admin-card-head"><div><span className="muted">OPERATIONS QUEUE</span><h2>Recent withdrawal activity</h2><p>Review the latest requests and act on anything still pending.</p></div><button className="text-action" onClick={()=>setTab("withdrawals")}>Open queue <ChevronRight size={13}/></button></div><AdminWithdrawals rows={(queue.length?queue:data.recent_withdrawals).slice(0,5)} busy={busy} onProcess={processWithdrawal}/></section>
       </section>}
 
-      {tab==="withdrawals"&&<section className="admin-section"><section className="admin-card"><div className="admin-card-head"><div><span className="muted">MONEY MOVEMENT</span><h2>Withdrawal queue</h2><p>Pending requests require manual operational approval.</p></div><span className="admin-count">{data.pending_withdrawals} pending</span></div><AdminWithdrawals rows={data.recent_withdrawals} busy={busy} onProcess={processWithdrawal}/></section></section>}
+      {tab==="withdrawals"&&<section className="admin-section"><section className="admin-card"><div className="admin-card-head"><div><span className="muted">MONEY MOVEMENT</span><h2>Withdrawal queue</h2><p>Pending requests require manual operational approval.</p></div><span className="admin-count">{data.pending_withdrawals} pending</span></div><AdminWithdrawals rows={queue.length?queue:data.recent_withdrawals} busy={busy} onProcess={processWithdrawal}/></section></section>}
 
       {tab==="users"&&<section className="admin-section"><section className="admin-card admin-users-card"><div className="admin-card-head"><div><span className="muted">CUSTOMERS / COMMAND CENTER</span><h2>User directory</h2><p>Search, inspect and administer every account without bypassing the financial ledger.</p></div><span className="admin-count">{data.users} users</span></div><AdminUsers initialUsers={data.recent_users as any}/></section></section>}
 
@@ -114,15 +116,15 @@ export default function AdminPanel({initialData,adminEmail}:{initialData:AdminDa
 
       {tab==="settings"&&<section className="admin-section"><section className="admin-card settings-card"><div className="admin-card-head"><div><span className="muted">SYSTEM VARIABLES</span><h2>Platform settings</h2><p>These values drive vault and referral calculations. Keep live-money controls disabled until the operating and compliance structure is ready.</p></div></div>
         <div className="settings-grid">
-          {[["minDeposit","Minimum deposit","NGN",settings.minDeposit],["yieldPct","Configured yield","%",settings.yieldPct],["exitFeePct","Exit fee","%",settings.exitFeePct],["commissionPct","Instant commission","%",settings.commissionPct]].map(([key,label,suffix,val]:any)=><label key={key}><span>{label}</span><div className="setting-input"><input type="number" min="0" value={val} onChange={e=>setSettings({...settings,[key]:Number(e.target.value)})}/><b>{suffix}</b></div></label>)}
+          {[["minDeposit","Minimum deposit","NGN",settings.minDeposit],["minWithdrawal","Minimum withdrawal","NGN",settings.minWithdrawal],["yieldPct","Configured yield","%",settings.yieldPct],["exitFeePct","Exit fee","%",settings.exitFeePct],["commissionPct","Instant commission","%",settings.commissionPct]].map(([key,label,suffix,val]:any)=><label key={key}><span>{label}</span><div className="setting-input"><input type="number" min="0" value={val} onChange={e=>setSettings({...settings,[key]:Number(e.target.value)})}/><b>{suffix}</b></div></label>)}
         </div>
-        <label className="toggle-row"><span><b>Deposits enabled</b><small>Allow the funding engine to accept activation deposits.</small></span><input type="checkbox" checked={settings.depositsEnabled} onChange={e=>setSettings({...settings,depositsEnabled:e.target.checked})}/></label>
+        <label className="toggle-row"><span><b>Deposits enabled</b><small>Allow the funding engine to accept activation deposits.</small></span><input type="checkbox" checked={settings.depositsEnabled} onChange={e=>setSettings({...settings,depositsEnabled:e.target.checked})}/></label><label className="toggle-row"><span><b>Withdrawals enabled</b><small>Pause new withdrawal requests without affecting existing requests.</small></span><input type="checkbox" checked={settings.withdrawalsEnabled} onChange={e=>setSettings({...settings,withdrawalsEnabled:e.target.checked})}/></label><label className="setting-textarea"><span>Withdrawal processing notice</span><textarea value={settings.withdrawalNotice} onChange={e=>setSettings({...settings,withdrawalNotice:e.target.value})}/></label>
         <button className="primary save-settings" onClick={saveSettings} disabled={busy==="settings"}>{busy==="settings"?"Saving…":"Save system settings"}</button>
       </section></section>}
     </main>
   </div>;
 }
 
-function AdminWithdrawals({rows,busy,onProcess}:{rows:any[];busy:string;onProcess:(id:string,a:boolean)=>void}) {
-  return <div className="admin-table withdrawal-table">{rows.map(r=><div className="admin-row" key={r.id}><div className="admin-person"><span className="avatar"><ArrowDownToLine size={14}/></span><span><b>{naira(r.amount)}</b><small>{r.full_name||r.email||r.user_id} · {date(r.created_at)}</small></span></div><span className={"status-text "+r.status}>{r.status}</span><span>{r.reference||"—"}</span><div className="row-actions">{r.status==="pending"?<><button className="approve" disabled={busy===r.id} onClick={()=>onProcess(r.id,true)}><CheckCircle2 size={14}/><span>Approve</span></button><button className="reject" disabled={busy===r.id} onClick={()=>onProcess(r.id,false)}><XCircle size={14}/><span>Reject</span></button></>:<span className="muted">{r.status}</span>}</div></div>)}{!rows.length&&<div className="admin-empty"><Clock3 size={22}/><p>No withdrawal requests.</p></div>}</div>;
+function AdminWithdrawals({rows,busy,onProcess}:{rows:any[];busy:string;onProcess:(id:string,a:string)=>void}) {
+  return <div className="admin-table withdrawal-table">{rows.map(r=>{const gross=Number(r.gross_amount??r.amount??0),net=Number(r.net_amount??r.amount??0),age=Number(r.age_hours||0);return <div className="admin-row" key={r.id}><div className="admin-person"><span className="avatar"><ArrowDownToLine size={14}/></span><span><b>{naira(net)}</b><small>{r.full_name||r.email||r.user_id} · {r.reference||"No reference"} · {date(r.created_at)}</small></span></div><span className={"status-text "+r.status}>{String(r.status).replace("_"," ")}</span><span className="withdraw-queue-meta">{naira(gross)}<small>{age<1?"new":age.toFixed(1)+"h"}</small></span><div className="row-actions">{r.status==="pending"&&<button className="approve" disabled={busy===r.id} onClick={()=>onProcess(r.id,"review")}><CheckCircle2 size={14}/><span>Review</span></button>}{r.status==="under_review"&&<button className="approve" disabled={busy===r.id} onClick={()=>onProcess(r.id,"processing")}><CheckCircle2 size={14}/><span>Process</span></button>}{r.status==="processing"&&<button className="approve" disabled={busy===r.id} onClick={()=>onProcess(r.id,"paid")}><CheckCircle2 size={14}/><span>Mark paid</span></button>}{["pending","under_review"].includes(r.status)&&<button className="reject" disabled={busy===r.id} onClick={()=>onProcess(r.id,"reject")}><XCircle size={14}/><span>Reject</span></button>}</div></div>})}{!rows.length&&<div className="admin-empty"><Clock3 size={22}/><p>No active withdrawal requests.</p></div>}</div>;
 }
