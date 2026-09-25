@@ -27,11 +27,11 @@ export default function LoginForm({ initialMode = "login" }: { initialMode?: "lo
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
-          options: { data: { full_name: name } }
+          options: {\n            data: { full_name: name },\n            emailRedirectTo: `${window.location.origin}/auth/confirmed`\n          }
         });
         if (error) setMessage(error.message);
         else if (data.session) router.push("/dashboard");
-        else setMessage("Account created. Check your email to confirm your account.");
+        else router.push(`/auth/confirmed?email=${encodeURIComponent(email)}`);
       }
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Unable to connect to ZYNTH right now.");
