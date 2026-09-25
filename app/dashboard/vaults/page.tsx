@@ -10,8 +10,10 @@ export default function VaultsPage(){
   async function create(){
     setBusy(true);setMessage("");
     try{
-      const r=await fetch("/api/vault/create",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({amount:Number(amount)})});
-      const d=await r.json(); setMessage(r.ok?"Vault created successfully.":d.error||"Unable to create vault.");
+      const r=await fetch("/api/deposits/create",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({amount:Number(amount),method:"manual"})});
+      const d=await r.json();
+      if(!r.ok){setMessage(d.error||"Unable to start payment.");return;}
+      window.location.href="/dashboard/deposit/"+d.request.id;
     }catch{setMessage("Unable to connect. Please try again.");}
     finally{setBusy(false);}
   }
@@ -24,15 +26,15 @@ export default function VaultsPage(){
       <section className="panel vault-create-panel">
         <div className="vault-icon-large"><LockKeyhole size={21}/></div>
         <span className="muted">OPEN A NEW CYCLE</span><h2>5-day yield vault</h2>
-        <p className="copy">Choose an amount from your available wallet balance. The server validates your balance and creates the vault atomically.</p>
+        <p className="copy">Choose the amount you want to place into a vault. ZYNTH will take you to the built-in payment page first if the funds need to be deposited manually.</p>
         <label className="input-label">AMOUNT</label>
         <div className="money-input"><span>₦</span><input inputMode="decimal" value={amount} onChange={e=>setAmount(e.target.value)} aria-label="Vault amount"/></div>
         <div className="amount-presets">{["5500","10000","25000","50000"].map(v=><button key={v} onClick={()=>setAmount(v)} className={amount===v?"selected":""}>₦{Number(v).toLocaleString("en-NG")}</button>)}</div>
-        <button className="primary full-button" onClick={create} disabled={busy}>{busy?"Processing…":"Open 5-day vault"} <ArrowUpRight size={16}/></button>
+        <button className="primary full-button" onClick={create} disabled={busy}>{busy?"Preparing payment…":"Continue to payment"} <ArrowUpRight size={16}/></button>
         {message&&<div className="form-feedback"><CheckCircle2 size={15}/>{message}</div>}
       </section>
       <aside className="vault-info-stack">
-        <section className="panel vault-info-card"><span className="muted">HOW IT WORKS</span><div className="info-step"><span>01</span><div><b>Choose amount</b><small>Use funds already available in your wallet.</small></div></div><div className="info-step"><span>02</span><div><b>Cycle begins</b><small>Your 5-day maturity clock starts after successful creation.</small></div></div><div className="info-step"><span>03</span><div><b>Track maturity</b><small>Monitor principal and configured yield from your dashboard.</small></div></div></section>
+        <section className="panel vault-info-card"><span className="muted">HOW IT WORKS</span><div className="info-step"><span>01</span><div><b>Choose amount</b><small>Enter the amount you want to fund into your vault.</small></div></div><div className="info-step"><span>02</span><div><b>Complete payment</b><small>Use the built-in payment page and follow the configured manual instructions.</small></div></div><div className="info-step"><span>03</span><div><b>Open the vault</b><small>After confirmation, your wallet is credited and you can start the 5-day cycle.</small></div></div></section>
         <section className="panel vault-safety"><ShieldCheck size={18}/><div><b>Protected execution</b><p>Payment confirmation and vault creation are validated server-side.</p></div></section>
       </aside>
     </div>
