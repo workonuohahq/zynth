@@ -819,3 +819,133 @@ html[data-theme="light"] .landing-footer:hover{color:#3f3a33;border-color:#c9ad7
 html[data-theme="light"] .skeleton{background:linear-gradient(90deg,#e9e4da 25%,#f8f5ee 37%,#e9e4da 63%);background-size:400% 100%}
 html[data-theme="light"] .status-text.paid,html[data-theme="light"] .status-text.completed{color:#8e692d!important}
 @media(max-width:800px){html[data-theme="light"] .dashboard-sidebar,html[data-theme="light"] .admin-sidebar{box-shadow:4px 0 20px #51432b10}}
+
+
+/* ZYNTH LIGHT MODE — dashboard visual layer
+   Keep the dashboard structure identical; transform every surface and writing token. */
+html[data-theme="light"] .premium-header .live-dot{color:#7a746a}
+html[data-theme="light"] .dashboard-header p{color:#716c63}
+html[data-theme="light"] .icon-button{background:#fffdf8;border-color:#d9d2c5;color:#625d54;box-shadow:0 8px 22px #51432b0d}
+html[data-theme="light"] .icon-button:hover{background:#f5f0e6;border-color:#c8b98f;color:#1d1b17}
+
+html[data-theme="light"] .wealth-hero{
+  border-color:#d7c59e;
+  background:linear-gradient(120deg,#fffaf0 0%,#f3ead8 58%,#ebe1cb 100%);
+  box-shadow:0 22px 70px #594a2b14;
+}
+html[data-theme="light"] .wealth-main{color:#1d1b17}
+html[data-theme="light"] .wealth-main:after{border-color:#cdb77d;box-shadow:0 0 0 45px #b88b3e08,0 0 0 90px #b88b3e04}
+html[data-theme="light"] .wealth-label{color:#706a60}
+html[data-theme="light"] .secure-chip{border-color:#d7c59e;color:#80642e;background:#fffaf0}
+html[data-theme="light"] .wealth-main>strong{color:#171613}
+html[data-theme="light"] .wealth-breakdown{color:#706a60}
+html[data-theme="light"] .dot.locked{background:#aaa398}
+html[data-theme="light"] .wealth-side{
+  border-left-color:#ded3bd;
+  background:#f7f0e3cc;
+}
+html[data-theme="light"] .wealth-side div span{color:#80786c}
+html[data-theme="light"] .wealth-side div b{color:#28251f}
+html[data-theme="light"] .wealth-side div:nth-child(2) b{color:#8e692d}
+html[data-theme="light"] .wealth-side>a{color:#8e692d}
+@media(max-width:900px){
+  html[data-theme="light"] .wealth-side{border-left:0;border-top-color:#ded3bd}
+}
+
+html[data-theme="light"] .quick-action{
+  background:#fffdf8;
+  border-color:#ddd6c8;
+  color:#24211c;
+  box-shadow:0 10px 28px #57472a0a;
+}
+html[data-theme="light"] .quick-action:hover{border-color:#cdb77d;background:#fffaf1;box-shadow:0 14px 34px #57472a12}
+html[data-theme="light"] .quick-action b{color:#24211c}
+html[data-theme="light"] .quick-action small{color:#777168}
+html[data-theme="light"] .quick-action>svg{color:#a09a90}
+html[data-theme="light"] .qa-icon.green{background:#eee5d3;color:#9a722f}
+html[data-theme="light"] .qa-icon.blue{background:#e8edf3;color:#55789d}
+html[data-theme="light"] .qa-icon.amber{background:#f3ead8;color:#9b702c}
+
+html[data-theme="light"] .dashboard-grid .panel,
+html[data-theme="light"] .activity-panel{
+  background:#fffdf8;
+  border-color:#ddd6c8;
+  box-shadow:0 14px 40px #57472a0b;
+}
+html[data-theme="light"] .panel-head h2,
+html[data-theme="light"] .account-panel h2,
+html[data-theme="light"] .next-panel h2{color:#1d1b17}
+html[data-theme="light"] .text-action{color:#8e692d}
+html[data-theme="light"] .text-action:hover{color:#6f5122}
+html[data-theme="light"] .vault-cards{border-color:#e1dbd0}
+html[data-theme="light"] .vault-card{
+  background:#fbfaf6;
+  border-color:#e0d9cd;
+  color:#28251f;
+  box-shadow:0 8px 24px #57472a08;
+}
+html[data-theme="light"] .vault-card-top,
+html[data-theme="light"] .vault-card-meta{color:#777168}
+html[data-theme="light"] .status-badge{color:#8e692d}
+html[data-theme="light"] .vault-card-amount{color:#1d1b17}
+html[data-theme="light"] .vault-progress{background:#e7e1d6}
+html[data-theme="light"] .vault-card-meta b{color:#4f4a42}
+html[data-theme="light"] .premium-empty h3{color:#1d1b17}
+html[data-theme="light"] .premium-empty p{color:#706a61}
+html[data-theme="light"] .premium-empty .empty-icon{background:#eee5d3;color:#9a722f}
+
+html[data-theme="light"] .health-icon{color:#9a722f}
+html[data-theme="light"] .health-row{border-bottom-color:#e5dfd5;color:#6f6a61}
+html[data-theme="light"] .health-row b{color:#8e692d}
+html[data-theme="light"] .health-row .pending{color:#a06b25}
+html[data-theme="light"] .notice{
+  background:#faf4e7;
+  border-color:#dfc98f;
+  color:#80652f;
+}
+html[data-theme="light"] .next-panel>svg{color:#9a722f}
+html[data-theme="light"] .next-panel p{color:#716b62}
+html[data-theme="light"] .next-panel p b{color:#403b34}
+html[data-theme="light"] .milestone-value{color:#1d1b17}
+
+html[data-theme="light"] .activity-list{border-color:#e2ddd4}
+html[data-theme="light"] .activity-row{border-bottom-color:#e5dfd5}
+html[data-theme="light"] .activity-info b{color:#29261f}
+html[data-theme="light"] .activity-info small{color:#817b72}
+html[data-theme="light"] .activity-row>strong{color:#39352e}
+html[data-theme="light"] .activity-icon.positive{background:#eee5d3;color:#9a722f}
+html[data-theme="light"] .activity-icon.neutral{background:#eeece7;color:#777168}
+html[data-theme="light"] .amount-positive{color:#8e692d}
+html[data-theme="light"] .activity-empty{color:#777168}
+html[data-theme="light"] .dashboard-footnote{
+  color:#817b72;
+  border-top:1px solid #e0d9ce;
+}
+html[data-theme="light"] .dashboard-footnote span{color:#817b72}
+
+/* Dashboard navigation + mobile navigation must switch too. */
+html[data-theme="light"] .dashboard-sidebar{background:#faf9f6}
+html[data-theme="light"] .dashboard-sidebar .side-section-label{color:#8b7957}
+html[data-theme="light"] .mobile-nav{
+  background:#fffdf8f5;
+  border-color:#d8d1c5;
+  box-shadow:0 14px 40px #51432b20;
+}
+html[data-theme="light"] .mobile-nav a{color:#777168}
+html[data-theme="light"] .mobile-nav a.active{color:#8e692d;background:#eee8dc}
+html[data-theme="light"] .mobile-nav a:focus-visible{outline-color:#b88b3e}
+
+/* Typography pass: remove the last dark-dashboard text remnants. */
+html[data-theme="light"] .dashboard-content,
+html[data-theme="light"] .dashboard-content span,
+html[data-theme="light"] .dashboard-content b,
+html[data-theme="light"] .dashboard-content strong{color:inherit}
+html[data-theme="light"] .dashboard-content .muted{color:#817b72}
+html[data-theme="light"] .dashboard-content .copy{color:#706a61}
+html[data-theme="light"] .dashboard-content .eyebrow{color:#8e692d}
+html[data-theme="light"] .dashboard-content a{color:inherit}
+html[data-theme="light"] .dashboard-content .text-action,
+html[data-theme="light"] .dashboard-content .wealth-side>a{color:#8e692d}
+
+/* Keep the light theme warm and readable in the final viewport. */
+html[data-theme="light"] .dashboard-main{background:radial-gradient(circle at 72% -8%,#eadfca 0,transparent 30%),#f4f1ea}
