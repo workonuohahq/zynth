@@ -7,7 +7,7 @@ export async function POST(request: Request) {
     const client=await createSupabaseServerClient(); const {data:{user}}=await client.auth.getUser();
     if(!user)return NextResponse.json({error:"Authentication required."},{status:401});
     const {data,error}=await client.rpc("create_vault",{p_user_id:user.id,p_amount:amount});
-    if(error){const status=/INSUFFICIENT|BELOW_MINIMUM|INVALID_AMOUNT|USER_NOT_FOUND|AUTHORIZATION/.test(error.message)?400:503;return NextResponse.json({error:"Unable to create vault.",code:error.message},{status});}
+    if(error){const status=/INSUFFICIENT|BELOW_MINIMUM|INVALID_AMOUNT|USER_NOT_FOUND|AUTHORIZATION|ACCOUNT_RESTRICTED/.test(error.message)?400:503;return NextResponse.json({error:error.message==="ACCOUNT_RESTRICTED"?"This account is restricted from opening new vaults. Contact support if you believe this is an error.":"Unable to create vault.",code:error.message},{status});}
     return NextResponse.json({ok:true,vault:data});
   }catch(error){console.error(error);return NextResponse.json({error:"Unable to create vault."},{status:500});}
 }
