@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -16,8 +17,15 @@ export async function GET(request: Request) {
       headers: { accept: "application/json", "auth-token": token }, cache: "no-store"
     });
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) return NextResponse.json({ error: String(data?.message || data?.error || "MetaApi account read failed").slice(0,500) }, { status: 502 });
-    return NextResponse.json({ snapshot: normalize(data) });
+    if (!res.ok) return NextResponse.json({ error: String(data?.message || data?.error || "MetaApi account read failed").slice(0,500) }, { status: res.status === 401 ? 401 : 502 });
+    const snapshot = normalize(data);
+    const supabase = createSupabaseAdminClient();
+    const { data: connection } = await supabase.from("btest_connections").select("id").eq("metaapi_account_id", accountId).maybeSingle();
+    if (connection) {
+      await supabase.from("btest_connections").update({ status: "connected", last_seen_at: new Date().toISOString() }).eq("id", connection.id);
+      await supabase.from("btest_snapshots").insert({ connection_id: connection.id, balance: snapshot.balance, equity: snapshot.equity, credit: snapshot.credit, margin: snapshot.margin, free_margin: snapshot.freeMargin, currency: snapshot.currency, trade_mode: snapshot.tradeMode });
+    }
+    return NextResponse.json({ snapshot });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message.slice(0,500) : "MetaApi refresh failed" }, { status: 502 });
   }
