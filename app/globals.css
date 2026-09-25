@@ -949,3 +949,313 @@ html[data-theme="light"] .dashboard-content .wealth-side>a{color:#8e692d}
 
 /* Keep the light theme warm and readable in the final viewport. */
 html[data-theme="light"] .dashboard-main{background:radial-gradient(circle at 72% -8%,#eadfca 0,transparent 30%),#f4f1ea}
+
+
+/* FINAL GOLD CONTROL LAYER — navigation, action buttons and icons
+   Eliminate legacy blue/green visual islands and keep every interactive surface
+   on the same obsidian/champagne system in both themes. */
+:root{
+  --gold:#d6b36a;
+  --gold-bright:#ead5a0;
+  --gold-deep:#a47b35;
+  --gold-ink:#171108;
+  --gold-surface:#201a10;
+  --gold-line:#463a25;
+}
+html[data-theme="light"]{
+  --gold:#b88b3e;
+  --gold-bright:#8e692d;
+  --gold-deep:#73531f;
+  --gold-ink:#fffaf0;
+  --gold-surface:#f3ead8;
+  --gold-line:#d7c59e;
+}
+
+/* User navigation: Vaults / Activity / Goals / Account / Support */
+.nav-item,
+.mobile-nav a{
+  color:#8d877d;
+  border-color:transparent;
+}
+.nav-item svg,
+.mobile-nav a svg{color:inherit;stroke-width:1.9}
+.nav-item:hover,
+.nav-item.active{
+  background:#17140f;
+  color:var(--gold-bright);
+  border-color:#3b3121;
+}
+.nav-item.active{
+  box-shadow:inset 2px 0 0 var(--gold),0 7px 20px #0002;
+}
+.mobile-nav{
+  border-color:#3b3121;
+  background:#0f0e0cf2;
+}
+.mobile-nav a.active{
+  color:var(--gold-bright);
+  background:#211b11;
+}
+.mobile-nav a:hover{color:var(--gold-bright)}
+
+/* Dashboard action tiles and links */
+.quick-action,
+.quick-action:hover{
+  color:#f2eee7;
+  background:#0f0f0e;
+  border-color:#30291d;
+}
+.quick-action:hover{
+  border-color:#55462b;
+  background:#17140f;
+  box-shadow:0 12px 30px #0003;
+}
+.quick-action b{color:#f3eee5}
+.quick-action small{color:#81796d}
+.quick-action>svg{color:#a69a88}
+.qa-icon,
+.qa-icon.green,
+.qa-icon.blue,
+.qa-icon.amber{
+  background:#211a10;
+  color:var(--gold-bright);
+  border:1px solid #453721;
+}
+.qa-icon.blue{color:var(--gold-bright)}
+.qa-icon.amber{color:var(--gold-bright)}
+.text-action,
+.wealth-side>a{color:var(--gold-bright)}
+.text-action:hover,
+.wealth-side>a:hover{color:#f0dcae}
+
+/* Main dashboard buttons */
+.fund-btn,.primary,.landing-cta{
+  background:linear-gradient(135deg,var(--gold-bright),var(--gold));
+  color:var(--gold-ink);
+  border:1px solid #e2c784;
+}
+.secondary-dark{
+  background:#17140f!important;
+  color:var(--gold-bright)!important;
+  border:1px solid #4a3d28!important;
+}
+.icon-button{
+  background:#10100f;
+  border-color:#30291f;
+  color:#b7aea1;
+}
+.icon-button:hover{
+  background:#1a1711;
+  border-color:#5a492c;
+  color:var(--gold-bright);
+}
+
+/* Vault cards, activity icons and account-health icons */
+.vault-card{
+  background:#100f0d;
+  border-color:#322a1d;
+}
+.vault-card:hover{border-color:#55452a}
+.vault-card .status-badge,
+.vault-card .status-badge i,
+.vault-card-meta b{color:var(--gold-bright)}
+.vault-progress{background:#272116}
+.vault-progress span{background:linear-gradient(90deg,var(--gold-deep),var(--gold-bright))}
+.activity-icon.positive,
+.activity-icon.neutral,
+.empty-icon,
+.stat-icon,
+.health-icon,
+.next-panel>svg{
+  color:var(--gold-bright);
+}
+.activity-icon.positive{background:#211a10;border:1px solid #453721}
+.activity-icon.neutral{background:#181613;border:1px solid #332d24}
+.account-panel .ok,
+.health-row .ok,
+.amount-positive{color:var(--gold-bright)}
+.notice{border-color:#55452a;background:#211a10;color:#c8aa70}
+
+/* Admin command center: every icon/action uses the same gold language */
+.admin-list-item{
+  color:#a29786;
+}
+.admin-list-item:hover{
+  background:#18150f;
+  border-color:#403522;
+  color:#f1e8d5;
+}
+.admin-list-item.active{
+  color:#fff8e9;
+  background:#211a10;
+  border-color:#4d3e27;
+  box-shadow:inset 2px 0 0 var(--gold),0 7px 22px #0003;
+}
+.admin-list-icon,
+.admin-list-item.active .admin-list-icon{color:var(--gold-bright)}
+.admin-list-item em{
+  background:#241d12;
+  border-color:#57472b;
+  color:#e5cf9d;
+}
+.admin-kpi-icon{
+  background:#211a10;
+  border-color:#493a25;
+  color:var(--gold-bright);
+}
+.admin-kpi em{color:#9e8a65}
+.admin-count{
+  border-color:#403522;
+  background:#17140f;
+  color:#a99c88;
+}
+.admin-session{color:#a9956e}
+.admin-session i{background:var(--gold);box-shadow:0 0 10px #d6b36a66}
+.admin-refresh,.ghost{
+  background:#11110f;
+  border-color:#332c21;
+  color:#a99f91;
+}
+.admin-refresh:hover,.ghost:hover{
+  background:#1b1710;
+  border-color:#5a492c;
+  color:#f0dcae;
+}
+.admin-priority{
+  border-color:#55452a;
+  background:linear-gradient(100deg,#1b170f,#12100c);
+}
+.admin-priority-dot{background:var(--gold);box-shadow:0 0 12px #d6b36a66}
+.approve,.reject,.details{
+  transition:transform .2s ease,border-color .2s ease,background .2s ease,color .2s ease;
+}
+.approve{
+  border-color:#57472b;
+  background:#211a10;
+  color:var(--gold-bright);
+}
+.approve:hover{
+  border-color:#8a6b36;
+  background:#2a2113;
+}
+.reject{
+  border-color:#58402c;
+  background:#211811;
+  color:#d6b06d;
+}
+.reject:hover{
+  border-color:#80603a;
+  background:#2a1e13;
+}
+.details{
+  border-color:#493a27;
+  background:#17140f;
+  color:#d7c59e;
+}
+.details:hover{
+  border-color:#806538;
+  background:#211a10;
+  color:#f0dcae;
+}
+.row-actions button svg,.row-actions a svg{color:currentColor}
+.status-text.paid,.status-text.completed,.status-text.under_review,.status-text.processing{
+  color:var(--gold-bright)!important;
+}
+
+/* Light mode: convert the same controls without changing structure */
+html[data-theme="light"] .nav-item,
+html[data-theme="light"] .mobile-nav a{color:#756f65}
+html[data-theme="light"] .nav-item:hover,
+html[data-theme="light"] .nav-item.active{
+  background:#eee6d7;
+  border-color:#d8c8a6;
+  color:#73531f;
+}
+html[data-theme="light"] .mobile-nav{
+  background:#fffdf8f5;
+  border-color:#d8c8a6;
+}
+html[data-theme="light"] .mobile-nav a.active{
+  background:#f0e7d5;
+  color:#73531f;
+}
+html[data-theme="light"] .quick-action{
+  background:#fffdf8;
+  border-color:#ddd4c6;
+  color:#27231d;
+  box-shadow:0 8px 24px #57472a08;
+}
+html[data-theme="light"] .quick-action:hover{
+  background:#fff9ef;
+  border-color:#cbb681;
+}
+html[data-theme="light"] .quick-action b{color:#28241e}
+html[data-theme="light"] .quick-action small{color:#7b746a}
+html[data-theme="light"] .quick-action>svg{color:#9a8e7c}
+html[data-theme="light"] .qa-icon,
+html[data-theme="light"] .qa-icon.green,
+html[data-theme="light"] .qa-icon.blue,
+html[data-theme="light"] .qa-icon.amber{
+  background:#f2e9d8;
+  border-color:#dccaa5;
+  color:#8e692d;
+}
+html[data-theme="light"] .vault-card{
+  background:#fffdf8;
+  border-color:#ded5c8;
+}
+html[data-theme="light"] .vault-card:hover{border-color:#c9ad72}
+html[data-theme="light"] .activity-icon.positive{background:#f2e9d8;border-color:#dccaa5;color:#8e692d}
+html[data-theme="light"] .activity-icon.neutral{background:#f0eee9;border-color:#ddd8ce;color:#777168}
+html[data-theme="light"] .admin-list-item{color:#756f65}
+html[data-theme="light"] .admin-list-item:hover,
+html[data-theme="light"] .admin-list-item.active{
+  background:#eee6d7;
+  border-color:#d8c8a6;
+  color:#5f451d;
+}
+html[data-theme="light"] .admin-list-icon,
+html[data-theme="light"] .admin-list-item.active .admin-list-icon{color:#8e692d}
+html[data-theme="light"] .admin-list-item em{background:#f4ecdd;border-color:#d5c399;color:#73531f}
+html[data-theme="light"] .admin-kpi-icon{background:#f2e9d8;border-color:#dccaa5;color:#8e692d}
+html[data-theme="light"] .admin-count{background:#faf6ee;border-color:#ddd1bd;color:#766e62}
+html[data-theme="light"] .admin-refresh,
+html[data-theme="light"] .ghost{
+  background:#fffdf8;
+  border-color:#d9d1c4;
+  color:#625d54;
+}
+html[data-theme="light"] .admin-refresh:hover,
+html[data-theme="light"] .ghost:hover{
+  background:#f7f0e3;
+  border-color:#c8b98f;
+  color:#5f451d;
+}
+html[data-theme="light"] .approve{
+  background:#f4ecdd;
+  border-color:#d5c399;
+  color:#73531f;
+}
+html[data-theme="light"] .approve:hover{background:#eee3ce;border-color:#bfa66f}
+html[data-theme="light"] .reject{
+  background:#f6ede1;
+  border-color:#dbc7aa;
+  color:#76582e;
+}
+html[data-theme="light"] .reject:hover{background:#eee2d1;border-color:#bfa77a}
+html[data-theme="light"] .details{
+  background:#f6f1e8;
+  border-color:#d8cdbb;
+  color:#73531f;
+}
+html[data-theme="light"] .details:hover{background:#eee4d2;border-color:#bfa66f}
+html[data-theme="light"] .status-text.paid,
+html[data-theme="light"] .status-text.completed,
+html[data-theme="light"] .status-text.under_review,
+html[data-theme="light"] .status-text.processing{color:#73531f!important}
+
+/* Consistent focus states */
+:where(button,a,input,select,textarea):focus-visible{
+  outline:2px solid var(--gold);
+  outline-offset:2px;
+}
