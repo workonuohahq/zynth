@@ -23,12 +23,7 @@ export async function GET() {
           .select("main_wallet_balance,locked_vault_balance")
           .eq("id", user.id)
           .single(),
-        s
-          .from("system_settings")
-          .select(
-            "exit_fee_pct,global_min_withdrawal,withdrawals_enabled,withdrawal_processing_notice"
-          )
-          .single(),
+        s.rpc("get_withdrawal_policy"),
       ]);
 
     if (userError || settingsError || !u || !settings) {
