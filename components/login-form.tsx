@@ -27,7 +27,7 @@ export default function LoginForm({ initialMode = "login" }: { initialMode?: "lo
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
-          options: {\n            data: { full_name: name },\n            emailRedirectTo: `${window.location.origin}/auth/confirmed`\n          }
+          options: { data: { full_name: name }, emailRedirectTo: `${window.location.origin}/auth/confirmed` }
         });
         if (error) setMessage(error.message);
         else if (data.session) router.push("/dashboard");
