@@ -28,6 +28,8 @@ export default async function DashboardPage() {
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
 
+  await supabase.rpc("mature_my_due_vaults");
+
   const [{ data: profile }, { data: vaults }, { data: transactions }, { data: settings }] = await Promise.all([
     supabase.from("users").select("full_name,role,main_wallet_balance,locked_vault_balance,kyc_verified").eq("id", user!.id).single(),
     supabase.from("vaults").select("id,principal_amount,expected_yield,start_date,maturity_date,status").eq("user_id", user!.id).order("created_at", { ascending: false }).limit(6),
