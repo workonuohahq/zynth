@@ -49,6 +49,9 @@ create table if not exists public.withdrawal_requests (
 );
 create index if not exists withdrawal_requests_user_created_idx on public.withdrawal_requests(user_id,created_at desc);
 create index if not exists withdrawal_requests_queue_idx on public.withdrawal_requests(status,created_at asc);
+create index if not exists withdrawal_requests_beneficiary_idx on public.withdrawal_requests(beneficiary_id);
+create index if not exists withdrawal_requests_reviewed_by_idx on public.withdrawal_requests(reviewed_by);
+create index if not exists withdrawal_requests_processed_by_idx on public.withdrawal_requests(processed_by);
 create unique index if not exists withdrawal_requests_one_active_per_user on public.withdrawal_requests(user_id) where status in ('pending','under_review','processing');
 alter table public.withdrawal_requests enable row level security;
 revoke all on public.withdrawal_requests from anon,authenticated;
