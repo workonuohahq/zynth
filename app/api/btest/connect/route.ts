@@ -1,71 +1,36 @@
 import { NextResponse } from "next/server";
+import crypto from "node:crypto";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
-
-const PROVISIONING = "https://mt-provisioning-api-v1.agiliumtrade.agiliumtrade.ai";
-const CLIENT = "https://mt-client-api-v1.new-york.agiliumtrade.ai";
+const MTAPI_BASE = (process.env.MTAPI_BASE_URL || "https://mt5.mtapi.io").replace(/\/$/, "");
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
-  const token = String(body.metaApiToken || process.env.METAAPI_TOKEN || "").trim();
-  if (!token) return NextResponse.json({ error: "MetaApi token is required. Paste it into the BTest token field." }, { status: 400 });
-  const login = String(body.login || "").trim();
-  const password = String(body.password || "");
-  const server = String(body.server || "").trim();
+  const login = String(body.login || "").trim(), password = String(body.password || ""), server = String(body.server || "").trim();
   if (!/^\d+$/.test(login) || !password || !server) return NextResponse.json({ error: "MT5 login, server and password are required." }, { status: 400 });
-
+  const sessionId = crypto.randomUUID(), url = new URL(MTAPI_BASE + "/ConnectEx");
+  url.searchParams.set("user", login); url.searchParams.set("password", password); url.searchParams.set("server", server); url.searchParams.set("id", sessionId);
+  url.searchParams.set("connectTimeoutSeconds", "60"); url.searchParams.set("connectTimeoutClusterMemberSeconds", "20");
   try {
-    const accountRes = await fetch(PROVISIONING + "/users/current/accounts", {
-      method: "POST",
-      headers: { "content-type": "application/json", "accept": "application/json", "auth-token": token, "transaction-id": crypto.randomUUID().replaceAll("-","") },
-      body: JSON.stringify({ name: "ZYNTH BTest", login, password, server, platform: "mt5", magic: 0, type: "cloud-g2" }),
-      cache: "no-store"
-    });
-    const accountData = await accountRes.json().catch(() => ({}));
-    if (!accountRes.ok) return NextResponse.json({ error: metaError(accountData, accountRes.status) }, { status: 502 });
-    const accountId = accountData.id;
-    if (!accountId) return NextResponse.json({ error: "MetaApi did not return an account id." }, { status: 502 });
-
-    const deployRes = await fetch(PROVISIONING + "/users/current/accounts/" + encodeURIComponent(accountId) + "/deploy", {
-      method: "POST", headers: { accept: "application/json", "auth-token": token }, cache: "no-store"
-    });
-    if (!deployRes.ok && deployRes.status !== 204) {
-      const deployData = await deployRes.json().catch(() => ({}));
-      return NextResponse.json({ error: metaError(deployData, deployRes.status) }, { status: 502 });
-    }
-
-    const snapshot = await waitForSnapshot(token, accountId);
+    const res = await fetch(url, { headers: { accept: "text/plain" }, cache: "no-store" }), text = await res.text();
+    if (!res.ok || !text || /error|exception|failed/i.test(text.slice(0,300))) return NextResponse.json({ error: safe(text,res.status,"MT5 connection failed") }, { status: 502 });
+    const id = text.trim().replace(/^"|"$/g, ""), snapshot = await account(id), fingerprint = crypto.createHash("sha256").update(id).digest("hex");
     const supabase = createSupabaseAdminClient();
-    const { data: connection, error: connectionError } = await supabase.from("btest_connections").upsert({ metaapi_account_id: accountId, mt5_login: snapshot.login || login, mt5_server: snapshot.server || server, platform: snapshot.platform || "mt5", status: "connected", last_seen_at: new Date().toISOString() }, { onConflict: "metaapi_account_id" }).select("id").single();
-    if (connectionError) throw connectionError;
-    const { error: snapshotError } = await supabase.from("btest_snapshots").insert({ connection_id: connection.id, balance: snapshot.balance, equity: snapshot.equity, credit: snapshot.credit, margin: snapshot.margin, free_margin: snapshot.freeMargin, currency: snapshot.currency, trade_mode: snapshot.tradeMode });
-    if (snapshotError) throw snapshotError;
-    const response = NextResponse.json({ accountId, snapshot });
-    response.cookies.set("zynth_btest_metaapi", token, { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "strict", path: "/api/btest", maxAge: 60 * 60 * 8 });
-    return response;
-  } catch (error) {
-    console.error("ZYNTH BTest MetaApi error", error);
-    return NextResponse.json({ error: safeError(error instanceof Error ? error.message : "MetaApi connection failed") }, { status: 502 });
-  }
-}
-
-async function waitForSnapshot(token: string, accountId: string) {
-  let last = "";
-  for (let i = 0; i < 8; i++) {
-    const res = await fetch(CLIENT + "/users/current/accounts/" + encodeURIComponent(accountId) + "/account-information?refreshTerminalState=true", {
-      headers: { accept: "application/json", "auth-token": token }, cache: "no-store"
+    const { data: connection, error } = await supabase.from("btest_mt5_connections").upsert({
+      session_fingerprint:fingerprint, mt5_login:login, mt5_server:server, provider:"mtapi", status:"connected", last_seen_at:new Date().toISOString()
+    }, { onConflict:"session_fingerprint" }).select("id").single();
+    if (error) throw error;
+    await supabase.from("btest_mt5_snapshots").insert({
+      connection_id:connection.id, balance:snapshot.balance, equity:snapshot.equity, margin:snapshot.margin, free_margin:snapshot.freeMargin,
+      margin_level:snapshot.marginLevel, profit:snapshot.profit, credit:snapshot.credit, leverage:snapshot.leverage, currency:snapshot.currency, server:snapshot.server || server
     });
-    if (res.ok) return normalize(await res.json());
-    last = await res.text();
-    await new Promise(r => setTimeout(r, 2500));
-  }
-  throw new Error("MetaApi account did not become readable in time: " + last.slice(0, 300));
+    const out=NextResponse.json({connectionId:connection.id,snapshot:{...snapshot,login,server:snapshot.server||server,timestamp:new Date().toISOString()}});
+    out.cookies.set("zynth_btest_mtapi",id,{httpOnly:true,secure:process.env.NODE_ENV==="production",sameSite:"strict",path:"/api/btest",maxAge:28800});
+    out.cookies.set("zynth_btest_connection",connection.id,{httpOnly:true,secure:process.env.NODE_ENV==="production",sameSite:"strict",path:"/api/btest",maxAge:28800});
+    return out;
+  } catch(e) { return NextResponse.json({error:safe(e instanceof Error?e.message:"MT5 connection failed")},{status:502}); }
 }
-
-function normalize(info: any) {
-  return { login: String(info.login ?? ""), name: info.name ?? "", server: info.server ?? "", platform: info.platform ?? "mt5", broker: info.broker ?? "", balance: Number(info.balance ?? 0), equity: Number(info.equity ?? 0), credit: Number(info.credit ?? 0), margin: Number(info.margin ?? 0), freeMargin: Number(info.freeMargin ?? 0), currency: info.currency ?? "", tradeMode: info.type ?? "", timestamp: new Date().toISOString() };
-}
-function metaError(data: any, status: number) { return String(data?.message || data?.details || data?.error || ("MetaApi request failed (" + status + ")")).slice(0, 500).replace(/password[^,;]*/gi, "password [redacted]"); }
-function safeError(message: string) { return message.slice(0, 500).replace(/password[^,;]*/gi, "password [redacted]"); }
+async function account(id:string){ const u=new URL(MTAPI_BASE+"/AccountSummary"); u.searchParams.set("id",id); const r=await fetch(u,{headers:{accept:"application/json"},cache:"no-store"}); const d=await r.json().catch(()=>({})); if(!r.ok||d?.error||d?.exception) throw new Error(safe(JSON.stringify(d),r.status,"MT5 account data could not be read")); return norm(d); }
+function norm(i:any){return {balance:Number(i.balance??0),equity:Number(i.equity??0),margin:Number(i.margin??0),freeMargin:Number(i.freeMargin??0),marginLevel:i.marginLevel==null?null:Number(i.marginLevel),profit:Number(i.profit??0),credit:Number(i.credit??0),leverage:i.leverage==null?null:Number(i.leverage),currency:String(i.currency??""),server:String(i.server??"")};}
+function safe(raw:string,status:number,fallback:string){return raw.replace(/password[^,;]*/gi,"password [redacted]").slice(0,500)||\`\${fallback} (\${status})\`;}
