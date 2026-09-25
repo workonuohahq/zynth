@@ -48,7 +48,7 @@ export default function TransactionsPage(){
          {pending&&<div className="ledger-actions">
            {isDeposit&&depositId&&<Link className="ledger-action primary" href={`/dashboard/deposit/${depositId}`}>Payment details <ChevronRight size={12}/></Link>}
            {isDeposit&&depositId&&<button className="ledger-action danger" onClick={()=>cancelDeposit(depositId)} disabled={busy===r.id}>{busy===r.id?"Cancelling…":<><X size={13}/> Cancel</>}</button>}
-           {isWithdrawal&&withdrawalRequestId&&<Link className="ledger-action secondary" href={`/dashboard/withdrawal/${withdrawalRequestId}`}>Track <ChevronRight size={12}/></Link>}{isWithdrawal&&pending&&<button className="ledger-action danger" onClick={()=>cancelWithdrawal(String(r.metadata.withdrawal_request_id))} disabled={busy===String(r.metadata.withdrawal_request_id)}>{busy===String(r.metadata.withdrawal_request_id)?"Cancelling…":<><X size={13}/> Cancel request</>}</button>}
+           {isWithdrawal&&withdrawalRequestId&&<Link className="ledger-action secondary" href={`/dashboard/withdrawal/${withdrawalRequestId}`}>Track <ChevronRight size={12}/></Link>}{isWithdrawal&&pending&&withdrawalRequestId&&<button className="ledger-action danger" onClick={()=>cancelWithdrawal(withdrawalRequestId)} disabled={busy===withdrawalRequestId}>{busy===withdrawalRequestId?"Cancelling…":<><X size={13}/> Cancel request</>}</button>}
          </div>}
        </div>
        <div className="ledger-amount"><b className={positive?"amount-positive":""}>{positive?"+":"−"}{money(r.amount)}</b><small className={r.status==="completed"?"status-complete":r.status==="pending"?"status-pending":"status-failed"}>{r.status}</small></div>
