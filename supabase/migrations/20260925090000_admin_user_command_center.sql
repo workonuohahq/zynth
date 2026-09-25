@@ -140,3 +140,9 @@ grant execute on function public.admin_add_user_note(uuid,uuid,text) to authenti
 
 -- Financial operations respect admin account restrictions.
 -- The production definitions include the same ACCOUNT_RESTRICTED guard before any balance mutation.
+
+create index if not exists admin_user_notes_admin_created_idx on public.admin_user_notes(admin_user_id,created_at desc);
+drop policy if exists "admins_manage_admin_user_notes" on public.admin_user_notes;
+create policy "admins_manage_admin_user_notes" on public.admin_user_notes for all to authenticated
+using (exists(select 1 from public.users where id=(select auth.uid()) and role='admin'))
+with check (exists(select 1 from public.users where id=(select auth.uid()) and role='admin'));
