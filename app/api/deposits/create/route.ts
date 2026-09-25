@@ -26,7 +26,7 @@ export async function POST(request: Request) {
     });
 
     if (error) {
-      const status = /BELOW_MINIMUM|INVALID_AMOUNT|INVALID_METHOD|DEPOSITS_DISABLED|AUTHORIZATION/.test(error.message) ? 400 : 503;
+      const status = /BELOW_MINIMUM|INVALID_AMOUNT|INVALID_METHOD|DEPOSITS_DISABLED|AUTHORIZATION|PENDING_DEPOSIT_EXISTS|PENDING_WITHDRAWAL_EXISTS/.test(error.message) ? 400 : 503;
       return NextResponse.json({ error: error.message === "DEPOSITS_DISABLED" ? "Deposits are temporarily paused." : "Unable to start the payment request.", code: error.message }, { status });
     }
 
