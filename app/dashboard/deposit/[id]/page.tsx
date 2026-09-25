@@ -85,7 +85,7 @@ export default function DepositPaymentPage({params}:{params:{id:string}}){
       <div className="payment-top"><span className="payment-brand">ZYNTH</span><Link href="/dashboard/vaults" className="payment-back"><ArrowLeft size={14}/> Back to vault</Link></div>
       <div className="payment-card">
         <section className="payment-hero">
-          <div className="payment-eyebrow">SECURE MANUAL PAYMENT</div>
+          <div className="payment-eyebrow">SECURE PAYMENT</div>
           <h1>{settings.deposit_page_title}</h1>
           <p>{settings.deposit_page_subtitle}</p>
           <div className="payment-amount"><span>AMOUNT TO PAY</span><strong>{money(request.amount)}</strong></div>
@@ -94,7 +94,7 @@ export default function DepositPaymentPage({params}:{params:{id:string}}){
           <div className="payment-notice"><ShieldCheck size={18}/><span>{settings.deposit_page_notice}</span></div>
           <div className="payment-section-title">PAYMENT OPTIONS</div>
           {methods.length?<div className="method-grid">{methods.map(m=><div className="method" key={m.key}>
-            <div className="method-head"><span className="method-brand">{m.title}</span><span className="method-tag">MANUAL</span></div>
+            <div className="method-head"><span className="method-brand">{m.title}</span><span className="method-tag">AVAILABLE</span></div>
             {m.accountName&&<div className="detail"><span>Account name</span><b>{m.accountName}</b></div>}
             {m.accountNumber&&<div className="detail"><span>Account / wallet</span><b>{m.accountNumber}<button className="copy-btn" onClick={()=>copy(m.accountNumber,"account")}><Copy size={11}/>{copied==="account"?"Copied":"Copy"}</button></b></div>}
             {m.bankName&&<div className="detail"><span>Bank / channel</span><b>{m.bankName}</b></div>}
@@ -104,12 +104,12 @@ export default function DepositPaymentPage({params}:{params:{id:string}}){
           <p className="copy" style={{color:"#64748b",fontSize:13,lineHeight:1.6,whiteSpace:"pre-line"}}>{settings.deposit_instructions}</p>
           <div className="payment-steps">
             <div className="step"><span className="step-num">01</span><b>Pay the exact amount</b><span>Use one of the configured payment channels above.</span></div>
-            <div className="step"><span className="step-num">02</span><b>Keep your proof</b><span>Keep the transfer receipt or payment reference until confirmation.</span></div>
-            <div className="step"><span className="step-num">03</span><b>Wait for review</b><span>ZYNTH credits your wallet only after manual confirmation.</span></div>
+            <div className="step"><span className="step-num">02</span><b>Keep your proof</b><span>Keep the transfer receipt or payment reference for your records.</span></div>
+            <div className="step"><span className="step-num">03</span><b>Complete your payment</b><span>Your wallet will be updated once your payment has been verified.</span></div>
           </div>
           <div className={`status-box status-${request.status}`}>
             {confirmed?<CheckCircle2/>:rejected?<ExternalLink/>:<Clock3/>}
-            <div><b>{confirmed?"Payment confirmed":rejected?"Payment request rejected":"Awaiting manual confirmation"}</b><span>Request {request.reference} · {new Date(request.created_at).toLocaleString("en-NG")}</span>{request.admin_note&&<span>{request.admin_note}</span>}</div>
+            <div><b>{confirmed?"Payment confirmed":rejected?"Payment request unavailable":"Payment received"}</b><span>Request {request.reference} · {new Date(request.created_at).toLocaleString("en-NG")}</span>{request.admin_note&&<span>{request.admin_note}</span>}</div>
           </div>
           <div className="payment-actions">
             <Link className="payment-action payment-primary" href="/dashboard/vaults">{confirmed?"Continue to vault":"Return to vaults"} <ArrowRight size={15}/></Link>
