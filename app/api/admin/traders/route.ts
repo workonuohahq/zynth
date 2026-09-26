@@ -9,7 +9,19 @@ export async function GET(req:Request){try{const {s,user}=await admin();if(!user
  }
  const {data,error}=await s.rpc("zynth_admin_trader_command_center",{p_admin_id:user.id});
  if(error)throw error;const payload=data||{};
- return NextResponse.json({applications:Array.isArray(payload.applications)?payload.applications:[],traders:Array.isArray(payload.traders)?payload.traders:[],users:Array.isArray(payload.users)?payload.users:[]});
+ const {data:pendingMt5,error:pendingMt5Error}=await s.from("zynth_trader_mt5_credentials").select("user_id,mt5_login,mt5_server,status,submitted_at,change_requested,change_requested_at").eq("status","pending").order("submitted_at",{ascending:true});
+ if(pendingMt5Error)throw pendingMt5Error;
+ const pendingIds=(pendingMt5||[]).map((x:any)=>x.user_id);
+ const traderRows=Array.isArray(payload.traders)?payload.traders:[];
+ const enrichedTraders=traderRows.map((t:any)=>({...t,mt5:t.mt5||null}));
+ return NextResponse.json({
+  applications:Array.isArray(payload.applications)?payload.applications:[],
+  traders:enrichedTraders,
+  users:Array.isArray(payload.users)?payload.users:[],
+  mt5_pending_count:pendingMt5?.length||0,
+  mt5_pending:pendingMt5||[],
+  mt5_pending_user_ids:pendingIds
+ });
  }catch(e:any){console.error(e);return NextResponse.json({error:"Unable to load trader operations."},{status:500});}}
 
 import {NextResponse} from "next/server";import {createSupabaseServerClient} from "@/lib/supabase/server";import {decryptMt5Secret} from "@/lib/mt5-credentials";
