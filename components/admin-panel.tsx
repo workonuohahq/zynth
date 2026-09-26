@@ -27,7 +27,7 @@ export default function AdminPanel({initialData,adminEmail}:{initialData:any;adm
   const supportUnread=(support.tickets||[]).reduce((sum:number,ticket:any)=>sum+Number(ticket.admin_unread_count||0),0);setReports(q.reports||[]);setHistory(q.history||[]);setStrategies(s.strategies||[]);setTraders(t.traders||[]);setNotificationTemplates(n.templates||[]);setData((x:any)=>({...x,support_unread_count:supportUnread,mt5_pending_count:Number(t.mt5_pending_count||0),pending_reports:(q.pending_reports??x.pending_reports),pending_report_queue:(q.pending_report_queue??x.pending_report_queue),strategies:(s.strategies?.length??x.strategies),traders:(t.traders?.length??x.traders)}));
  }
  async function refreshData(){setRefreshing(true);setNotice("");try{await load();setRefreshKey(x=>x+1);setNotice("Admin data refreshed.");window.setTimeout(()=>setNotice(""),3000)}catch(e){setNotice(e instanceof Error?e.message:"Could not refresh admin data.")}finally{setRefreshing(false)}}
- useEffect(()=>{load()},[]);
+ useEffect(()=>{load();const timer=window.setInterval(async()=>{try{const r=await fetch("/api/admin/support",{cache:"no-store"});if(!r.ok)return;const j=await r.json();const unread=(j.tickets||[]).reduce((sum:number,ticket:any)=>sum+Number(ticket.admin_unread_count||0),0);setData((x:any)=>({...x,support_unread_count:unread}));}catch{}} ,15000);return()=>window.clearInterval(timer)},[]);
  async function act(id:string,a:string){
   setBusy(id);setNotice("");
   let reason="";
