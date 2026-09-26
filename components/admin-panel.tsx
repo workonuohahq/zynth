@@ -24,7 +24,7 @@ export default function AdminPanel({initialData,adminEmail}:{initialData:any;adm
   ]);
   setReports(q.reports||[]);setHistory(q.history||[]);setStrategies(s.strategies||[]);setTraders(t.traders||[]);setNotificationTemplates(n.templates||[]);setData((x:any)=>({...x,pending_reports:(q.pending_reports??x.pending_reports),pending_report_queue:(q.pending_report_queue??x.pending_report_queue),strategies:(s.strategies?.length??x.strategies),traders:(t.traders?.length??x.traders)}));
  }
- async function refreshData(){setRefreshing(true);setNotice("");try{await load();setRefreshKey(x=>x+1);setNotice("Admin data refreshed.");}catch(e){setNotice(e instanceof Error?e.message:"Could not refresh admin data.")}finally{setRefreshing(false)}}
+ async function refreshData(){setRefreshing(true);setNotice("");try{await load();setRefreshKey(x=>x+1);setNotice("Admin data refreshed.");window.setTimeout(()=>setNotice(""),3000)}catch(e){setNotice(e instanceof Error?e.message:"Could not refresh admin data.")}finally{setRefreshing(false)}}
  useEffect(()=>{load()},[]);
  async function act(id:string,a:string){
   setBusy(id);setNotice("");
