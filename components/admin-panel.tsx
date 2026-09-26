@@ -17,13 +17,14 @@ const pct=(n:any)=>`${Number(n||0).toFixed(2)}%`;
 export default function AdminPanel({initialData,adminEmail}:{initialData:any;adminEmail:string}){
  const[data,setData]=useState(initialData||{}),[tab,setTab]=useState("overview"),[refreshing,setRefreshing]=useState(false),[refreshKey,setRefreshKey]=useState(0),[moneyOpen,setMoneyOpen]=useState(false),[reports,setReports]=useState<any[]>([]),[history,setHistory]=useState<any[]>([]),[strategies,setStrategies]=useState<any[]>([]),[traders,setTraders]=useState<any[]>([]),[editingStrategy,setEditingStrategy]=useState<any>(null),[notificationTemplates,setNotificationTemplates]=useState<any[]>([]),[busy,setBusy]=useState(""),[notice,setNotice]=useState(""),[preview,setPreview]=useState<any>(null),[previewBusy,setPreviewBusy]=useState("");
  async function load(){
-  const [q,s,t,n]=await Promise.all([
+  const [q,s,t,n,support]=await Promise.all([
    fetch("/api/admin/settlements").then(r=>r.json()),
    fetch("/api/admin/strategies").then(r=>r.json()),
    fetch("/api/admin/traders").then(r=>r.json()),
-   fetch("/api/admin/notification-templates").then(r=>r.json())
+   fetch("/api/admin/notification-templates").then(r=>r.json()),
+   fetch("/api/admin/support").then(r=>r.ok?r.json():{tickets:[]}).catch(()=>({tickets:[]}))
   ]);
-  setReports(q.reports||[]);setHistory(q.history||[]);setStrategies(s.strategies||[]);setTraders(t.traders||[]);setNotificationTemplates(n.templates||[]);setData((x:any)=>({...x,mt5_pending_count:Number(t.mt5_pending_count||0),pending_reports:(q.pending_reports??x.pending_reports),pending_report_queue:(q.pending_report_queue??x.pending_report_queue),strategies:(s.strategies?.length??x.strategies),traders:(t.traders?.length??x.traders)}));
+  const supportUnread=(support.tickets||[]).reduce((sum:number,ticket:any)=>sum+Number(ticket.admin_unread_count||0),0);setReports(q.reports||[]);setHistory(q.history||[]);setStrategies(s.strategies||[]);setTraders(t.traders||[]);setNotificationTemplates(n.templates||[]);setData((x:any)=>({...x,support_unread_count:supportUnread,mt5_pending_count:Number(t.mt5_pending_count||0),pending_reports:(q.pending_reports??x.pending_reports),pending_report_queue:(q.pending_report_queue??x.pending_report_queue),strategies:(s.strategies?.length??x.strategies),traders:(t.traders?.length??x.traders)}));
  }
  async function refreshData(){setRefreshing(true);setNotice("");try{await load();setRefreshKey(x=>x+1);setNotice("Admin data refreshed.");window.setTimeout(()=>setNotice(""),3000)}catch(e){setNotice(e instanceof Error?e.message:"Could not refresh admin data.")}finally{setRefreshing(false)}}
  useEffect(()=>{load()},[]);
@@ -57,7 +58,7 @@ export default function AdminPanel({initialData,adminEmail}:{initialData:any;adm
       {k:"investors",l:"Investors",i:Users,b:data.investors},
       {k:"traders",l:"Traders",i:ShieldCheck,b:data.mt5_pending_count||0},
       {k:"notifications",l:"Notifications",i:Bell,b:0},
-      {k:"support",l:"Customer Service",i:Headphones,b:0},
+      {k:"support",l:"Customer Service",i:Headphones,b:Number(data.support_unread_count||0)},
       {k:"referrals",l:"Referrals",i:Gift,b:0}
     ].map(({k,l,i:Icon,b})=><button key={k} className={tab===k?"admin-list-item active":"admin-list-item"} onClick={()=>setTab(k)}><span className="admin-list-icon"><Icon size={16}/></span><span className="admin-list-label">{l}</span>{b>0&&<em>{b}</em>}</button>)}
     <div className={"admin-money-nav "+(moneyOpen||["deposits","withdrawals","redemptions"].includes(tab)?"open":"")}>
