@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, CheckCircle2, Clock3, Copy, ExternalLink, LockKeyhole, ShieldCheck, WalletCards } from "lucide-react";
 
@@ -15,8 +14,8 @@ type DepositRequest = { id:string; amount:number; method:string; status:string; 
 const money=(n:number)=>`₦${Number(n||0).toLocaleString("en-NG",{minimumFractionDigits:2,maximumFractionDigits:2})}`;
 
 export default function DepositPaymentPage({params}:{params:{id:string}}){
-  const searchParams=useSearchParams();
-  const returnTo=searchParams.get("returnTo")||"/dashboard/investments";
+  const [returnTo,setReturnTo]=useState("/dashboard/investments");
+  useEffect(()=>{const raw=new URLSearchParams(window.location.search).get("returnTo")||"/dashboard/investments";setReturnTo(raw.startsWith("/dashboard/")?raw:"/dashboard/investments");},[]);
   const [request,setRequest]=useState<DepositRequest|null>(null);
   const [settings,setSettings]=useState<Settings|null>(null);
   const [loading,setLoading]=useState(true);
