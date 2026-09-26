@@ -1,16 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { CheckCircle2, ChevronRight, ExternalLink, Filter, KeyRound, Eye, EyeOff, ShieldAlert, ShieldCheck, UserPlus, Users, X, XCircle } from "lucide-react";
 
 type Trader = any;
 
 export default function AdminTraders({ onSaved, refreshKey }: { onSaved: () => void; refreshKey?: number }) {
-  const [data, setData] = useState<any>({ traders: [], applications: [], users: [], mt5_pending: [], mt5_pending_count: 0, reporting_settings:{trader_report_start_time:"06:00:00",trader_report_end_time:"23:00:00"} });
+  const [data, setData] = useState<any>({ traders: [], users: [], mt5_pending: [], mt5_pending_count: 0, reporting_settings:{trader_report_start_time:"06:00:00",trader_report_end_time:"23:00:00"} });
   const [busy, setBusy] = useState("");
   const [note, setNote] = useState("");
   const [query, setQuery] = useState("");
-  const [status, setStatus] = useState("all");
   const [selected, setSelected] = useState<any>(null);
   const [tab, setTab] = useState<"onboard" | "traders">("onboard");
   const [loadError, setLoadError] = useState("");
@@ -41,7 +40,7 @@ export default function AdminTraders({ onSaved, refreshKey }: { onSaved: () => v
       const j = await r.json();
       if (!r.ok) throw new Error(j.error || "Unable to load this user's profile.");
       const p = j.profile || {};
-      const traderProfile = j.trader || j.application || p;
+      const traderProfile = j.trader || p;
       const trader = {
         id: p.id || userId,
         email: p.email,
@@ -92,30 +91,18 @@ export default function AdminTraders({ onSaved, refreshKey }: { onSaved: () => v
     const j = await r.json();
     if (!r.ok) window.alert(j.error || "Operation failed");
     else window.alert(
-      body.action === "approve"
-        ? "Trader approved and Trader Desk unlocked."
-        : body.action === "promote"
-          ? "User promoted to trader."
-          : "Application updated."
+      body.action === "promote"
+        ? "User onboarded as trader."
+        : "Operation completed."
     );
     await load();
     onSaved();
     setBusy("");
   }
 
-  const apps = useMemo(() => {
-    const q = query.toLowerCase().trim();
-    return data.applications.filter((a: Application) => {
-      const hay = [a.display_name, a.email, a.country, a.trading_style, ...(a.markets || [])].join(" ").toLowerCase();
-      return (!q || hay.includes(q)) && (status === "all" || a.status === status);
-    });
-  }, [data.applications, query, status]);
-
   const stats = {
     active: data.traders.length,
-    open: data.applications.length,
-    pending: data.applications.filter((a: Application) => a.status === "pending").length,
-    review: data.applications.filter((a: Application) => ["under_review", "more_info"].includes(a.status)).length,
+    eligible: data.users.length,
     strategies: data.traders.reduce((n: number, t: Trader) => n + (t.strategy_count || 0), 0),
     mt5Pending: Number(data.mt5_pending_count || 0),
   };
