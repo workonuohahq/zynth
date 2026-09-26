@@ -39,21 +39,16 @@ export async function GET(req:Request){try{const {s,user}=await admin();if(!user
  if(pendingMt5Error)throw pendingMt5Error;
  const pendingIds=(pendingMt5||[]).map((x:any)=>x.user_id);
  const traderRows=Array.isArray(payload.traders)?payload.traders:[];
+ const userRows=Array.isArray(payload.users)?payload.users:[];
+ const applicationRows=Array.isArray(payload.applications)?payload.applications:[];
  const enrichedTraders=traderRows.map((t:any)=>({...t,mt5:t.mt5||null}));
- const {data:pendingUsers,error:pendingUsersError}=pendingIds.length
-  ? await s.from("users").select("id,email,full_name,role").in("id",pendingIds)
-  : {data:[],error:null};
- if(pendingUsersError)throw pendingUsersError;
- const {data:pendingProfiles,error:pendingProfilesError}=pendingIds.length
-  ? await s.from("zynth_trader_profiles").select("*").in("user_id",pendingIds)
-  : {data:[],error:null};
- if(pendingProfilesError)throw pendingProfilesError;
- const userMap=new Map((pendingUsers||[]).map((u:any)=>[u.id,u]));
- const profileMap=new Map((pendingProfiles||[]).map((p:any)=>[p.user_id,p]));
+ const traderMap=new Map(traderRows.map((t:any)=>[t.id,t]));
+ const userMap=new Map(userRows.map((u:any)=>[u.id,u]));
+ const applicationMap=new Map(applicationRows.map((x:any)=>[x.user_id,x]));
  const enrichedPending=(pendingMt5||[]).map((m:any)=>({
   ...m,
-  user:userMap.get(m.user_id)||null,
-  profile:profileMap.get(m.user_id)||null
+  user:userMap.get(m.user_id)||traderMap.get(m.user_id)||null,
+  profile:traderMap.get(m.user_id)?.profile||applicationMap.get(m.user_id)||null
  }));
  return NextResponse.json({
   applications:Array.isArray(payload.applications)?payload.applications:[],
