@@ -22,7 +22,8 @@ export async function POST(req:Request){
  const b=await req.json().catch(()=>({}));
  const action=String(b.action||"");
  let data,error;
- if(action==="confirm") ({data,error}=await supabase.rpc("zynth_admin_settle_report",{p_report_id:String(b.reportId),p_admin_id:user.id}));
+ if(action==="preview") ({data,error}=await supabase.rpc("zynth_admin_settlement_preview",{p_report_id:String(b.reportId),p_admin_id:user.id}));
+ else if(action==="confirm") ({data,error}=await supabase.rpc("zynth_admin_settle_report",{p_report_id:String(b.reportId),p_admin_id:user.id}));
  else if(action==="reject") ({data,error}=await supabase.rpc("zynth_admin_reject_report",{p_report_id:String(b.reportId),p_reason:String(b.reason||"Report rejected"),p_admin_id:user.id}));
  else return NextResponse.json({error:"Unknown settlement action."},{status:400});
  if(error)return NextResponse.json({error:error.message},{status:400});
