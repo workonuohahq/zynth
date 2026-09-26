@@ -1,6 +1,6 @@
 "use client";
 import {useEffect,useMemo,useState} from "react";
-import {Activity,ArrowUpRight,BarChart3,BookOpen,CheckCircle2,ChevronRight,Clock3,FileCheck2,Lightbulb,Plus,RefreshCw,Save,Settings2,ShieldCheck,Target,TrendingUp,UploadCloud,UserRound,X,Zap} from "lucide-react";
+import {Activity,ArrowUpRight,BarChart3,BookOpen,CheckCircle2,ChevronRight,Clock3,FileCheck2,Lightbulb,Plus,RefreshCw,Save,Settings2,ShieldCheck,Target,TrendingUp,UploadCloud,UserRound,X,Zap,Eye,EyeOff} from "lucide-react";
 const money=(n:any)=>`₦${Number(n||0).toLocaleString("en-NG",{minimumFractionDigits:2,maximumFractionDigits:2})}`;
 const pct=(n:any)=>`${Number(n||0).toFixed(2)}%`;
 export default function TraderPage(){
