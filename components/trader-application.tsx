@@ -1,0 +1,26 @@
+"use client";
+import {useState} from "react";
+import {ArrowRight,CheckCircle2,FileText,ShieldCheck} from "lucide-react";
+const fields=["Forex","Crypto","Stocks","Indices","Commodities"];
+export default function TraderApplication({initial}:{initial:any}){
+ const [form,setForm]=useState<any>({displayName:initial?.full_name||"",bio:"",country:"Nigeria",years:"",markets:[],style:"",holding:"",riskManagement:"",risk:"",drawdown:"",broker:"",trackRecord:"",evidence:"",note:""});
+ const [busy,setBusy]=useState(false),[msg,setMsg]=useState("");
+ const set=(k:string,v:any)=>setForm((x:any)=>({...x,[k]:v}));
+ const toggle=(v:string)=>set("markets",form.markets.includes(v)?form.markets.filter((x:string)=>x!==v):[...form.markets,v]);
+ async function submit(){setBusy(true);setMsg("");const r=await fetch("/api/trader/apply",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(form)});const d=await r.json();setMsg(r.ok?"Application submitted. An administrator will review your profile and track record.":d.error||"Unable to submit.");setBusy(false);}
+ return <section className="trader-apply-shell"><header className="dashboard-header"><div><span className="eyebrow">ZYNTH / TRADER APPLICATION</span><h1>Apply to become a trader.</h1><p>Tell ZYNTH how you trade. Approval unlocks the Trader Desk; strategies still require separate administration.</p></div><span className="secure-chip"><ShieldCheck size={14}/> Controlled access</span></header>
+ <div className="trader-apply-grid"><section className="panel"><div className="panel-head"><div><span className="muted">PROFILE</span><h2>Your trading identity</h2></div></div>
+ <div className="settings-grid"><label><span>Display name</span><input value={form.displayName} onChange={e=>set("displayName",e.target.value)} placeholder="How investors should see you"/></label><label><span>Country</span><input value={form.country} onChange={e=>set("country",e.target.value)}/></label></div>
+ <label className="setting-textarea"><span>Bio</span><textarea value={form.bio} onChange={e=>set("bio",e.target.value)} placeholder="Brief professional trading background"/></label>
+ <div className="settings-grid"><label><span>Years trading</span><input type="number" value={form.years} onChange={e=>set("years",e.target.value)} min="0"/></label><label><span>Broker / platform</span><input value={form.broker} onChange={e=>set("broker",e.target.value)} placeholder="Broker or execution platform"/></label></div>
+ <div className="field-group"><span>Markets</span><div className="choice-grid">{fields.map(x=><button type="button" key={x} className={form.markets.includes(x)?"choice active":"choice"} onClick={()=>toggle(x)}>{x}</button>)}</div></div>
+ <div className="settings-grid"><label><span>Trading style</span><select value={form.style} onChange={e=>set("style",e.target.value)}><option value="">Select</option><option>Scalping</option><option>Day trading</option><option>Swing trading</option><option>Position trading</option><option>Systematic</option><option>Discretionary</option></select></label><label><span>Typical holding period</span><select value={form.holding} onChange={e=>set("holding",e.target.value)}><option value="">Select</option><option>Minutes</option><option>Hours</option><option>Days</option><option>Weeks</option><option>Months</option></select></label></div>
+ <label className="setting-textarea"><span>Risk-management approach</span><textarea value={form.riskManagement} onChange={e=>set("riskManagement",e.target.value)} placeholder="Explain position sizing, stops and capital protection."/></label>
+ <div className="settings-grid"><label><span>Typical risk per trade (%)</span><input type="number" step="0.01" value={form.risk} onChange={e=>set("risk",e.target.value)}/></label><label><span>Historical max drawdown (%)</span><input type="number" step="0.01" value={form.drawdown} onChange={e=>set("drawdown",e.target.value)}/></label></div>
+ </section><aside className="panel"><div className="panel-head"><div><span className="muted">TRACK RECORD</span><h2>Evidence</h2></div><FileText size={18}/></div>
+ <label className="setting-textarea"><span>Track-record URL</span><input value={form.trackRecord} onChange={e=>set("trackRecord",e.target.value)} placeholder="Public or private report link"/></label>
+ <label className="setting-textarea"><span>Evidence URL</span><input value={form.evidence} onChange={e=>set("evidence",e.target.value)} placeholder="Supporting statement/report link"/></label>
+ <label className="setting-textarea"><span>Applicant note</span><textarea value={form.note} onChange={e=>set("note",e.target.value)} placeholder="Anything the reviewer should know"/></label>
+ <div className="notice"><CheckCircle2 size={16}/> Approval makes you an active trader. It does not automatically publish a strategy.</div>
+ <button className="primary full-button" onClick={submit} disabled={busy||!form.displayName.trim()}>{busy?"Submitting…":<>Submit application <ArrowRight size={16}/></>}</button>{msg&&<div className="form-feedback">{msg}</div>}</aside></div></section>
+}
