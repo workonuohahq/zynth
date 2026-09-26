@@ -14,7 +14,7 @@ const money=(n:any)=>`₦${Number(n||0).toLocaleString("en-NG",{minimumFractionD
 const pct=(n:any)=>`${Number(n||0).toFixed(2)}%`;
 
 export default function AdminPanel({initialData,adminEmail}:{initialData:any;adminEmail:string}){
- const[data,setData]=useState(initialData||{}),[tab,setTab]=useState("overview"),[moneyOpen,setMoneyOpen]=useState(false),[reports,setReports]=useState<any[]>([]),[history,setHistory]=useState<any[]>([]),[strategies,setStrategies]=useState<any[]>([]),[traders,setTraders]=useState<any[]>([]),[editingStrategy,setEditingStrategy]=useState<any>(null),[notificationTemplates,setNotificationTemplates]=useState<any[]>([]),[busy,setBusy]=useState(""),[notice,setNotice]=useState(""),[preview,setPreview]=useState<any>(null),[previewBusy,setPreviewBusy]=useState("");
+ const[data,setData]=useState(initialData||{}),[tab,setTab]=useState("overview"),[refreshing,setRefreshing]=useState(false),[refreshKey,setRefreshKey]=useState(0),[moneyOpen,setMoneyOpen]=useState(false),[reports,setReports]=useState<any[]>([]),[history,setHistory]=useState<any[]>([]),[strategies,setStrategies]=useState<any[]>([]),[traders,setTraders]=useState<any[]>([]),[editingStrategy,setEditingStrategy]=useState<any>(null),[notificationTemplates,setNotificationTemplates]=useState<any[]>([]),[busy,setBusy]=useState(""),[notice,setNotice]=useState(""),[preview,setPreview]=useState<any>(null),[previewBusy,setPreviewBusy]=useState("");
  async function load(){
   const [q,s,t,n]=await Promise.all([
    fetch("/api/admin/settlements").then(r=>r.json()),
@@ -22,8 +22,9 @@ export default function AdminPanel({initialData,adminEmail}:{initialData:any;adm
    fetch("/api/admin/traders").then(r=>r.json()),
    fetch("/api/admin/notification-templates").then(r=>r.json())
   ]);
-  setReports(q.reports||[]);setHistory(q.history||[]);setStrategies(s.strategies||[]);setTraders(t.traders||[]);setNotificationTemplates(n.templates||[]);
+  setReports(q.reports||[]);setHistory(q.history||[]);setStrategies(s.strategies||[]);setTraders(t.traders||[]);setNotificationTemplates(n.templates||[]);setData((x:any)=>({...x,pending_reports:(q.pending_reports??x.pending_reports),pending_report_queue:(q.pending_report_queue??x.pending_report_queue),strategies:(s.strategies?.length??x.strategies),traders:(t.traders?.length??x.traders)}));
  }
+ async function refreshData(){setRefreshing(true);setNotice("");try{await load();setRefreshKey(x=>x+1);setNotice("Admin data refreshed.");}catch(e){setNotice(e instanceof Error?e.message:"Could not refresh admin data.")}finally{setRefreshing(false)}}
  useEffect(()=>{load()},[]);
  async function act(id:string,a:string){
   setBusy(id);setNotice("");
@@ -73,7 +74,7 @@ export default function AdminPanel({initialData,adminEmail}:{initialData:any;adm
    <div className="admin-sidebar-bottom"><span className="admin-session"><i/>Online</span><div className="admin-identity"><span className="avatar">A</span><span><b>Administrator</b><small>{adminEmail}</small></span></div></div>
   </aside>
   <main className="admin-main">
-   <header className="admin-topbar"><div><div className="eyebrow-row"><span className="eyebrow">ZYNTH / ADMIN</span><span className="live-dot"><i/> CONTROL ONLINE</span></div><h1>{tab==="overview"?"Control center":tab.charAt(0).toUpperCase()+tab.slice(1)}</h1><p>Portfolio operations, strategy settlement and investor controls.</p></div><div className="admin-top-actions"><ThemeSwitcher/>{tab!=="referrals"&&<button className="ghost admin-refresh" onClick={()=>location.reload()}><RefreshCw size={15}/> Refresh</button>}</div></header>
+   <header className="admin-topbar"><div><div className="eyebrow-row"><span className="eyebrow">ZYNTH / ADMIN</span><span className="live-dot"><i/> CONTROL ONLINE</span></div><h1>{tab==="overview"?"Control center":tab.charAt(0).toUpperCase()+tab.slice(1)}</h1><p>Portfolio operations, strategy settlement and investor controls.</p></div><div className="admin-top-actions"><ThemeSwitcher/><button className="ghost admin-refresh" onClick={refreshData} disabled={refreshing}><RefreshCw size={15} className={refreshing?"spin":""}/> {refreshing?"Refreshing…":"Refresh data"}</button></div></header>
    {notice&&<div className="admin-notice">{notice}</div>}
 
    {tab==="overview"&&<section className="admin-section"><div className="admin-kpis">{[[TrendingUp,"AUM",money(data.aumm),"PORTFOLIO"],[Users,"Investors",data.investors,"ACCOUNTS"],[ShieldCheck,"Traders",data.traders,"OPERATORS"],[Clock3,"Pending reports",data.pending_reports,"ACTION"],[ArrowDownToLine,"Withdrawals",data.withdrawals_pending,"ACTION"]].map(([Icon,label,val,tag]:any)=><div className="admin-kpi" key={label}><div className="admin-kpi-top"><span className="admin-kpi-icon"><Icon size={16}/></span><em>{tag}</em></div><small>{label}</small><b>{val}</b></div>)}</div><section className="admin-card admin-feature-card"><div className="admin-card-head"><div><span className="muted">SETTLEMENT QUEUE</span><h2>What needs attention</h2><p>Trader reports do not change investor balances until an administrator confirms them.</p></div><button className="text-action" onClick={()=>setTab("settlements")}>Open queue <ChevronRight size={13}/></button></div><div className="admin-table">{(data.pending_report_queue||[]).slice(0,6).map((r:any)=><div className="admin-row" key={r.id}><div className="admin-person"><span className="avatar">T</span><span><b>{r.strategy_name}</b><small>{r.trader_name||"Trader"} · {new Date(r.report_date).toLocaleDateString("en-NG")}</small></span></div><span>{money(r.closing_balance)}</span><span>{pct(r.return_pct)}</span><strong>Pending</strong></div>)}{!data.pending_report_queue?.length&&<div className="admin-empty"><CheckCircle2 size={22}/><p>No settlement reports waiting.</p></div>}</div></section></section>}
@@ -101,17 +102,17 @@ export default function AdminPanel({initialData,adminEmail}:{initialData:any;adm
   </section>
  </section>}
 
-   {tab==="investors"&&<section className="admin-section"><section className="admin-card admin-users-card"><div className="admin-card-head"><div><span className="muted">INVESTOR DIRECTORY</span><h2>Investors</h2><p>Account status and portfolio controls.</p></div></div><AdminUsers initialUsers={[]}/></section></section>}
+   {tab==="investors"&&<section className="admin-section"><section className="admin-card admin-users-card"><div className="admin-card-head"><div><span className="muted">INVESTOR DIRECTORY</span><h2>Investors</h2><p>Account status and portfolio controls.</p></div></div><AdminUsers initialUsers={[]} refreshKey={refreshKey}/></section></section>}
 
-   {tab==="traders"&&<AdminTraders onSaved={load}/>} 
+   {tab==="traders"&&<AdminTraders onSaved={load} refreshKey={refreshKey}/>} 
 
    {tab==="deposits"&&<section className="admin-section"><section className="admin-card"><div className="admin-card-head"><div><span className="muted">MONEY MOVEMENT</span><h2>Deposit operations</h2><p>Review and confirm incoming payment requests. Strategy-linked deposits activate an investment directly and never become spendable cash.</p></div><Link className="text-action" href="/admin/deposits">Open deposit queue <ChevronRight size={13}/></Link></div></section></section>}
    {tab==="withdrawals"&&<section className="admin-section"><section className="admin-card"><div className="admin-card-head"><div><span className="muted">MONEY MOVEMENT</span><h2>Withdrawal operations</h2><p>Existing withdrawal controls remain available while profit eligibility is enforced by the Vault layer.</p></div><Link className="text-action" href="/admin/withdrawals">Open queue <ChevronRight size={13}/></Link></div></section></section>}
    {tab==="redemptions"&&<section className="admin-section"><section className="admin-card"><div className="admin-card-head"><div><span className="muted">INVESTMENT LIQUIDITY</span><h2>Investor exits</h2><p>Redemptions are unit-based, NAV-priced and released only after the configured approval and delay rules.</p></div><Link className="text-action" href="/admin/redemptions">Open redemption control <ChevronRight size={13}/></Link></div></section></section>}
 
-   {tab==="settings"&&<section className="admin-section"><section className="admin-card settings-card"><div className="admin-card-head"><div><span className="muted">SYSTEM RULES</span><h2>Settlement & Vault controls</h2><p>Configure the investor engine, profit lock and operating thresholds. Changes are audited.</p></div></div><AdminInvestmentSettings/><div className="rule-list" style={{marginTop:20}}><div><span>Settlement model</span><b>Trader report → admin confirm → NAV</b></div><div><span>MT5 automation</span><b>Removed</b></div></div></section></section>}
-   {tab==="notifications"&&<AdminNotificationCenter initialTemplates={notificationTemplates}/>}
-   {tab==="referrals"&&<AdminReferralCenter/>}
+   {tab==="settings"&&<section className="admin-section"><section className="admin-card settings-card"><div className="admin-card-head"><div><span className="muted">SYSTEM RULES</span><h2>Settlement & Vault controls</h2><p>Configure the investor engine, profit lock and operating thresholds. Changes are audited.</p></div></div><AdminInvestmentSettings refreshKey={refreshKey}/><div className="rule-list" style={{marginTop:20}}><div><span>Settlement model</span><b>Trader report → admin confirm → NAV</b></div><div><span>MT5 automation</span><b>Removed</b></div></div></section></section>}
+   {tab==="notifications"&&<AdminNotificationCenter initialTemplates={notificationTemplates} refreshKey={refreshKey}/>}
+   {tab==="referrals"&&<AdminReferralCenter refreshKey={refreshKey}/>}
   </main>
 
   {preview&&<div className="settlement-modal-backdrop" role="presentation" onMouseDown={closePreview}><section className="settlement-modal" role="dialog" aria-modal="true" aria-label="Settlement preview" onMouseDown={e=>e.stopPropagation()}>
