@@ -202,7 +202,8 @@ export default function AdminStrategyForm({ traders, onSaved }: { traders: any[]
 
             <div className="strategy-preview-metrics">
               <div><span>Starting balance</span><strong>{money(starting)}</strong></div>
-              <div><span>Minimum entry</span><strong>{money(minimum)}</strong></div>\n              <div><span>Maximum entry</span><strong>{maximum ? money(maximum) : "No cap"}</strong></div>
+              <div><span>Minimum entry</span><strong>{money(minimum)}</strong></div>
+              <div><span>Maximum entry</span><strong>{maximum ? money(maximum) : "No cap"}</strong></div>
             </div>
 
             <div className="strategy-preview-description">
