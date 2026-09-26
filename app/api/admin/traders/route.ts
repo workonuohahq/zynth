@@ -1,13 +1,5 @@
 import {NextResponse} from "next/server";import {createSupabaseServerClient} from "@/lib/supabase/server";import {decryptMt5Secret} from "@/lib/mt5-credentials";
 async function admin(){const s=await createSupabaseServerClient();const {data:{user}}=await s.auth.getUser();if(!user)return {s,user:null};const {data:p}=await s.from("users").select("role").eq("id",user.id).single();return p?.role==="admin"?{s,user}:{s,user:null};}
-export async function GET(){try{const {s,user}=await admin();if(!user)return NextResponse.json({error:"Administrator access required."},{status:403});
- const {data,error}=await s.rpc("zynth_admin_trader_command_center",{p_admin_id:user.id});
- if(error) throw error;
- const payload=data||{};
- return NextResponse.json({applications:Array.isArray(payload.applications)?payload.applications:[],traders:Array.isArray(payload.traders)?payload.traders:[],users:Array.isArray(payload.users)?payload.users:[]});
- }catch(e:any){console.error(e);return NextResponse.json({error:"Unable to load trader operations."},{status:500});}}
-export async function GET(req:Request){try{const {s,user}=await admin();if(!user)return NextResponse.json({error:"Administrator access required."},{status:403});const userId=new URL(req.url).searchParams.get("userId");if(!userId)return NextResponse.json({error:"Trader user is required."},{status:400});const {data,error}=await s.from("zynth_trader_mt5_credentials").select("mt5_login,mt5_server,investor_password_ciphertext,status,submitted_at,verified_at,rejection_reason").eq("user_id",userId).maybeSingle();if(error)return NextResponse.json({error:error.message},{status:400});if(!data)return NextResponse.json({error:"No MT5 submission found."},{status:404});let investorPassword="";try{investorPassword=decryptMt5Secret(data.investor_password_ciphertext)}catch{investorPassword="";}return NextResponse.json({credentials:{mt5Login:data.mt5_login,mt5Server:data.mt5_server,investorPassword,status:data.status,submittedAt:data.submitted_at,verifiedAt:data.verified_at,rejectionReason:data.rejection_reason}});}catch(e:any){return NextResponse.json({error:e.message||"Unable to load MT5 credentials."},{status:500});}}
-
 export async function POST(req:Request){try{const {s,user}=await admin();if(!user)return NextResponse.json({error:"Administrator access required."},{status:403});const b=await req.json();
  if(["verify_mt5","reject_mt5"].includes(b.action)){
   const userId=String(b.userId||""); if(!userId)return NextResponse.json({error:"Trader user is required."},{status:400});
