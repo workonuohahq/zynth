@@ -54,13 +54,15 @@ export async function GET(req:Request){try{const {s,user}=await admin();if(!user
   user:userMap.get(m.user_id)||traderMap.get(m.user_id)||null,
   profile:(traderMap.get(m.user_id) as any)?.profile||applicationMap.get(m.user_id)||null
  }));
+ const {data:reportSettings}=await s.from("system_settings").select("trader_report_start_time,trader_report_end_time").limit(1).maybeSingle();
  return NextResponse.json({
   applications:Array.isArray(payload.applications)?payload.applications:[],
   traders:enrichedTraders,
   users:Array.isArray(payload.users)?payload.users:[],
   mt5_pending_count:pendingMt5?.length||0,
   mt5_pending:enrichedPending,
-  mt5_pending_user_ids:pendingIds
+  mt5_pending_user_ids:pendingIds,
+  reporting_settings:reportSettings||{trader_report_start_time:"06:00:00",trader_report_end_time:"23:00:00"}
  });
  }catch(e:any){console.error(e);return NextResponse.json({error:"Unable to load trader operations."},{status:500});}}
 
@@ -79,6 +81,15 @@ export async function POST(req:Request){try{const {s,user}=await admin();if(!use
   if(error)return NextResponse.json({error:error.message},{status:400});
   await s.from("audit_logs").insert({actor_user_id:user.id,action:"trader_mt5_"+(isVerify?"verified":"rejected"),target_type:"trader",target_id:userId,metadata:{reason:b.reason||null,change_request:Boolean(current.change_requested)}});
   return NextResponse.json({success:true,credentials:data});
+}
+if(b.action==="save_reporting_settings"){
+  const start=String(b.startTime||"").slice(0,8),end=String(b.endTime||"").slice(0,8);
+  if(!/^([01]\\d|2[0-3]):[0-5]\\d(:[0-5]\\d)?$/.test(start)||!/^([01]\\d|2[0-3]):[0-5]\\d(:[0-5]\\d)?$/.test(end))return NextResponse.json({error:"Enter valid reporting times."},{status:400});
+  if(start.slice(0,5)===end.slice(0,5))return NextResponse.json({error:"Start and end time cannot be the same."},{status:400});
+  const {data,error}=await s.from("system_settings").update({trader_report_start_time:start.slice(0,5)+":00",trader_report_end_time:end.slice(0,5)+":00",updated_at:new Date().toISOString()}).eq("id","00000000-0000-0000-0000-000000000001").select("trader_report_start_time,trader_report_end_time").single();
+  if(error)return NextResponse.json({error:error.message},{status:400});
+  await s.from("audit_logs").insert({actor_user_id:user.id,action:"trader.reporting_window_updated",target_type:"system_settings",target_id:"00000000-0000-0000-0000-000000000001",metadata:{start_time:data.trader_report_start_time,end_time:data.trader_report_end_time}});
+  return NextResponse.json({success:true,reporting_settings:data});
 }
 if(b.action==="promote"){const {data,error}=await s.rpc("zynth_admin_promote_trader",{p_user_id:b.userId,p_admin_id:user.id});if(error)return NextResponse.json({error:error.message},{status:400});return NextResponse.json(data);}
  if(["approve","reject","more_info","under_review"].includes(b.action)){const {data,error}=await s.rpc("zynth_admin_review_trader_application",{p_application_id:b.applicationId,p_admin_id:user.id,p_action:b.action,p_admin_note:String(b.note||"")});if(error)return NextResponse.json({error:error.message},{status:400});return NextResponse.json(data);}
