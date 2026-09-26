@@ -1,12 +1,14 @@
 "use client";
-import {useMemo,useState} from "react";
+import {useEffect,useMemo,useState} from "react";
 import {Bell,CheckCircle2,Copy,Edit3,Eye,Plus,Power,Search,ShieldCheck,Trash2,X} from "lucide-react";
 const cats=["all","money","investment","performance","trader","account","custom"];
 const blank={id:null,event_key:"",name:"",description:"",category:"custom",title:"",body:"",notification_type:"activity",enabled:true,system_event:false,variables:[]};
-export default function AdminNotificationCenter({initialTemplates=[]}:{initialTemplates?:any[]}){
+export default function AdminNotificationCenter({initialTemplates=[],refreshKey}:{initialTemplates?:any[];refreshKey?:number}){
  const [items,setItems]=useState<any[]>(initialTemplates),[editing,setEditing]=useState<any>(null),[query,setQuery]=useState(""),[cat,setCat]=useState("all"),[busy,setBusy]=useState(false),[notice,setNotice]=useState("");
  const filtered=useMemo(()=>items.filter(x=>(cat==="all"||x.category===cat)&&(!query||[x.name,x.event_key,x.title,x.body].join(" ").toLowerCase().includes(query.toLowerCase()))),[items,cat,query]);
+ useEffect(()=>{setItems(initialTemplates)},[initialTemplates]);
  const refresh=async()=>{const r=await fetch("/api/admin/notification-templates");const j=await r.json();if(r.ok)setItems(j.templates||[]);else setNotice(j.error||"Could not load notification templates.");};
+ useEffect(()=>{if(refreshKey===undefined)return;refresh()},[refreshKey]);
  const save=async()=>{if(!editing)return;setBusy(true);setNotice("");const r=await fetch("/api/admin/notification-templates",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(editing)});const j=await r.json();setNotice(r.ok?(editing.id?"Notification updated.":"Notification created."):j.error||"Save failed.");if(r.ok){await refresh();setEditing(null)}setBusy(false)};
  const remove=async(id:string)=>{if(!window.confirm("Delete this custom notification template? This cannot be undone."))return;setBusy(true);const r=await fetch("/api/admin/notification-templates",{method:"DELETE",headers:{"content-type":"application/json"},body:JSON.stringify({id})});const j=await r.json();setNotice(r.ok?"Custom notification deleted.":j.error||"Delete failed.");if(r.ok)await refresh();setBusy(false)};
  const toggle=async(x:any)=>{setBusy(true);const r=await fetch("/api/admin/notification-templates",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({...x,enabled:!x.enabled})});const j=await r.json();setNotice(r.ok?(x.name+" "+(!x.enabled?"enabled":"disabled")+"."):(j.error||"Update failed."));if(r.ok)await refresh();setBusy(false)};
