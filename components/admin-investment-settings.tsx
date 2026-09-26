@@ -29,18 +29,20 @@ export default function AdminInvestmentSettings() {
   }
 
   async function save() {
+    if (!settings) return;
+    const current = settings;
     setBusy(true);
     setMessage("");
     const r = await fetch("/api/admin/investment-settings", {
       method: "PATCH",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        investmentEnabled: settings.investment_enabled,
-        strategyEntryEnabled: settings.strategy_entry_enabled,
-        strategyExitEnabled: settings.strategy_exit_enabled,
-        vaultProfitLockDays: settings.vault_profit_lock_days,
-        minDeposit: settings.global_min_deposit,
-        minWithdrawal: settings.global_min_withdrawal
+        investmentEnabled: current.investment_enabled,
+        strategyEntryEnabled: current.strategy_entry_enabled,
+        strategyExitEnabled: current.strategy_exit_enabled,
+        vaultProfitLockDays: current.vault_profit_lock_days,
+        minDeposit: current.global_min_deposit,
+        minWithdrawal: current.global_min_withdrawal
       })
     });
     const d = await r.json();
