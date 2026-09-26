@@ -6,6 +6,7 @@ const money=(n:any)=>`₦${Number(n||0).toLocaleString("en-NG",{minimumFractionD
 export default function Investments(){
  const [strategies,setStrategies]=useState<any[]>([]),[cash,setCash]=useState(0),[amounts,setAmounts]=useState<Record<string,string>>({}),[msg,setMsg]=useState("");
  useEffect(()=>{Promise.all([fetch("/api/account/summary").then(r=>r.json()),fetch("/api/strategies").then(r=>r.json())]).then(([s,p])=>{setCash(Number(s.summary?.cash||0));setStrategies(p.strategies||[])}).catch(()=>{});},[]);
+ useEffect(()=>{const q=new URLSearchParams(window.location.search);const strategyId=q.get("strategyId"),amount=q.get("amount");if(strategyId&&amount&&Number(amount)>0)setAmounts(v=>({...v,[strategyId]:amount}));},[]);
  async function invest(id:string){
  const amount=Number(amounts[id]||0);
  if(!Number.isFinite(amount)||amount<=0){setMsg("Enter a valid investment amount.");return;}
@@ -21,7 +22,7 @@ export default function Investments(){
    const dd=await dep.json();
    if(!dep.ok){
      if(dd.code==="PENDING_DEPOSIT_EXISTS"){setMsg("You already have a pending deposit. Open Activity to continue that payment before investing.");}
-     else if(dd.code==="BELOW_MINIMUM"){setMsg(`The investment amount is below the platform deposit minimum of ${money(dd.minimum||0)}.`);}
+     else if(dd.code==="BELOW_MINIMUM"){setMsg("The investment amount is below the platform deposit minimum. Increase the investment amount or fund your wallet separately first.");}
      else setMsg(dd.error||"Unable to start the funding request.");
      return;
    }
