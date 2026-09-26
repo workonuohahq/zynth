@@ -14,7 +14,7 @@ export async function POST(req:Request){try{const {s,user}=await admin();if(!use
   const status=b.action==="verify_mt5"?"verified":"rejected";
   const {data,error}=await s.from("zynth_trader_mt5_credentials").update({status,verified_at:status==="verified"?new Date().toISOString():null,verified_by:status==="verified"?user.id:null,rejection_reason:status==="rejected"?String(b.reason||"MT5 details were not approved by operations."):null,updated_at:new Date().toISOString()}).eq("user_id",userId).select("user_id,status,verified_at,rejection_reason").single();
   if(error)return NextResponse.json({error:error.message},{status:400});
-  await s.from("audit_logs").insert({actor_id:user.id,action:"trader_mt5_"+status,entity_type:"trader",entity_id:userId,metadata:{reason:b.reason||null}});
+  await s.from("audit_logs").insert({actor_user_id:user.id,action:"trader_mt5_"+status,target_type:"trader",target_id:userId,metadata:{reason:b.reason||null}});
   return NextResponse.json({success:true,credentials:data});
 }
 if(b.action==="promote"){const {data,error}=await s.rpc("zynth_admin_promote_trader",{p_user_id:b.userId,p_admin_id:user.id});if(error)return NextResponse.json({error:error.message},{status:400});return NextResponse.json(data);}
