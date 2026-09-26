@@ -48,7 +48,7 @@ export async function GET(req:Request){try{const {s,user}=await admin();if(!user
  const enrichedPending=(pendingMt5||[]).map((m:any)=>({
   ...m,
   user:userMap.get(m.user_id)||traderMap.get(m.user_id)||null,
-  profile:traderMap.get(m.user_id)?.profile||applicationMap.get(m.user_id)||null
+  profile:(traderMap.get(m.user_id) as any)?.profile||applicationMap.get(m.user_id)||null
  }));
  return NextResponse.json({
   applications:Array.isArray(payload.applications)?payload.applications:[],
