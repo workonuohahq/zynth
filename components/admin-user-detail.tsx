@@ -16,6 +16,7 @@ export default function AdminUserDetail({initial}:{initial:Detail}){
   const [notice,setNotice]=useState("");
   const [name,setName]=useState(initial.profile.full_name||"");
   const [kyc,setKyc]=useState(Boolean(initial.profile.kyc_verified));
+  const [role,setRole]=useState(initial.profile.role||"user");
   const [note,setNote]=useState("");
   const [amount,setAmount]=useState("");
   const [reason,setReason]=useState("");
@@ -36,6 +37,7 @@ export default function AdminUserDetail({initial}:{initial:Detail}){
       setNotice(action==="wallet"?"Wallet adjustment posted to the ledger.":action==="note"?"Internal note added.":"User record updated.");
       if(action==="note")setNote("");
       if(action==="wallet"){setAmount("");setReason("");}
+      if(action==="role")setRole(payload.role);
       await reload();
     }catch(e){setNotice(e instanceof Error?e.message:"Action failed.");setBusy("");}
   };
@@ -77,10 +79,10 @@ export default function AdminUserDetail({initial}:{initial:Detail}){
         <div className="profile-edit-grid">
           <label><span>Full name</span><input value={name} onChange={e=>setName(e.target.value)} placeholder="User name"/></label>
           <label><span>Email</span><input value={p.email} disabled/></label>
-          <label><span>Role</span><input value={p.role} disabled/></label>
+          <label><span>Role</span><select value={role} onChange={e=>setRole(e.target.value)}><option value="user">Investor</option><option value="trader">Trader</option><option value="admin">Administrator</option></select></label>
           <label><span>KYC status</span><select value={kyc?"verified":"unverified"} onChange={e=>setKyc(e.target.value==="verified")}><option value="unverified">Unverified</option><option value="verified">Verified</option></select></label>
         </div>
-        <button className="primary" onClick={()=>act("profile",{full_name:name,kyc_verified:kyc})} disabled={busy==="profile"}>{busy==="profile"?"Saving…":"Save profile"}</button>
+        <div style={{display:"flex",gap:10,flexWrap:"wrap"}}><button className="primary" onClick={()=>act("profile",{full_name:name,kyc_verified:kyc})} disabled={busy==="profile"}>{busy==="profile"?"Saving…":"Save profile"}</button><button className="ghost" onClick={()=>act("role",{role})} disabled={busy==="role"}>{busy==="role"?"Saving role…":"Save role"}</button></div>
       </section>
 
       <section className="admin-card">
