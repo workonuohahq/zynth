@@ -169,9 +169,8 @@ export default function AdminTraders({ onSaved, refreshKey }: { onSaved: () => v
 
       <div className="trader-command-stats">
         <div><span>ACTIVE TRADERS</span><strong>{stats.active}</strong><small>{stats.strategies} published strategies</small></div>
-        <div><span>OPEN APPLICATIONS</span><strong>{stats.open}</strong><small>{stats.pending} awaiting first review</small></div>
-        <div><span>IN REVIEW</span><strong>{stats.review}</strong><small>More info / under review</small></div>
-        <div><span>APPROVAL PIPELINE</span><strong>{stats.pending + stats.review}</strong><small>Admin decisions required</small></div>
+        <div><span>ELIGIBLE USERS</span><strong>{stats.eligible}</strong><small>Available for admin onboarding</small></div>
+        <div><span>ONBOARDING MODEL</span><strong>ADMIN</strong><small>No self-application</small></div>
         <div><span>MT5 VERIFICATION</span><strong>{stats.mt5Pending}</strong><small>{stats.mt5Pending ? "Requires admin attention" : "Queue clear"}</small></div>
       </div>
 
