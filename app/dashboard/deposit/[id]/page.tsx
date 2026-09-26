@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, CheckCircle2, Clock3, Copy, ExternalLink, LockKeyhole, ShieldCheck, WalletCards } from "lucide-react";
 
@@ -14,6 +15,8 @@ type DepositRequest = { id:string; amount:number; method:string; status:string; 
 const money=(n:number)=>`₦${Number(n||0).toLocaleString("en-NG",{minimumFractionDigits:2,maximumFractionDigits:2})}`;
 
 export default function DepositPaymentPage({params}:{params:{id:string}}){
+  const searchParams=useSearchParams();
+  const returnTo=searchParams.get("returnTo")||"/dashboard/investments";
   const [request,setRequest]=useState<DepositRequest|null>(null);
   const [settings,setSettings]=useState<Settings|null>(null);
   const [loading,setLoading]=useState(true);
@@ -42,7 +45,7 @@ export default function DepositPaymentPage({params}:{params:{id:string}}){
   }
 
   if(loading)return <main className="payment-shell"><div className="payment-loading">Loading secure payment page…</div></main>;
-  if(error||!request||!settings)return <main className="payment-shell"><div className="payment-error"><b>{error||"Payment request unavailable."}</b><Link href="/dashboard/vaults">Return to vaults</Link></div></main>;
+  if(error||!request||!settings)return <main className="payment-shell"><div className="payment-error"><b>{error||"Payment request unavailable."}</b><Link href={returnTo}>Return to investment</Link></div></main>;
 
   const confirmed=request.status==="confirmed";
   const rejected=request.status==="rejected";
@@ -116,14 +119,14 @@ export default function DepositPaymentPage({params}:{params:{id:string}}){
           <div className="payment-steps">
             <div className="step"><span className="step-num">01</span><b>Pay the exact amount</b><span>Use one of the configured payment channels above.</span></div>
             <div className="step"><span className="step-num">02</span><b>Use your reference</b><span>Paste the payment reference above into your bank transfer description / narration.</span></div>
-            <div className="step"><span className="step-num">03</span><b>Complete your payment</b><span>Once your payment is verified, the funds are automatically placed into a new 5-day vault.</span></div>
+            <div className="step"><span className="step-num">03</span><b>Complete your payment</b><span>Once your payment is verified, the funds are credited to your available ZYNTH cash balance so you can complete the investment.</span></div>
           </div>
           <div className={`status-box status-${request.status}`}>
             {confirmed?<CheckCircle2/>:rejected||cancelled?<ExternalLink/>:<Clock3/>}
             <div><b>{confirmed?"Vault funded":rejected?"Payment request unavailable":cancelled?"Payment request cancelled":"Payment request received"}</b><span>Request {request.reference} · {new Date(request.created_at).toLocaleString("en-NG")}</span>{request.admin_note&&<span>{request.admin_note}</span>}</div>
           </div>
           <div className="payment-actions">
-            <Link className="payment-action payment-primary" href="/dashboard/vaults">{confirmed?"View your vault":"Return to vaults"} <ArrowRight size={15}/></Link>
+            <Link className="payment-action payment-primary" href={returnTo}>{confirmed?"Continue to investment":"Return to investment"} <ArrowRight size={15}/></Link>
             {request.status==="pending"&&<button className="payment-action payment-secondary" onClick={cancelRequest}>Cancel request</button>}
             <Link className="payment-action payment-secondary" href="/dashboard/transactions">View activity</Link>
           </div>
