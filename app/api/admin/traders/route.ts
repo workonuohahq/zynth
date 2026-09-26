@@ -12,7 +12,6 @@ export async function GET(req:Request){try{const {s,user}=await admin();if(!user
   if(mt5Error)return NextResponse.json({error:mt5Error.message},{status:400});
   if(!trader&&!userRow&&!mt5Row)return NextResponse.json({error:"User profile not found."},{status:404});
   let investorPassword="";if(mt5Row?.investor_password_ciphertext){try{investorPassword=decryptMt5Secret(mt5Row.investor_password_ciphertext)}catch{investorPassword=""}}
-  const base=trader||application||userRow||{};
   const accountType=trader?"trader":"investor";
   return NextResponse.json({
    profile:{
