@@ -43,7 +43,7 @@ export function validateMT5Login(input: MT5AccountInput) {
   const login = input.login.trim();
   const server = input.server.trim();
 
-  if (!/^\\d+$/.test(login)) throw new Error("MT5 login must contain digits only.");
+  if (!/^\d+$/.test(login)) throw new Error("MT5 login must contain digits only.");
   if (!server) throw new Error("MT5 server is required.");
 
   return { login, server };
