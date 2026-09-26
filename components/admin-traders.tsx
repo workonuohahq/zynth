@@ -15,7 +15,8 @@ export default function AdminTraders({ onSaved, refreshKey }: { onSaved: () => v
   const [selected, setSelected] = useState<any>(null);
   const [tab, setTab] = useState<"applications" | "traders">("applications");
   const [loadError, setLoadError] = useState("");
-  const [loading, setLoading] = useState(true);\n  const [revealedMt5, setRevealedMt5] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [revealedMt5, setRevealedMt5] = useState<any>(null);
 
   async function load() {
     setLoading(true); setLoadError("");
@@ -66,7 +67,8 @@ export default function AdminTraders({ onSaved, refreshKey }: { onSaved: () => v
     strategies: data.traders.reduce((n: number, t: Trader) => n + (t.strategy_count || 0), 0),
   };
 
-  const profile = selected?.profile || selected?.application || selected;\n  const mt5 = selected?.trader?.mt5 || null;
+  const profile = selected?.profile || selected?.application || selected;
+  const mt5 = selected?.trader?.mt5 || null;
 
   return (
     <section className="admin-section trader-command-center">
