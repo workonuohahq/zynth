@@ -6,16 +6,14 @@ export async function GET(req:Request){try{const {s,user}=await admin();if(!user
   const command=commandData||{};
   const traderRows=Array.isArray(command.traders)?command.traders:[];
   const userRows=Array.isArray(command.users)?command.users:[];
-  const applicationRows=Array.isArray(command.applications)?command.applications:[];
   const trader=traderRows.find((x:any)=>x.id===requestedUserId)||null;
   const userRow=userRows.find((x:any)=>x.id===requestedUserId)||null;
-  const application=applicationRows.find((x:any)=>x.user_id===requestedUserId)||null;
   const {data:mt5Row,error:mt5Error}=await s.from("zynth_trader_mt5_credentials").select("mt5_login,mt5_server,investor_password_ciphertext,status,submitted_at,verified_at,rejection_reason,change_requested,change_requested_at").eq("user_id",requestedUserId).maybeSingle();
   if(mt5Error)return NextResponse.json({error:mt5Error.message},{status:400});
-  if(!trader&&!userRow&&!application&&!mt5Row)return NextResponse.json({error:"User profile not found."},{status:404});
+  if(!trader&&!userRow&&!mt5Row)return NextResponse.json({error:"User profile not found."},{status:404});
   let investorPassword="";if(mt5Row?.investor_password_ciphertext){try{investorPassword=decryptMt5Secret(mt5Row.investor_password_ciphertext)}catch{investorPassword=""}}
   const base=trader||application||userRow||{};
-  const accountType=trader?"trader":(application?"trader":"investor");
+  const accountType=trader?"trader":"investor";
   return NextResponse.json({
    profile:{
     id:requestedUserId,user_id:requestedUserId,
@@ -26,7 +24,7 @@ export async function GET(req:Request){try{const {s,user}=await admin();if(!user
     account_type:accountType,
     account_status:userRow?.account_status||trader?.account_status||null,
     created_at:userRow?.created_at||trader?.created_at||application?.created_at||null,
-    ...(trader?.profile||application||{})
+    ...(trader?.profile||{})
    },
    trader:trader||null,
    application:application||null,
@@ -44,7 +42,6 @@ export async function GET(req:Request){try{const {s,user}=await admin();if(!user
  const pendingIds=(pendingMt5||[]).map((x:any)=>x.user_id);
  const traderRows=Array.isArray(payload.traders)?payload.traders:[];
  const userRows=Array.isArray(payload.users)?payload.users:[];
- const applicationRows=Array.isArray(payload.applications)?payload.applications:[];
  const enrichedTraders=traderRows.map((t:any)=>({...t,mt5:t.mt5||null}));
  const traderMap=new Map(traderRows.map((t:any)=>[t.id,t]));
  const userMap=new Map(userRows.map((u:any)=>[u.id,u]));
@@ -52,11 +49,10 @@ export async function GET(req:Request){try{const {s,user}=await admin();if(!user
  const enrichedPending=(pendingMt5||[]).map((m:any)=>({
   ...m,
   user:userMap.get(m.user_id)||traderMap.get(m.user_id)||null,
-  profile:(traderMap.get(m.user_id) as any)?.profile||applicationMap.get(m.user_id)||null
+  profile:(traderMap.get(m.user_id) as any)?.profile||null
  }));
  const {data:reportSettings}=await s.from("system_settings").select("trader_report_start_time,trader_report_end_time").limit(1).maybeSingle();
  return NextResponse.json({
-  applications:Array.isArray(payload.applications)?payload.applications:[],
   traders:enrichedTraders,
   users:Array.isArray(payload.users)?payload.users:[],
   mt5_pending_count:pendingMt5?.length||0,
@@ -92,6 +88,5 @@ if(b.action==="save_reporting_settings"){
   return NextResponse.json({success:true,reporting_settings:data});
 }
 if(b.action==="promote"){const {data,error}=await s.rpc("zynth_admin_promote_trader",{p_user_id:b.userId,p_admin_id:user.id});if(error)return NextResponse.json({error:error.message},{status:400});return NextResponse.json(data);}
- if(["approve","reject","more_info","under_review"].includes(b.action)){const {data,error}=await s.rpc("zynth_admin_review_trader_application",{p_application_id:b.applicationId,p_admin_id:user.id,p_action:b.action,p_admin_note:String(b.note||"")});if(error)return NextResponse.json({error:error.message},{status:400});return NextResponse.json(data);}
  return NextResponse.json({error:"Unsupported action."},{status:400});
  }catch(e:any){return NextResponse.json({error:e.message||"Operation failed."},{status:500});}}
