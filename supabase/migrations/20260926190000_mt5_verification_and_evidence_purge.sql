@@ -18,13 +18,17 @@ create index if not exists idx_zynth_trader_mt5_status on public.zynth_trader_mt
 create index if not exists idx_zynth_trader_mt5_user on public.zynth_trader_mt5_credentials(user_id);
 alter table public.zynth_trader_mt5_credentials enable row level security;
 grant select,insert,update on public.zynth_trader_mt5_credentials to authenticated;
-drop policy if exists "trader mt5 own select" on public.zynth_trader_mt5_credentials for select to authenticated using((select auth.uid())=user_id);
-drop policy if exists "trader mt5 own insert" on public.zynth_trader_mt5_credentials for insert to authenticated with check((select auth.uid())=user_id);
-drop policy if exists "trader mt5 own update" on public.zynth_trader_mt5_credentials for update to authenticated using((select auth.uid())=user_id) with check((select auth.uid())=user_id);
-drop policy if exists "admin mt5 select" on public.zynth_trader_mt5_credentials for select to authenticated using(exists(select 1 from public.users u where u.id=(select auth.uid()) and u.role='admin' and u.account_status='active'));
-drop policy if exists "admin mt5 update" on public.zynth_trader_mt5_credentials for update to authenticated using(exists(select 1 from public.users u where u.id=(select auth.uid()) and u.role='admin' and u.account_status='active')) with check(exists(select 1 from public.users u where u.id=(select auth.uid()) and u.role='admin' and u.account_status='active'));
-alter table public.zynth_trader_applications drop column if exists evidence_url;
-alter table public.zynth_daily_reports drop column if exists evidence_url;
+drop policy if exists "trader mt5 own select" on public.zynth_trader_mt5_credentials;
+create policy "trader mt5 own select" on public.zynth_trader_mt5_credentials for select to authenticated using((select auth.uid())=user_id);
+drop policy if exists "trader mt5 own insert" on public.zynth_trader_mt5_credentials;
+create policy "trader mt5 own insert" on public.zynth_trader_mt5_credentials for insert to authenticated with check((select auth.uid())=user_id);
+drop policy if exists "trader mt5 own update" on public.zynth_trader_mt5_credentials;
+create policy "trader mt5 own update" on public.zynth_trader_mt5_credentials for update to authenticated using((select auth.uid())=user_id) with check((select auth.uid())=user_id);
+drop policy if exists "admin mt5 select" on public.zynth_trader_mt5_credentials;
+create policy "admin mt5 select" on public.zynth_trader_mt5_credentials for select to authenticated using(exists(select 1 from public.users u where u.id=(select auth.uid()) and u.role='admin' and u.account_status='active'));
+drop policy if exists "admin mt5 update" on public.zynth_trader_mt5_credentials;
+create policy "admin mt5 update" on public.zynth_trader_mt5_credentials for update to authenticated using(exists(select 1 from public.users u where u.id=(select auth.uid()) and u.role='admin' and u.account_status='active')) with check(exists(select 1 from public.users u where u.id=(select auth.uid()) and u.role='admin' and u.account_status='active'));
 alter table public.system_settings drop column if exists require_settlement_evidence;
 -- The report submission RPC now requires a verified MT5 credential before accepting reports.
 -- Admin settings no longer expose or persist an evidence requirement.
+
