@@ -11,14 +11,16 @@ export default function LoginForm({ initialMode = "login", referralCode = "" }: 
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [message, setMessage] = useState("");
-  const [busy, setBusy] = useState(false);\n  const [refCode] = useState(referralCode || "");
+  const [busy, setBusy] = useState(false);
+  const [refCode] = useState(referralCode || "");
 
   async function submit(e: FormEvent) {
     e.preventDefault();
     setBusy(true);
     setMessage("");
     try {
-      const supabase = createSupabaseBrowserClient();\n      if (refCode) localStorage.setItem("zynth_referral_code", refCode);
+      const supabase = createSupabaseBrowserClient();
+      if (refCode) localStorage.setItem("zynth_referral_code", refCode);
       if (mode === "login") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) setMessage(error.message);
