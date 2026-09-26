@@ -3,7 +3,7 @@ async function admin(){const s=await createSupabaseServerClient();const {data:{u
 export async function GET(){try{const {s,user}=await admin();if(!user)return NextResponse.json({error:"Administrator access required."},{status:403});
  const [{data:applications},{data:traders},{data:users}]=await Promise.all([
   s.from("zynth_trader_applications").select("*,users!zynth_trader_applications_user_id_fkey(email,full_name)").in("status",["pending","under_review","more_info"]).order("created_at",{ascending:false}),
-  s.from("users").select("id,email,full_name,account_status,zynth_trader_profiles(status,display_name),zynth_strategies(id)").eq("role","trader").order("created_at",{ascending:false}),
+  s.from("users").select("id,email,full_name,account_status,zynth_trader_profiles(*),zynth_strategies(id)").eq("role","trader").order("created_at",{ascending:false}),
   s.from("users").select("id,email,full_name,account_status,created_at").eq("role","user").eq("account_status","active").order("created_at",{ascending:false}).limit(50)
  ]);
  const apps=(applications||[]).map((a:any)=>({...a,email:a.users?.email||null,user_name:a.users?.full_name||null,users:undefined}));
