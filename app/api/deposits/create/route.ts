@@ -6,11 +6,12 @@ export async function POST(request: Request) {
     const body = await request.json();
     const amount = Number(body?.amount);
     const method = String(body?.method || "manual");
+    const strategyId = body?.strategyId ? String(body.strategyId) : null;
     if (!Number.isFinite(amount) || amount <= 0) return NextResponse.json({ error: "Enter a valid amount." }, { status: 400 });
     const client = await createSupabaseServerClient();
     const { data: { user } } = await client.auth.getUser();
     if (!user) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
-    const { data, error } = await client.rpc("create_deposit_request", { p_user_id:user.id, p_amount:amount, p_method:method });
+    const { data, error } = await client.rpc("create_deposit_request", { p_user_id:user.id, p_amount:amount, p_method:method, p_strategy_id:strategyId });
     if (error) {
       const status = /BELOW_MINIMUM|INVALID_AMOUNT|INVALID_METHOD|DEPOSITS_DISABLED|AUTHORIZATION|PENDING_DEPOSIT_EXISTS|PENDING_WITHDRAWAL_EXISTS|ACCOUNT_RESTRICTED/.test(error.message) ? 400 : 503;
       const errorText =
