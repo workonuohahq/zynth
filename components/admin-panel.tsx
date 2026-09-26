@@ -6,6 +6,7 @@ import AdminUsers from "@/components/admin-users";
 import ThemeSwitcher from "@/components/theme-switcher";
 import AdminInvestmentSettings from "@/components/admin-investment-settings";
 import AdminStrategyForm from "@/components/admin-strategy-form";
+import AdminTraders from "@/components/admin-traders";
 
 const money=(n:any)=>`₦${Number(n||0).toLocaleString("en-NG",{minimumFractionDigits:2,maximumFractionDigits:2})}`;
 const pct=(n:any)=>`${Number(n||0).toFixed(2)}%`;
@@ -60,7 +61,7 @@ export default function AdminPanel({initialData,adminEmail}:{initialData:any;adm
 
    {tab==="investors"&&<section className="admin-section"><section className="admin-card admin-users-card"><div className="admin-card-head"><div><span className="muted">INVESTOR DIRECTORY</span><h2>Investors</h2><p>Account status and portfolio controls.</p></div></div><AdminUsers initialUsers={[]}/></section></section>}
 
-   {tab==="traders"&&<section className="admin-section"><section className="admin-card"><div className="admin-card-head"><div><span className="muted">TRADER DESK</span><h2>Assigned traders</h2><p>Only assigned traders can submit daily reports for a strategy.</p></div></div><div className="admin-table">{traders.map((t:any)=><div className="admin-row" key={t.id}><div className="admin-person"><span className="avatar">T</span><span><b>{t.full_name||"Unnamed trader"}</b><small>{t.email}</small></span></div><span>Trader</span><strong>Active</strong></div>)}</div></section></section>}
+   {tab==="traders"&&<AdminTraders onSaved={load}/>} 
 
    {tab==="withdrawals"&&<section className="admin-section"><section className="admin-card"><div className="admin-card-head"><div><span className="muted">MONEY MOVEMENT</span><h2>Withdrawal operations</h2><p>Existing withdrawal controls remain available while profit eligibility is enforced by the Vault layer.</p></div><Link className="text-action" href="/admin/withdrawals">Open queue <ChevronRight size={13}/></Link></div></section></section>}
 
