@@ -30,6 +30,42 @@ export default function AdminTraders({ onSaved, refreshKey }: { onSaved: () => v
   }
   useEffect(() => { load(); }, [refreshKey]);
 
+  async function openMt5Review(userId: string) {
+    setBusy("mt5-review-"+userId);
+    setRevealedMt5(null);
+    try {
+      const r = await fetch("/api/admin/traders?userId="+encodeURIComponent(userId), { cache: "no-store" });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || "Unable to load this user's profile.");
+      const p = j.profile || {};
+      const traderProfile = j.trader || j.application || p;
+      const trader = {
+        id: p.id || userId,
+        email: p.email,
+        full_name: p.full_name,
+        display_name: p.display_name,
+        role: p.role,
+        account_type: p.account_type,
+        profile: traderProfile,
+        mt5: j.credentials ? {
+          mt5_login: j.credentials.mt5Login,
+          mt5_server: j.credentials.mt5Server,
+          status: j.credentials.status,
+          submitted_at: j.credentials.submittedAt,
+          verified_at: j.credentials.verifiedAt,
+          rejection_reason: j.credentials.rejectionReason,
+          change_requested: j.credentials.changeRequested
+        } : null
+      };
+      setTab("traders");
+      setSelected({ profile: traderProfile, trader, user: p, application: j.application || null });
+    } catch (e: any) {
+      window.alert(e?.message || "Unable to load trader profile.");
+    } finally {
+      setBusy("");
+    }
+  }
+
   async function action(body: any, key: string) {
     setBusy(key);
     const r = await fetch("/api/admin/traders", {
@@ -69,7 +105,7 @@ export default function AdminTraders({ onSaved, refreshKey }: { onSaved: () => v
   };
 
   const profile = selected?.profile || selected?.application || selected;
-  const mt5 = selected?.trader?.mt5 || null;
+  const mt5 = selected?.trader?.mt5 || (selected?.mt5 ? selected.mt5 : null);
 
   return (
     <section className="admin-section trader-command-center">
@@ -105,7 +141,7 @@ export default function AdminTraders({ onSaved, refreshKey }: { onSaved: () => v
               <div className="trader-mt5-submitted"><strong>{m.submitted_at ? new Date(m.submitted_at).toLocaleDateString("en-NG",{day:"2-digit",month:"short",year:"numeric"}) : "—"}</strong><span>{m.submitted_at ? new Date(m.submitted_at).toLocaleTimeString("en-NG",{hour:"2-digit",minute:"2-digit"}) : ""}</span></div>
               <div><span className="trader-mt5-pending-badge"><i/> Pending</span></div>
               <div className="trader-mt5-row-actions">
-                <button className="details" onClick={() => { setTab("traders"); if (trader) setSelected({profile: trader.profile || {}, trader}); }}><Eye size={13}/> Review</button>
+                <button className="details" disabled={busy==="mt5-review-"+m.user_id} onClick={() => openMt5Review(m.user_id)}><Eye size={13}/>{busy==="mt5-review-"+m.user_id ? "Loading…" : "Review"}</button>
               </div>
             </div>
           })}
