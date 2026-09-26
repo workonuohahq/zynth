@@ -110,7 +110,8 @@ export default function AdminPanel({initialData,adminEmail}:{initialData:any;adm
    {tab==="redemptions"&&<section className="admin-section"><section className="admin-card"><div className="admin-card-head"><div><span className="muted">INVESTMENT LIQUIDITY</span><h2>Investor exits</h2><p>Redemptions are unit-based, NAV-priced and released only after the configured approval and delay rules.</p></div><Link className="text-action" href="/admin/redemptions">Open redemption control <ChevronRight size={13}/></Link></div></section></section>}
 
    {tab==="settings"&&<section className="admin-section"><section className="admin-card settings-card"><div className="admin-card-head"><div><span className="muted">SYSTEM RULES</span><h2>Settlement & Vault controls</h2><p>Configure the investor engine, profit lock and operating thresholds. Changes are audited.</p></div></div><AdminInvestmentSettings/><div className="rule-list" style={{marginTop:20}}><div><span>Settlement model</span><b>Trader report → admin confirm → NAV</b></div><div><span>MT5 automation</span><b>Removed</b></div></div></section></section>}
-   {tab==="notifications"&&<AdminNotificationCenter initialTemplates={notificationTemplates}/>}\n   {tab==="referrals"&&<AdminReferralCenter/>}
+   {tab==="notifications"&&<AdminNotificationCenter initialTemplates={notificationTemplates}/>}
+   {tab==="referrals"&&<AdminReferralCenter/>}
   </main>
 
   {preview&&<div className="settlement-modal-backdrop" role="presentation" onMouseDown={closePreview}><section className="settlement-modal" role="dialog" aria-modal="true" aria-label="Settlement preview" onMouseDown={e=>e.stopPropagation()}>
