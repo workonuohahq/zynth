@@ -1,3 +1,4 @@
+drop function if exists public.zynth_submit_daily_report(uuid,date,numeric,numeric,numeric,text,boolean);
 -- Trader valuation reporting: time window, one report per cycle, and realized/unrealized P&L.
 alter table public.system_settings
   add column if not exists trader_report_start_time time without time zone not null default '06:00:00',
