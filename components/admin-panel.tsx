@@ -1,25 +1,27 @@
 "use client";
 import {useEffect,useState} from "react";
 import Link from "next/link";
-import {ArrowDownToLine,ArrowLeftRight,BarChart3,CheckCircle2,ChevronRight,Clock3,ExternalLink,Eye,RefreshCw,Settings2,ShieldCheck,TrendingUp,Users,X,XCircle,Pencil,Pause,Play,Archive,Trash2} from "lucide-react";
+import {ArrowDownToLine,ArrowLeftRight,BarChart3,Bell,CheckCircle2,ChevronRight,Clock3,ExternalLink,Eye,RefreshCw,Settings2,ShieldCheck,TrendingUp,Users,X,XCircle,Pencil,Pause,Play,Archive,Trash2} from "lucide-react";
 import AdminUsers from "@/components/admin-users";
 import ThemeSwitcher from "@/components/theme-switcher";
 import AdminInvestmentSettings from "@/components/admin-investment-settings";
 import AdminStrategyForm from "@/components/admin-strategy-form";
 import AdminTraders from "@/components/admin-traders";
+import AdminNotificationCenter from "@/components/admin-notification-center";
 
 const money=(n:any)=>`₦${Number(n||0).toLocaleString("en-NG",{minimumFractionDigits:2,maximumFractionDigits:2})}`;
 const pct=(n:any)=>`${Number(n||0).toFixed(2)}%`;
 
 export default function AdminPanel({initialData,adminEmail}:{initialData:any;adminEmail:string}){
- const[data,setData]=useState(initialData||{}),[tab,setTab]=useState("overview"),[moneyOpen,setMoneyOpen]=useState(false),[reports,setReports]=useState<any[]>([]),[history,setHistory]=useState<any[]>([]),[strategies,setStrategies]=useState<any[]>([]),[traders,setTraders]=useState<any[]>([]),[editingStrategy,setEditingStrategy]=useState<any>(null),[busy,setBusy]=useState(""),[notice,setNotice]=useState(""),[preview,setPreview]=useState<any>(null),[previewBusy,setPreviewBusy]=useState("");
+ const[data,setData]=useState(initialData||{}),[tab,setTab]=useState("overview"),[moneyOpen,setMoneyOpen]=useState(false),[reports,setReports]=useState<any[]>([]),[history,setHistory]=useState<any[]>([]),[strategies,setStrategies]=useState<any[]>([]),[traders,setTraders]=useState<any[]>([]),[editingStrategy,setEditingStrategy]=useState<any>(null),[notificationTemplates,setNotificationTemplates]=useState<any[]>([]),[busy,setBusy]=useState(""),[notice,setNotice]=useState(""),[preview,setPreview]=useState<any>(null),[previewBusy,setPreviewBusy]=useState("");
  async function load(){
-  const [q,s,t]=await Promise.all([
+  const [q,s,t,n]=await Promise.all([
    fetch("/api/admin/settlements").then(r=>r.json()),
    fetch("/api/admin/strategies").then(r=>r.json()),
-   fetch("/api/admin/traders").then(r=>r.json())
+   fetch("/api/admin/traders").then(r=>r.json()),
+   fetch("/api/admin/notification-templates").then(r=>r.json())
   ]);
-  setReports(q.reports||[]);setHistory(q.history||[]);setStrategies(s.strategies||[]);setTraders(t.traders||[]);
+  setReports(q.reports||[]);setHistory(q.history||[]);setStrategies(s.strategies||[]);setTraders(t.traders||[]);setNotificationTemplates(n.templates||[]);
  }
  useEffect(()=>{load()},[]);
  async function act(id:string,a:string){
@@ -50,7 +52,8 @@ export default function AdminPanel({initialData,adminEmail}:{initialData:any;adm
       {k:"settlements",l:"Settlements",i:Clock3,b:data.pending_reports},
       {k:"strategies",l:"Strategies",i:TrendingUp,b:data.strategies},
       {k:"investors",l:"Investors",i:Users,b:data.investors},
-      {k:"traders",l:"Traders",i:ShieldCheck,b:data.traders}
+      {k:"traders",l:"Traders",i:ShieldCheck,b:data.traders},
+      {k:"notifications",l:"Notifications",i:Bell,b:0}
     ].map(({k,l,i:Icon,b})=><button key={k} className={tab===k?"admin-list-item active":"admin-list-item"} onClick={()=>setTab(k)}><span className="admin-list-icon"><Icon size={16}/></span><span className="admin-list-label">{l}</span>{b>0&&<em>{b}</em>}</button>)}
     <div className={"admin-money-nav "+(moneyOpen||["deposits","withdrawals","redemptions"].includes(tab)?"open":"")}>
       <button className={["deposits","withdrawals","redemptions"].includes(tab)?"admin-list-item active":"admin-list-item"} onClick={()=>setMoneyOpen(v=>!v)} aria-expanded={moneyOpen}>
@@ -105,6 +108,7 @@ export default function AdminPanel({initialData,adminEmail}:{initialData:any;adm
    {tab==="redemptions"&&<section className="admin-section"><section className="admin-card"><div className="admin-card-head"><div><span className="muted">INVESTMENT LIQUIDITY</span><h2>Investor exits</h2><p>Redemptions are unit-based, NAV-priced and released only after the configured approval and delay rules.</p></div><Link className="text-action" href="/admin/redemptions">Open redemption control <ChevronRight size={13}/></Link></div></section></section>}
 
    {tab==="settings"&&<section className="admin-section"><section className="admin-card settings-card"><div className="admin-card-head"><div><span className="muted">SYSTEM RULES</span><h2>Settlement & Vault controls</h2><p>Configure the investor engine, profit lock and operating thresholds. Changes are audited.</p></div></div><AdminInvestmentSettings/><div className="rule-list" style={{marginTop:20}}><div><span>Settlement model</span><b>Trader report → admin confirm → NAV</b></div><div><span>MT5 automation</span><b>Removed</b></div></div></section></section>}
+   {tab==="notifications"&&<AdminNotificationCenter initialTemplates={notificationTemplates}/>}
   </main>
 
   {preview&&<div className="settlement-modal-backdrop" role="presentation" onMouseDown={closePreview}><section className="settlement-modal" role="dialog" aria-modal="true" aria-label="Settlement preview" onMouseDown={e=>e.stopPropagation()}>
