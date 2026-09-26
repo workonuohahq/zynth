@@ -13,12 +13,15 @@ export async function POST(request: Request) {
     if (!user) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
     const { data, error } = await client.rpc("create_deposit_request", { p_user_id:user.id, p_amount:amount, p_method:method, p_strategy_id:strategyId });
     if (error) {
-      const status = /BELOW_MINIMUM|INVALID_AMOUNT|INVALID_METHOD|DEPOSITS_DISABLED|AUTHORIZATION|PENDING_DEPOSIT_EXISTS|PENDING_WITHDRAWAL_EXISTS|ACCOUNT_RESTRICTED/.test(error.message) ? 400 : 503;
+      const status = /BELOW_MINIMUM|BELOW_MINIMUM_INVESTMENT|ABOVE_MAXIMUM_INVESTMENT|STRATEGY_UNAVAILABLE|INVALID_AMOUNT|INVALID_METHOD|DEPOSITS_DISABLED|AUTHORIZATION|PENDING_DEPOSIT_EXISTS|PENDING_WITHDRAWAL_EXISTS|ACCOUNT_RESTRICTED/.test(error.message) ? 400 : 503;
       const errorText =
         error.message === "DEPOSITS_DISABLED" ? "Deposits are temporarily paused." :
         error.message === "ACCOUNT_RESTRICTED" ? "This account is restricted from creating new funding requests. Contact support if you believe this is an error." :
         error.message === "PENDING_DEPOSIT_EXISTS" ? "You already have a pending deposit. Check Activity to view its status or cancel it before starting another." :
         error.message === "PENDING_WITHDRAWAL_EXISTS" ? "You have a pending withdrawal. Complete or cancel it before starting a new deposit." :
+        error.message === "BELOW_MINIMUM_INVESTMENT" ? "That amount is below this strategy's minimum investment." :
+        error.message === "ABOVE_MAXIMUM_INVESTMENT" ? "That amount is above this strategy's maximum investment." :
+        error.message === "STRATEGY_UNAVAILABLE" ? "That strategy is no longer available for investment." :
         error.message;
       return NextResponse.json({ error:errorText || "Unable to start the payment request.", code:error.message }, { status });
     }
