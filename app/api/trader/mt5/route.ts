@@ -1,35 +1,18 @@
 import {NextResponse} from "next/server";
 import {createSupabaseServerClient} from "@/lib/supabase/server";
 import {encryptMt5Secret} from "@/lib/mt5-credentials";
-
-async function auth(){
- const s=await createSupabaseServerClient();
- const {data:{user}}=await s.auth.getUser();
- if(!user) return {s,user:null};
- const {data:p}=await s.from("users").select("role,account_status").eq("id",user.id).single();
- if(p?.role!=="trader"||p.account_status!=="active") return {s,user:null};
- return {s,user};
-}
-export async function GET(){
- const {s,user}=await auth(); if(!user)return NextResponse.json({error:"Trader access required."},{status:403});
- const {data,error}=await s.from("zynth_trader_mt5_credentials").select("id,mt5_login,mt5_server,status,submitted_at,verified_at,rejection_reason,updated_at").eq("user_id",user.id).maybeSingle();
- if(error)return NextResponse.json({error:error.message},{status:400});
- return NextResponse.json({credentials:data?{...data,investor_password_set:true}:null});
-}
-export async function POST(req:Request){
- const {s,user}=await auth(); if(!user)return NextResponse.json({error:"Trader access required."},{status:403});
- const b=await req.json().catch(()=>({}));
- const login=String(b.mt5Login||"").trim();
- const server=String(b.mt5Server||"").trim();
- const password=String(b.investorPassword||"");
- if(!/^\d{4,20}$/.test(login))return NextResponse.json({error:"Enter a valid MT5 login number."},{status:400});
- if(server.length<2||server.length>160)return NextResponse.json({error:"Enter your MT5 broker server exactly as shown in MT5."},{status:400});
- if(password.length<4||password.length>200)return NextResponse.json({error:"Enter a valid investor password."},{status:400});
- let encrypted:string; try{encrypted=encryptMt5Secret(password)}catch(e:any){return NextResponse.json({error:e.message},{status:500});}
- const {data,error}=await s.from("zynth_trader_mt5_credentials").upsert({
-   user_id:user.id,mt5_login:login,mt5_server:server,investor_password_ciphertext:encrypted,
-   status:"pending",submitted_at:new Date().toISOString(),verified_at:null,verified_by:null,rejection_reason:null,updated_at:new Date().toISOString()
- },{onConflict:"user_id"}).select("id,mt5_login,mt5_server,status,submitted_at,verified_at,rejection_reason,updated_at").single();
- if(error)return NextResponse.json({error:error.message},{status:400});
- return NextResponse.json({credentials:{...data,investor_password_set:true},message:"MT5 details submitted for administrator verification."});
-}
+async function auth(){const s=await createSupabaseServerClient();const {data:{user}}=await s.auth.getUser();if(!user)return{s,user:null};const {data:p}=await s.from("users").select("role,account_status").eq("id",user.id).single();if(p?.role!=="trader"||p.account_status!=="active")return{s,user:null};return{s,user};}
+export async function GET(){const {s,user}=await auth();if(!user)return NextResponse.json({error:"Trader access required."},{status:403});const {data,error}=await s.from("zynth_trader_mt5_credentials").select("id,mt5_login,mt5_server,status,submitted_at,verified_at,rejection_reason,updated_at,change_requested,change_requested_at").eq("user_id",user.id).maybeSingle();if(error)return NextResponse.json({error:error.message},{status:400});return NextResponse.json({credentials:data?{...data,investor_password_set:true}:null});}
+export async function POST(req:Request){const {s,user}=await auth();if(!user)return NextResponse.json({error:"Trader access required."},{status:403});const b=await req.json().catch(()=>({}));const action=String(b.action||"submit");
+const {data:current,error:readError}=await s.from("zynth_trader_mt5_credentials").select("*").eq("user_id",user.id).maybeSingle();if(readError)return NextResponse.json({error:readError.message},{status:400});
+if(action==="request_change"){if(!current||current.status!=="verified")return NextResponse.json({error:"MT5 details must be verified before requesting a change."},{status:400});if(current.change_requested)return NextResponse.json({error:"A MT5 change request is already pending."},{status:409});const {data,error}=await s.from("zynth_trader_mt5_credentials").update({change_requested:true,change_requested_at:new Date().toISOString(),rejection_reason:null,updated_at:new Date().toISOString()}).eq("user_id",user.id).select("id,status,change_requested,change_requested_at").single();if(error)return NextResponse.json({error:error.message},{status:400});return NextResponse.json({credentials:data,message:"MT5 change request opened. Submit the replacement details for verification."});}
+const login=String(b.mt5Login||"").trim(),server=String(b.mt5Server||"").trim(),password=String(b.investorPassword||"");if(!/^\d{4,20}$/.test(login))return NextResponse.json({error:"Enter a valid MT5 login number."},{status:400});if(server.length<2||server.length>160)return NextResponse.json({error:"Enter your MT5 broker server exactly as shown in MT5."},{status:400});if(password.length<4||password.length>200)return NextResponse.json({error:"Enter a valid investor password."},{status:400});
+if(current?.status==="pending"&&!current.change_requested)return NextResponse.json({error:"Your MT5 details are already submitted and awaiting administrator verification."},{status:409});
+if(current?.status==="verified"&&!current.change_requested)return NextResponse.json({error:"Your MT5 details are already verified. Request a change before submitting replacement details."},{status:409});
+let encrypted:string;try{encrypted=encryptMt5Secret(password)}catch(e:any){return NextResponse.json({error:e.message},{status:500});}
+const isChange=Boolean(current?.change_requested&&current?.status==="verified");
+const payload:any={mt5_login:login,mt5_server:server,investor_password_ciphertext:encrypted,status:"pending",submitted_at:new Date().toISOString(),verified_at:null,verified_by:null,rejection_reason:null,updated_at:new Date().toISOString(),change_requested:false};
+if(isChange){payload.previous_mt5_login=current.mt5_login;payload.previous_mt5_server=current.mt5_server;payload.previous_investor_password_ciphertext=current.investor_password_ciphertext;payload.change_requested_at=current.change_requested_at;}
+else{payload.previous_mt5_login:null;payload.previous_mt5_server:null;payload.previous_investor_password_ciphertext:null;payload.change_requested_at:null;}
+const {data,error}=current?await s.from("zynth_trader_mt5_credentials").update(payload).eq("user_id",user.id).select("id,mt5_login,mt5_server,status,submitted_at,verified_at,rejection_reason,updated_at,change_requested,change_requested_at").single():await s.from("zynth_trader_mt5_credentials").insert({...payload,user_id:user.id}).select("id,mt5_login,mt5_server,status,submitted_at,verified_at,rejection_reason,updated_at,change_requested,change_requested_at").single();
+if(error)return NextResponse.json({error:error.message},{status:400});return NextResponse.json({credentials:{...data,investor_password_set:true},message:isChange?"Replacement MT5 details submitted. Trader Desk is pending administrator verification.":"MT5 details submitted for administrator verification."});}
