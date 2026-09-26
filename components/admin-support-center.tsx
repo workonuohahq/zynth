@@ -1,7 +1,7 @@
 "use client";
 import {useEffect,useMemo,useState} from "react";
 import {createSupabaseBrowserClient} from "@/lib/supabase/client";
-import {AlertTriangle,CheckCircle2,ChevronRight,Clock3,Headphones,MessageCircle,RefreshCw,Send,ShieldCheck,Ticket,UserRound} from "lucide-react";
+import {AlertTriangle,CheckCircle2,ChevronRight,Clock3,Headphones,MessageCircle,Send,ShieldCheck,Ticket,UserRound} from "lucide-react";
 const fmt=(d:string)=>new Date(d).toLocaleString("en-NG",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});
 const label=(s:string)=>s.replaceAll("_"," ");
 export default function AdminSupportCenter({refreshKey=0}:{refreshKey?:number}){
@@ -14,7 +14,7 @@ export default function AdminSupportCenter({refreshKey=0}:{refreshKey?:number}){
  async function send(){const body=composer.trim();if(!body||!selected||sending)return;setSending(true);setComposer("");const r=await fetch("/api/admin/support",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({action:"message",ticketId:selected.id,body})});const j=await r.json();if(!r.ok){setComposer(body);setNotice(j.error||"Message failed.")}else await load(selected.id,true);setSending(false)}
  const counts=tickets.reduce((a,t)=>(a[t.status]=(a[t.status]||0)+1,a),{} as any);
  return <section className="admin-section customer-service-admin">
-  <div className="support-admin-head"><div><span className="muted">CUSTOMER SERVICE</span><h2>Support desk</h2><p>Live customer conversations, ticket control and account context in one workspace.</p></div><button className="ghost" onClick={()=>load()} disabled={loading}><RefreshCw size={14} className={loading?"spin":""}/> Refresh</button></div>
+  <div className="support-admin-head"><div><span className="muted">CUSTOMER SERVICE</span><h2>Support desk</h2><p>Live customer conversations, ticket control and account context in one workspace.</p></div></div>
   {notice&&<div className="admin-notice">{notice}</div>}
   <div className="support-admin-kpis"><div><MessageCircle size={17}/><span>Open</span><b>{counts.open||0}</b></div><div><Clock3 size={17}/><span>In progress</span><b>{counts.in_progress||0}</b></div><div><AlertTriangle size={17}/><span>Urgent</span><b>{tickets.filter(t=>t.priority==="urgent"&&t.status!=="closed").length}</b></div><div><CheckCircle2 size={17}/><span>Resolved</span><b>{counts.resolved||0}</b></div></div>
   <div className="support-admin-shell">
