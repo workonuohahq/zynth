@@ -1,0 +1,21 @@
+"use client";
+import {useEffect,useState} from "react";
+import Link from "next/link";
+import {ArrowLeft,CheckCircle2,Copy,Gift,Share2,Users} from "lucide-react";
+const money=(n:any)=>"₦"+Number(n||0).toLocaleString("en-NG",{minimumFractionDigits:2,maximumFractionDigits:2});
+export default function ReferralsPage(){const[d,setD]=useState<any>({});const[e,setE]=useState("");const[m,setM]=useState("");
+useEffect(()=>{fetch("/api/referral").then(r=>r.json()).then(setD)},[]);
+useEffect(()=>{const c=new URLSearchParams(location.search).get("ref");if(c)setE(c)},[]);
+async function claim(){const r=await fetch("/api/referral",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({code:e})});const j=await r.json();setM(r.ok?"Referral attribution saved.":j.error||"Could not apply referral code.");if(r.ok)location.reload();}
+async function copy(){await navigator.clipboard?.writeText(location.origin+(d.link||""));setM("Referral link copied.");}
+return <main className="referral-page"><div className="referral-shell"><Link href="/dashboard" className="back-link"><ArrowLeft size={15}/> Dashboard</Link>
+<header className="referral-user-hero"><div><span className="eyebrow">ZYNTH / GROWTH</span><h1>Refer. Build. Earn.</h1><p>Invite people you trust to ZYNTH. Rewards are earned only when a referred user completes the programme's qualifying investment requirement.</p></div><Gift size={42}/></header>
+{!d.enabled&&<div className="referral-disabled">The referral programme is currently paused. Your existing referral history remains preserved.</div>}
+<section className="referral-link-card"><div><span className="muted">YOUR REFERRAL LINK</span><strong>{location.origin}{d.link||"/login?mode=signup"}</strong><small>Code: {d.code||"Generating…"}</small></div><div className="referral-link-actions"><button onClick={copy}><Copy size={15}/> Copy</button><button onClick={()=>{if(navigator.share)navigator.share({title:"Join ZYNTH",url:location.origin+d.link})}}><Share2 size={15}/> Share</button></div></section>
+<div className="referral-stats"><div><Users size={17}/><span>People joined</span><b>{d.total_referrals||0}</b></div><div><CheckCircle2 size={17}/><span>Qualified</span><b>{d.qualified_referrals||0}</b></div><div><Gift size={17}/><span>Total earned</span><b>{money(d.total_earned)}</b></div><div><Gift size={17}/><span>Pending</span><b>{money(d.pending_rewards)}</b></div></div>
+<section className="referral-explainer"><div><span>01</span><h3>They join</h3><p>Your unique link attributes the new account to you. Attribution is locked once accepted.</p></div><div><span>02</span><h3>They qualify</h3><p>Their first qualifying investment must meet the active minimum within the programme window.</p></div><div><span>03</span><h3>You earn</h3><p>The reward enters review first. When approved, it is credited through the normal ZYNTH wallet ledger.</p></div></section>
+{d.referrals?.length>0&&<section className="referral-history panel"><div className="panel-head"><div><span className="muted">REFERRAL HISTORY</span><h2>Your network</h2></div></div>{d.referrals.map((r:any)=><div className="referral-history-row" key={r.id}><span className="avatar">R</span><div><b>{r.name}</b><small>{new Date(r.created_at).toLocaleDateString("en-NG")} · {r.status}</small></div><strong>{r.status==="rewarded"?"Rewarded":r.status==="reward_pending"?"Reward pending":"In progress"}</strong></div>)}</section>}
+<section className="referral-rules"><span className="muted">PROGRAMME RULES</span><p>Current qualifying minimum: <b>{money(d.min_qualifying_investment)}</b>. {d.percent_reward>0?("Reward rate: "+d.percent_reward+"%, capped at "+money(d.reward_cap)+"."):("Fixed reward: "+money(d.fixed_reward)+".")}</p></section>
+{m&&<div className="referral-toast">{m}</div>}
+{e&&<section className="referral-claim panel"><span className="muted">REFERRAL CODE DETECTED</span><h2>{e}</h2><p>Apply this code to your account before you make a qualifying investment.</p><button className="primary" onClick={claim}>Apply referral code</button></section>}
+</div></main>}
