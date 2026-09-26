@@ -8,7 +8,8 @@ export default function AdminStrategyForm({ traders, onSaved }: { traders: any[]
   const [description, setDescription] = useState("");
   const [traderId, setTraderId] = useState("");
   const [starting, setStarting] = useState("200000");
-  const [minimum, setMinimum] = useState("5000");
+  const [minimum, setMinimum] = useState("5500");
+  const [maximum, setMaximum] = useState("");
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -39,6 +40,7 @@ export default function AdminStrategyForm({ traders, onSaved }: { traders: any[]
         traderId: traderId || null,
         startingBalance: Number(starting),
         minimumInvestment: Number(minimum),
+        maximumInvestment: maximum ? Number(maximum) : null,
         status: "active",
       }),
     });
@@ -174,7 +176,7 @@ export default function AdminStrategyForm({ traders, onSaved }: { traders: any[]
               <strong>Ready to publish this strategy?</strong>
               <small>Publishing creates the strategy shell and makes it available according to the current investment settings.</small>
             </div>
-            <button className="strategy-publish-button" onClick={save} disabled={busy || !name.trim() || !traderId || Number(starting) <= 0 || Number(minimum) <= 0}>
+            <button className="strategy-publish-button" onClick={save} disabled={busy || !name.trim() || !traderId || Number(starting) <= 0 || Number(minimum) <= 0 || (maximum !== "" && Number(maximum) < Number(minimum))}>
               {busy ? "Publishing…" : <><Plus size={15} /> Publish strategy</>}
             </button>
           </div>
@@ -200,7 +202,7 @@ export default function AdminStrategyForm({ traders, onSaved }: { traders: any[]
 
             <div className="strategy-preview-metrics">
               <div><span>Starting balance</span><strong>{money(starting)}</strong></div>
-              <div><span>Minimum entry</span><strong>{money(minimum)}</strong></div>
+              <div><span>Minimum entry</span><strong>{money(minimum)}</strong></div>\n              <div><span>Maximum entry</span><strong>{maximum ? money(maximum) : "No cap"}</strong></div>
             </div>
 
             <div className="strategy-preview-description">
