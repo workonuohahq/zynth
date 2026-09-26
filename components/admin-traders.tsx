@@ -107,7 +107,7 @@ export default function AdminTraders({ onSaved, refreshKey }: { onSaved: () => v
     mt5Pending: Number(data.mt5_pending_count || 0),
   };
 
-  const profile = selected?.profile || selected?.application || selected;
+  const profile = selected?.profile || selected;
   const mt5 = selected?.trader?.mt5 || (selected?.mt5 ? selected.mt5 : null);
 
   return (
@@ -254,7 +254,7 @@ export default function AdminTraders({ onSaved, refreshKey }: { onSaved: () => v
               </div>}
               {mt5?.status==="verified" && <div className="trader-mt5-admin-actions"><button className="details" onClick={async()=>{const r=await fetch("/api/admin/traders?userId="+encodeURIComponent(selected.trader.id),{cache:"no-store"});const j=await r.json();if(r.ok)setRevealedMt5(j.credentials);else window.alert(j.error||"Unable to load credentials.");}}><KeyRound size={13}/> View credentials</button></div>}
               {revealedMt5 && <div className="trader-mt5-secret"><div><span>MT5 login</span><b>{revealedMt5.mt5Login}</b></div><div><span>Server</span><b>{revealedMt5.mt5Server}</b></div><div><span>Investor password</span><b>{revealedMt5.investorPassword}</b><button onClick={()=>setRevealedMt5(null)} aria-label="Hide credentials">{revealedMt5?<EyeOff size={13}/>:<Eye size={13}/>}</button></div></div>}
-            </div>}{false && <div className="trader-drawer-decision"><span>DECISION</span><div><button className="approve" onClick={()=>action({action:"approve",applicationId:selected.application.id,note},"drawer-approve")}><CheckCircle2 size={13}/> Approve trader</button><button className="details" onClick={()=>action({action:"more_info",applicationId:selected.application.id,note},"drawer-info")}>Request more info</button><button className="reject" onClick={()=>action({action:"reject",applicationId:selected.application.id,note},"drawer-reject")}><XCircle size={13}/> Reject</button></div></div>}
+            </div>}
           </aside>
         </div>
       )}
