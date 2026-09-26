@@ -6,7 +6,32 @@ const money=(n:any)=>`₦${Number(n||0).toLocaleString("en-NG",{minimumFractionD
 export default function Investments(){
  const [strategies,setStrategies]=useState<any[]>([]),[cash,setCash]=useState(0),[amounts,setAmounts]=useState<Record<string,string>>({}),[msg,setMsg]=useState("");
  useEffect(()=>{Promise.all([fetch("/api/account/summary").then(r=>r.json()),fetch("/api/strategies").then(r=>r.json())]).then(([s,p])=>{setCash(Number(s.summary?.cash||0));setStrategies(p.strategies||[])}).catch(()=>{});},[]);
- async function invest(id:string){const amount=Number(amounts[id]||0);if(!amount)return;setMsg("");const r=await fetch("/api/investments/create",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({strategyId:id,amount})});const d=await r.json();if(!r.ok){setMsg(d.error||"Unable to invest.");return}setMsg("Investment created successfully.");setCash(cash-amount);setAmounts({...amounts,[id]:""});}
+ async function invest(id:string){
+ const amount=Number(amounts[id]||0);
+ if(!Number.isFinite(amount)||amount<=0){setMsg("Enter a valid investment amount.");return;}
+ const strategy=strategies.find(s=>s.id===id);
+ if(strategy?.minimum_investment&&amount<Number(strategy.minimum_investment)){setMsg(`Minimum investment is ${money(strategy.minimum_investment)}.`);return;}
+ if(strategy?.maximum_investment&&amount>Number(strategy.maximum_investment)){setMsg(`Maximum investment is ${money(strategy.maximum_investment)}.`);return;}
+ setMsg("");
+ const r=await fetch("/api/investments/create",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({strategyId:id,amount})});
+ const d=await r.json();
+ if(r.ok){setMsg("Investment created successfully.");setCash(cash-amount);setAmounts({...amounts,[id]:""});return;}
+ if(d.code==="INSUFFICIENT_AVAILABLE_BALANCE"||/INSUFFICIENT_AVAILABLE_BALANCE/i.test(String(d.error||""))){
+   const dep=await fetch("/api/deposits/create",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({amount,method:"manual"})});
+   const dd=await dep.json();
+   if(!dep.ok){
+     if(dd.code==="PENDING_DEPOSIT_EXISTS"){setMsg("You already have a pending deposit. Open Activity to continue that payment before investing.");}
+     else if(dd.code==="BELOW_MINIMUM"){setMsg(`The investment amount is below the platform deposit minimum of ${money(dd.minimum||0)}.`);}
+     else setMsg(dd.error||"Unable to start the funding request.");
+     return;
+   }
+   const requestId=dd.request?.id;
+   if(!requestId){setMsg("Funding request created, but the payment page could not be opened.");return;}
+   window.location.href=`/dashboard/deposit/${requestId}?returnTo=${encodeURIComponent("/dashboard/investments?strategyId="+id+"&amount="+amount)}`;
+   return;
+ }
+ setMsg(d.error||"Unable to invest.");
+}
  return <section className="dashboard-content"><header className="dashboard-header"><div><span className="eyebrow">ZYNTH / INVESTMENTS</span><h1>Choose a strategy.</h1><p>Own units in a strategy and let confirmed daily performance determine your position value.</p></div><Link className="fund-btn secondary-dark" href="/dashboard">Overview <ArrowUpRight size={15}/></Link></header>
  <div className="wealth-hero"><div className="wealth-main"><div className="wealth-label"><span>Available cash</span><span className="secure-chip"><ShieldCheck size={13}/> Settlement based</span></div><strong>{money(cash)}</strong><div className="wealth-breakdown"><span><i className="dot available"/> Cash available for investment</span></div></div><div className="wealth-side"><div><span>Live strategies</span><b>{strategies.length}</b></div><div><span>Model</span><b>NAV + units</b></div><div><span>Settlement</span><b>Daily</b></div></div></div>
  {msg&&<div className="notice">{msg}</div>}
