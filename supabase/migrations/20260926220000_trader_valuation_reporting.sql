@@ -31,7 +31,7 @@ declare s public.zynth_strategies%rowtype;cfg record;local_now timestamp;local_d
  cycle_date date;start_t time;end_t time;opening numeric;prior_unrealized numeric;expected_pnl numeric;reported_pnl numeric;rid uuid;
 begin
  if auth.uid() is null then raise exception 'AUTHORIZATION_REQUIRED'; end if;
- if not exists(select 1 from public.zynth_trader_profiles tp where tp.user_id=auth.uid() and tp.status='approved') then raise exception 'TRADER_PROFILE_REQUIRED'; end if;
+ if not exists(select 1 from public.zynth_trader_profiles tp where tp.user_id=auth.uid() and tp.status in ('approved','active')) then raise exception 'TRADER_PROFILE_REQUIRED'; end if;
  if not exists(select 1 from public.zynth_trader_mt5_credentials c where c.user_id=auth.uid() and c.status='verified') then raise exception 'MT5_VERIFICATION_REQUIRED'; end if;
  select * into cfg from public.system_settings limit 1;
  start_t:=coalesce(cfg.trader_report_start_time,'06:00:00');end_t:=coalesce(cfg.trader_report_end_time,'23:00:00');
