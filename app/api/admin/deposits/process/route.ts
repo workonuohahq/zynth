@@ -14,7 +14,7 @@ export async function POST(request: Request) {
 
     if (!depositId) return NextResponse.json({ error: "Deposit request is required." }, { status: 400 });
 
-    const { data, error } = await client.rpc("admin_process_deposit", {
+    const { data, error } = await client.rpc("zynth_admin_process_deposit_v2", {
       p_admin_user_id: user.id,
       p_deposit_id: depositId,
       p_approved: approved,
