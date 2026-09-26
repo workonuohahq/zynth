@@ -19,7 +19,7 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   const path = request.nextUrl.pathname;
 
-  if (!user && (path.startsWith("/dashboard") || path.startsWith("/admin") || path.startsWith("/btest") || path.startsWith("/trader") || path.startsWith("/api/btest") || path.startsWith("/api/trader"))) {
+  if (!user && (path.startsWith("/dashboard") || path.startsWith("/admin") || path.startsWith("/trader") || path.startsWith("/api/trader"))) {
     if (path.startsWith("/api/btest") || path.startsWith("/api/trader")) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
     return NextResponse.redirect(new URL("/login", request.url));
   }
