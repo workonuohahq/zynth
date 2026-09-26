@@ -185,7 +185,6 @@ export default function AdminTraders({ onSaved, refreshKey }: { onSaved: () => v
             <div className="trader-drawer-section"><span>RISK FRAMEWORK</span><p>{profile?.risk_management || "No risk framework supplied."}</p></div>
             <div className="trader-drawer-links">
               {profile?.track_record_url && <a href={profile.track_record_url} target="_blank" rel="noreferrer">Track record <ExternalLink size={12}/></a>}
-              {profile?.evidence_url && <a href={profile.evidence_url} target="_blank" rel="noreferrer">Evidence <ExternalLink size={12}/></a>}
             </div>
             {selected.trader && <div className="trader-mt5-admin-panel">
               <div className="trader-drawer-section"><span>MT5 ACCOUNT VERIFICATION</span><div className="trader-mt5-admin-grid">
