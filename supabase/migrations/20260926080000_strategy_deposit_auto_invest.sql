@@ -119,13 +119,6 @@ begin
       units:=d.amount/nullif(s.nav,0);
       if units is null or units<=0 then raise exception 'INVALID_STRATEGY_NAV'; end if;
 
-      -- Credit and immediately consume the credited cash into the strategy.
-      -- Both operations occur inside this database transaction, so a failure
-      -- rolls the whole settlement back.
-      update public.users
-      set main_wallet_balance=main_wallet_balance+d.amount,updated_at=now()
-      where id=d.user_id;
-
       update public.transactions
       set status='completed',
           processed_at=now(),
