@@ -20,9 +20,11 @@ export async function GET(req:Request){
     s.from("withdrawal_requests").select("id,amount,status,created_at").eq("user_id",uid).in("status",["pending","processing"]).order("created_at",{ascending:false}).limit(5),
     s.from("deposit_requests").select("id,amount,status,created_at").eq("user_id",uid).in("status",["pending","processing"]).order("created_at",{ascending:false}).limit(5)
   ]);
-  return NextResponse.json({tickets:tickets||[],ticket,messages:messages||[],context:{investments:investments||[],transactions:transactions||[],withdrawals:withdrawals||[],deposits:deposits||[]}});
+  const attentionCount=(tickets||[]).filter((t:any)=>["open","in_progress"].includes(t.status)||Number(t.admin_unread_count||0)>0||t.priority==="urgent").length;
+  return NextResponse.json({tickets:tickets||[],ticket,messages:messages||[],context:{investments:investments||[],transactions:transactions||[],withdrawals:withdrawals||[],deposits:deposits||[]},attention_count:attentionCount});
  }
- return NextResponse.json({tickets:tickets||[]});
+ const attentionCount=(tickets||[]).filter((t:any)=>["open","in_progress"].includes(t.status)||Number(t.admin_unread_count||0)>0||t.priority==="urgent").length;
+ return NextResponse.json({tickets:tickets||[],attention_count:attentionCount});
 }
 export async function POST(req:Request){
  const {s,user}=await admin();if(!user)return NextResponse.json({error:"Administrator access required."},{status:403});
