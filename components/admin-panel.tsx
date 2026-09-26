@@ -21,7 +21,12 @@ export default function AdminPanel({initialData,adminEmail}:{initialData:any;adm
   ]);
   setReports(q.reports||[]);setHistory(q.history||[]);setStrategies(s.strategies||[]);setTraders(t.traders||[]);
  }
- useEffect(()=>{load();const h=(e:any)=>setEditingStrategy(e.detail);window.addEventListener("zynth-edit-strategy",h);return()=>window.removeEventListener("zynth-edit-strategy",h)},[]);
+ useEffect(() => {
+  load();
+  const handleEditStrategy = (event:any) => setEditingStrategy(event.detail);
+  window.addEventListener("zynth-edit-strategy", handleEditStrategy);
+  return () => window.removeEventListener("zynth-edit-strategy", handleEditStrategy);
+}, []);
  async function act(id:string,a:string){
   setBusy(id);setNotice("");
   let reason="";
