@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { CheckCircle2, ChevronRight, ExternalLink, Filter, ShieldAlert, ShieldCheck, UserPlus, Users, X, XCircle } from "lucide-react";
+import { CheckCircle2, ChevronRight, ExternalLink, Filter, KeyRound, Eye, EyeOff, ShieldAlert, ShieldCheck, UserPlus, Users, X, XCircle } from "lucide-react";
 
 type Trader = any;
 type Application = any;
@@ -15,7 +15,7 @@ export default function AdminTraders({ onSaved, refreshKey }: { onSaved: () => v
   const [selected, setSelected] = useState<any>(null);
   const [tab, setTab] = useState<"applications" | "traders">("applications");
   const [loadError, setLoadError] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);\n  const [revealedMt5, setRevealedMt5] = useState<any>(null);
 
   async function load() {
     setLoading(true); setLoadError("");
@@ -66,7 +66,7 @@ export default function AdminTraders({ onSaved, refreshKey }: { onSaved: () => v
     strategies: data.traders.reduce((n: number, t: Trader) => n + (t.strategy_count || 0), 0),
   };
 
-  const profile = selected?.profile || selected?.application || selected;
+  const profile = selected?.profile || selected?.application || selected;\n  const mt5 = selected?.trader?.mt5 || null;
 
   return (
     <section className="admin-section trader-command-center">
@@ -155,7 +155,7 @@ export default function AdminTraders({ onSaved, refreshKey }: { onSaved: () => v
               const p = t.zynth_trader_profiles?.[0] || t.zynth_trader_profiles || {};
               return <article className="trader-active-card" key={t.id}>
                 <div className="trader-card-top"><div className="trader-avatar-large">{String(t.display_name || "T").slice(0,1).toUpperCase()}</div><div className="trader-card-identity"><strong>{t.display_name || t.full_name || "Trader"}</strong><span>{t.email} · {p.country || "Country not supplied"}</span></div><span className="trader-status-pill approved">{p.status || "active"}</span></div>
-                <div className="trader-card-tags">{(p.markets || []).slice(0,4).map((m:string)=><span key={m}>{m}</span>)}<span>{p.trading_style || "Style not supplied"}</span></div>
+                <div className="trader-card-tags">{(p.markets || []).slice(0,4).map((m:string)=><span key={m}>{m}</span>)}<span>{p.trading_style || "Style not supplied"}</span><span className={"trader-status-pill "+(t.mt5?.status==="verified"?"approved":t.mt5?.status==="rejected"?"rejected":"pending")}>MT5 {t.mt5?.status||"pending"}</span></div>
                 <div className="trader-card-metrics"><div><span>EXPERIENCE</span><strong>{p.years_experience ?? "—"} yrs</strong></div><div><span>TYPICAL RISK</span><strong>{p.typical_risk_pct ?? "—"}%</strong></div><div><span>STRATEGIES</span><strong>{t.strategy_count || 0}</strong></div></div>
                 <button className="details trader-view-button" onClick={()=>setSelected({profile:p, trader:t})}>Open trader profile <ChevronRight size={13}/></button>
               </article>
@@ -187,7 +187,20 @@ export default function AdminTraders({ onSaved, refreshKey }: { onSaved: () => v
               {profile?.track_record_url && <a href={profile.track_record_url} target="_blank" rel="noreferrer">Track record <ExternalLink size={12}/></a>}
               {profile?.evidence_url && <a href={profile.evidence_url} target="_blank" rel="noreferrer">Evidence <ExternalLink size={12}/></a>}
             </div>
-            {selected.application && <div className="trader-drawer-decision"><span>DECISION</span><div><button className="approve" onClick={()=>action({action:"approve",applicationId:selected.application.id,note},"drawer-approve")}><CheckCircle2 size={13}/> Approve trader</button><button className="details" onClick={()=>action({action:"more_info",applicationId:selected.application.id,note},"drawer-info")}>Request more info</button><button className="reject" onClick={()=>action({action:"reject",applicationId:selected.application.id,note},"drawer-reject")}><XCircle size={13}/> Reject</button></div></div>}
+            {selected.trader && <div className="trader-mt5-admin-panel">
+              <div className="trader-drawer-section"><span>MT5 ACCOUNT VERIFICATION</span><div className="trader-mt5-admin-grid">
+                <div><span>Login</span><strong>{mt5?.mt5_login || "Not submitted"}</strong></div>
+                <div><span>Server</span><strong>{mt5?.mt5_server || "Not submitted"}</strong></div>
+                <div><span>Status</span><strong className={"trader-status-pill "+(mt5?.status==="verified"?"approved":mt5?.status==="rejected"?"rejected":"pending")}>{mt5?.status || "pending"}</strong></div>
+              </div></div>
+              {mt5 && mt5.status!=="verified" && <div className="trader-mt5-admin-actions">
+                <button className="approve" disabled={busy==="mt5-verify"} onClick={()=>action({action:"verify_mt5",userId:selected.trader.id}, "mt5-verify")}><CheckCircle2 size={13}/> Verify MT5</button>
+                <button className="reject" disabled={busy==="mt5-reject"} onClick={()=>action({action:"reject_mt5",userId:selected.trader.id,reason:note}, "mt5-reject")}><XCircle size={13}/> Reject</button>
+                <button className="details" onClick={async()=>{const r=await fetch("/api/admin/traders/mt5?userId="+encodeURIComponent(selected.trader.id),{cache:"no-store"});const j=await r.json();if(r.ok)setRevealedMt5(j.credentials);else window.alert(j.error||"Unable to reveal credentials.");}}><KeyRound size={13}/> View credentials</button>
+              </div>}
+              {mt5?.status==="verified" && <div className="trader-mt5-admin-actions"><button className="details" onClick={async()=>{const r=await fetch("/api/admin/traders/mt5?userId="+encodeURIComponent(selected.trader.id),{cache:"no-store"});const j=await r.json();if(r.ok)setRevealedMt5(j.credentials);else window.alert(j.error||"Unable to load credentials.");}}><KeyRound size={13}/> View credentials</button></div>}
+              {revealedMt5 && <div className="trader-mt5-secret"><div><span>MT5 login</span><b>{revealedMt5.mt5Login}</b></div><div><span>Server</span><b>{revealedMt5.mt5Server}</b></div><div><span>Investor password</span><b>{revealedMt5.investorPassword}</b><button onClick={()=>setRevealedMt5(null)} aria-label="Hide credentials">{revealedMt5?<EyeOff size={13}/>:<Eye size={13}/>}</button></div></div>}
+            </div>}{selected.application && <div className="trader-drawer-decision"><span>DECISION</span><div><button className="approve" onClick={()=>action({action:"approve",applicationId:selected.application.id,note},"drawer-approve")}><CheckCircle2 size={13}/> Approve trader</button><button className="details" onClick={()=>action({action:"more_info",applicationId:selected.application.id,note},"drawer-info")}>Request more info</button><button className="reject" onClick={()=>action({action:"reject",applicationId:selected.application.id,note},"drawer-reject")}><XCircle size={13}/> Reject</button></div></div>}
           </aside>
         </div>
       )}
