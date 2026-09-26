@@ -18,7 +18,7 @@ export default function Investments(){
  const d=await r.json();
  if(r.ok){setMsg("Investment created successfully.");setCash(cash-amount);setAmounts({...amounts,[id]:""});return;}
  if(d.code==="INSUFFICIENT_AVAILABLE_BALANCE"||/INSUFFICIENT_AVAILABLE_BALANCE/i.test(String(d.error||""))){
-   const dep=await fetch("/api/deposits/create",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({amount,method:"manual"})});
+   const dep=await fetch("/api/deposits/create",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({amount,method:"manual",strategyId:id})});
    const dd=await dep.json();
    if(!dep.ok){
      if(dd.code==="PENDING_DEPOSIT_EXISTS"){setMsg("You already have a pending deposit. Open Activity to continue that payment before investing.");}
