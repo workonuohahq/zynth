@@ -24,10 +24,10 @@ export default function AdminPanel({initialData,adminEmail}:{initialData:any;adm
    fetch("/api/admin/notification-templates").then(r=>r.json()),
    fetch("/api/admin/support").then(r=>r.ok?r.json():{tickets:[]}).catch(()=>({tickets:[]}))
   ]);
-  const supportUnread=(support.tickets||[]).reduce((sum:number,ticket:any)=>sum+Number(ticket.admin_unread_count||0),0);setReports(q.reports||[]);setHistory(q.history||[]);setStrategies(s.strategies||[]);setTraders(t.traders||[]);setNotificationTemplates(n.templates||[]);setData((x:any)=>({...x,support_unread_count:supportUnread,mt5_pending_count:Number(t.mt5_pending_count||0),pending_reports:(q.pending_reports??x.pending_reports),pending_report_queue:(q.pending_report_queue??x.pending_report_queue),strategies:(s.strategies?.length??x.strategies),traders:(t.traders?.length??x.traders)}));
+  const supportUnread=Number(support.attention_count||0);setReports(q.reports||[]);setHistory(q.history||[]);setStrategies(s.strategies||[]);setTraders(t.traders||[]);setNotificationTemplates(n.templates||[]);setData((x:any)=>({...x,support_unread_count:supportUnread,mt5_pending_count:Number(t.mt5_pending_count||0),pending_reports:(q.pending_reports??x.pending_reports),pending_report_queue:(q.pending_report_queue??x.pending_report_queue),strategies:(s.strategies?.length??x.strategies),traders:(t.traders?.length??x.traders)}));
  }
  async function refreshData(){setRefreshing(true);setNotice("");try{await load();setRefreshKey(x=>x+1);setNotice("Admin data refreshed.");window.setTimeout(()=>setNotice(""),3000)}catch(e){setNotice(e instanceof Error?e.message:"Could not refresh admin data.")}finally{setRefreshing(false)}}
- useEffect(()=>{load();const timer=window.setInterval(async()=>{try{const r=await fetch("/api/admin/support",{cache:"no-store"});if(!r.ok)return;const j=await r.json();const unread=(j.tickets||[]).reduce((sum:number,ticket:any)=>sum+Number(ticket.admin_unread_count||0),0);setData((x:any)=>({...x,support_unread_count:unread}));}catch{}} ,15000);return()=>window.clearInterval(timer)},[]);
+ useEffect(()=>{load();const timer=window.setInterval(async()=>{try{const r=await fetch("/api/admin/support",{cache:"no-store"});if(!r.ok)return;const j=await r.json();const unread=Number(j.attention_count||0);setData((x:any)=>({...x,support_unread_count:unread}));}catch{}} ,15000);return()=>window.clearInterval(timer)},[]);
  async function act(id:string,a:string){
   setBusy(id);setNotice("");
   let reason="";
@@ -60,7 +60,7 @@ export default function AdminPanel({initialData,adminEmail}:{initialData:any;adm
       {k:"notifications",l:"Notifications",i:Bell,b:0},
       {k:"support",l:"Customer Service",i:Headphones,b:Number(data.support_unread_count||0)},
       {k:"referrals",l:"Referrals",i:Gift,b:0}
-    ].map(({k,l,i:Icon,b})=><button key={k} className={tab===k?"admin-list-item active":"admin-list-item"} onClick={()=>setTab(k)}><span className="admin-list-icon"><Icon size={16}/></span><span className="admin-list-label">{l}</span>{b>0&&<em>{b}</em>}</button>)}
+    ].map(({k,l,i:Icon,b})=><button key={k} className={tab===k?"admin-list-item active":"admin-list-item"} onClick={()=>setTab(k)}><span className="admin-list-icon"><Icon size={16}/></span><span className="admin-list-label">{l}</span>{b>0&&<em className={k==="support"?"admin-support-badge":""}>{b}</em>}</button>)}
     <div className={"admin-money-nav "+(moneyOpen||["deposits","withdrawals","redemptions"].includes(tab)?"open":"")}>
       <button className={["deposits","withdrawals","redemptions"].includes(tab)?"admin-list-item active":"admin-list-item"} onClick={()=>setMoneyOpen(v=>!v)} aria-expanded={moneyOpen}>
         <span className="admin-list-icon"><ArrowLeftRight size={16}/></span><span className="admin-list-label">Money Movement</span><span className="admin-money-chevron"><ChevronRight size={13}/></span>
