@@ -5,7 +5,7 @@ import {ArrowRight,CheckCircle2,FileText,ShieldCheck,UserRound,LineChart,ShieldA
 const markets=["Forex","Crypto","Stocks","Indices","Commodities"];
 
 export default function TraderApplication({initial}:{initial:any}){
- const [form,setForm]=useState<any>({displayName:initial?.full_name||"",bio:"",country:"Nigeria",years:"",markets:[],style:"",holding:"",riskManagement:"",risk:"",drawdown:"",broker:"",trackRecord:"",evidence:"",note:""});
+ const [form,setForm]=useState<any>({displayName:initial?.full_name||"",bio:"",country:"Nigeria",years:"",markets:[],style:"",holding:"",riskManagement:"",risk:"",drawdown:"",broker:"",trackRecord:"",note:""});
  const [busy,setBusy]=useState(false),[msg,setMsg]=useState("");
  const set=(k:string,v:any)=>setForm((x:any)=>({...x,[k]:v}));
  const toggle=(v:string)=>set("markets",form.markets.includes(v)?form.markets.filter((x:string)=>x!==v):[...form.markets,v]);
@@ -47,8 +47,8 @@ export default function TraderApplication({initial}:{initial:any}){
      <div className="trader-metric-grid"><label><span>Typical risk / trade <em>%</em></span><div className="trader-input-suffix"><input type="number" step="0.01" value={form.risk} onChange={e=>set("risk",e.target.value)} placeholder="0.50"/><b>%</b></div></label><label><span>Historical max drawdown <em>%</em></span><div className="trader-input-suffix"><input type="number" step="0.01" value={form.drawdown} onChange={e=>set("drawdown",e.target.value)} placeholder="10.00"/><b>%</b></div></label></div>
     </section>
 
-    <section className="trader-form-section"><div className="trader-section-head"><div className="trader-section-number">04</div><div><span>VERIFICATION</span><h2>Track record & evidence</h2><p>Provide links reviewers can use to validate the experience and claims in your application.</p></div></div>
-     <div className="trader-field-grid"><label><span>Track-record URL</span><input value={form.trackRecord} onChange={e=>set("trackRecord",e.target.value)} placeholder="https://…"/><small>Performance report, journal or verifiable history.</small></label><label><span>Evidence URL</span><input value={form.evidence} onChange={e=>set("evidence",e.target.value)} placeholder="https://…"/><small>Supporting statement, report or relevant proof.</small></label></div>
+    <section className="trader-form-section"><div className="trader-section-head"><div className="trader-section-number">04</div><div><span>VERIFICATION</span><h2>Track record & professional history</h2><p>Provide a verifiable track-record reference. MT5 credentials are submitted separately after trader approval.</p></div></div>
+     <div className="trader-field-grid"><label><span>Track-record URL</span><input value={form.trackRecord} onChange={e=>set("trackRecord",e.target.value)} placeholder="https://…"/><small>Performance report, journal or verifiable history.</small></label></div>
      <label className="trader-field trader-field-wide"><span>Applicant note</span><textarea value={form.note} onChange={e=>set("note",e.target.value)} placeholder="Anything important a reviewer should understand about your application."/></label>
      <div className="trader-submit-box"><div><ShieldCheck size={18}/><div><b>Controlled approval</b><small>Approval activates your trader profile. It does not automatically make any strategy investable.</small></div></div><button className="trader-submit" onClick={submit} disabled={busy||!form.displayName.trim()}>{busy?"Submitting application":<>Submit for review <ArrowRight size={16}/></>}</button></div>
      {msg&&<div className="trader-feedback">{msg}</div>}
