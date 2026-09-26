@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, ChevronRight, ExternalLink, Filter, KeyRound, Eye, EyeOff, ShieldAlert, ShieldCheck, UserPlus, Users, X, XCircle } from "lucide-react";
 
 type Trader = any;
-type Application = any;
 
 export default function AdminTraders({ onSaved, refreshKey }: { onSaved: () => void; refreshKey?: number }) {
   const [data, setData] = useState<any>({ traders: [], applications: [], users: [], mt5_pending: [], mt5_pending_count: 0, reporting_settings:{trader_report_start_time:"06:00:00",trader_report_end_time:"23:00:00"} });
@@ -13,7 +12,7 @@ export default function AdminTraders({ onSaved, refreshKey }: { onSaved: () => v
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("all");
   const [selected, setSelected] = useState<any>(null);
-  const [tab, setTab] = useState<"applications" | "traders">("traders");
+  const [tab, setTab] = useState<"onboard" | "traders">("onboard");
   const [loadError, setLoadError] = useState("");
   const [loading, setLoading] = useState(true);
   const [revealedMt5, setRevealedMt5] = useState<any>(null);
@@ -27,7 +26,7 @@ export default function AdminTraders({ onSaved, refreshKey }: { onSaved: () => v
       const j = await r.json();
       if (!r.ok) throw new Error(j.error || "Unable to load trader operations.");
       const settings=j.reporting_settings||{trader_report_start_time:"06:00:00",trader_report_end_time:"23:00:00"};
-      setData({ traders: Array.isArray(j.traders) ? j.traders : [], applications: Array.isArray(j.applications) ? j.applications : [], users: Array.isArray(j.users) ? j.users : [], mt5_pending: Array.isArray(j.mt5_pending) ? j.mt5_pending : [], mt5_pending_count: Number(j.mt5_pending_count || 0), reporting_settings:settings });
+      setData({ traders: Array.isArray(j.traders) ? j.traders : [], users: Array.isArray(j.users) ? j.users : [], mt5_pending: Array.isArray(j.mt5_pending) ? j.mt5_pending : [], mt5_pending_count: Number(j.mt5_pending_count || 0), reporting_settings:settings });
       setReportingForm({startTime:String(settings.trader_report_start_time||"06:00").slice(0,5),endTime:String(settings.trader_report_end_time||"23:00").slice(0,5)});
     } catch (e: any) { setLoadError(e?.message || "Unable to load trader operations."); }
     finally { setLoading(false); }
@@ -62,7 +61,7 @@ export default function AdminTraders({ onSaved, refreshKey }: { onSaved: () => v
         } : null
       };
       setTab("traders");
-      setSelected({ profile: traderProfile, trader, user: p, application: j.application || null });
+      setSelected({ profile: traderProfile, trader, user: p });
     } catch (e: any) {
       window.alert(e?.message || "Unable to load trader profile.");
     } finally {
@@ -190,63 +189,31 @@ export default function AdminTraders({ onSaved, refreshKey }: { onSaved: () => v
       </div>
 
       <div className="trader-command-tabs">
-        <button className={tab === "applications" ? "active" : ""} onClick={() => setTab("applications")}>Applications <b>{stats.open}</b></button>
+        <button className={tab === "onboard" ? "active" : ""} onClick={() => setTab("onboard")}>Onboard users <b>{stats.eligible}</b></button>
         <button className={tab === "traders" ? "active" : ""} onClick={() => setTab("traders")}>Active traders <b>{stats.active}</b></button>
       </div>
 
-      {tab === "applications" ? (
-        <>
-          <section className="admin-card trader-ops-card">
-            <div className="admin-card-head">
-              <div><span className="muted">REVIEW PIPELINE</span><h2>Trader applications</h2><p>Every application is a due-diligence record, not just an approval button.</p></div>
-              <span className="admin-count">{apps.length} shown</span>
-            </div>
-
-            <div className="trader-ops-toolbar">
-              <label><Filter size={13}/><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search trader, market, country…" /></label>
-              <select value={status} onChange={e => setStatus(e.target.value)}>
-                <option value="all">All statuses</option><option value="pending">Pending</option><option value="under_review">Under review</option><option value="more_info">More info</option>
-              </select>
-            </div>
-
-            <div className="trader-application-grid">
-              {apps.map((a: Application) => (
-                <article className="trader-application-card" key={a.id}>
-                  <div className="trader-card-top">
-                    <div className="trader-avatar-large">{String(a.display_name || "A").slice(0,1).toUpperCase()}</div>
-                    <div className="trader-card-identity"><strong>{a.display_name || "Unnamed trader"}</strong><span>{a.email || "No email"} · {a.country || "Country not supplied"}</span></div>
-                    <span className={"trader-status-pill " + a.status}>{String(a.status).replaceAll("_"," ")}</span>
-                  </div>
-                  <div className="trader-card-tags">{(a.markets || []).slice(0,4).map((m: string) => <span key={m}>{m}</span>)}<span>{a.trading_style || "Style not supplied"}</span></div>
-                  <div className="trader-card-metrics">
-                    <div><span>EXPERIENCE</span><strong>{a.years_experience ?? 0} yrs</strong></div>
-                    <div><span>TYPICAL RISK</span><strong>{a.typical_risk_pct ?? "—"}%</strong></div>
-                    <div><span>MAX DD</span><strong>{a.historical_drawdown_pct ?? "—"}%</strong></div>
-                  </div>
-                  <div className="trader-card-actions">
-                    <button className="details" onClick={() => setSelected({ application: a })}>Review profile <ChevronRight size={13}/></button>
-                    <button className="approve" disabled={busy === a.id+"approve"} onClick={() => action({action:"approve",applicationId:a.id,note},a.id+"approve")}><CheckCircle2 size={13}/> Approve</button>
-                    <button className="reject" disabled={busy === a.id+"reject"} onClick={() => action({action:"reject",applicationId:a.id,note},a.id+"reject")}><XCircle size={13}/></button>
-                  </div>
-                </article>
-              ))}
-              {!apps.length && <div className="admin-empty"><ShieldCheck size={22}/><p>No applications match the current filter.</p></div>}
-            </div>
-
-            <div className="trader-review-note">
-              <div><span>ADMIN REVIEW NOTE</span><p>Use this note for the decision context. It stays separate from the trader's public profile.</p></div>
-              <input value={note} onChange={e=>setNote(e.target.value)} placeholder="e.g. Track record verified; request broker statement before approval." />
-            </div>
-          </section>
-
-          <section className="admin-card trader-promotion-card">
-            <div className="admin-card-head"><div><span className="muted">DIRECT ACCESS</span><h2>Promote a user</h2><p>For controlled internal onboarding where an application is not required.</p></div></div>
-            <div className="trader-promotion-grid">
-              {data.users.map((u:any)=><div className="trader-promotion-row" key={u.id}><div className="trader-avatar">{String(u.full_name||"U").slice(0,1).toUpperCase()}</div><div><strong>{u.full_name||"Unnamed user"}</strong><span>{u.email}</span></div><button className="details" disabled={busy===u.id} onClick={()=>action({action:"promote",userId:u.id},u.id)}><UserPlus size={13}/>{busy===u.id?"Promoting…":"Promote"}</button></div>)}
-              {!data.users.length && <div className="admin-empty"><ShieldAlert size={22}/><p>No eligible users found.</p></div>}
-            </div>
-          </section>
-        </>
+      {tab === "onboard" ? (
+        <section className="admin-card trader-ops-card">
+          <div className="admin-card-head">
+            <div><span className="muted">CONTROLLED ONBOARDING</span><h2>Onboard a trader</h2><p>Only administrators can grant trader access. Users cannot submit trader applications or self-promote.</p></div>
+            <span className="admin-count">{data.users.length} eligible</span>
+          </div>
+          <div className="trader-ops-toolbar">
+            <label><Filter size={13}/><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search user or email…" /></label>
+          </div>
+          <div className="trader-promotion-grid">
+            {data.users.filter((u:any)=>!query.trim() || [u.full_name,u.email].join(" ").toLowerCase().includes(query.toLowerCase().trim())).map((u:any)=>
+              <div className="trader-promotion-row" key={u.id}>
+                <div className="trader-avatar">{String(u.full_name||"U").slice(0,1).toUpperCase()}</div>
+                <div><strong>{u.full_name||"Unnamed user"}</strong><span>{u.email}</span></div>
+                <button className="details" disabled={busy===u.id} onClick={()=>action({action:"promote",userId:u.id},u.id)}><UserPlus size={13}/>{busy===u.id?"Onboarding…":"Onboard as trader"}</button>
+              </div>
+            )}
+            {!data.users.length && <div className="admin-empty"><ShieldAlert size={22}/><p>No eligible active users found.</p></div>}
+          </div>
+          <div className="trader-review-note"><div><span>GOVERNANCE</span><p>Onboarding creates or activates the trader profile, records the administrator, and unlocks the Trader Desk. MT5 verification remains a separate operational gate.</p></div></div>
+        </section>
       ) : (
         <section className="admin-card trader-ops-card">
           <div className="admin-card-head"><div><span className="muted">OPERATOR REGISTER</span><h2>Active traders</h2><p>Trader profiles, risk characteristics and strategy footprint.</p></div></div>
@@ -300,7 +267,7 @@ export default function AdminTraders({ onSaved, refreshKey }: { onSaved: () => v
               </div>}
               {mt5?.status==="verified" && <div className="trader-mt5-admin-actions"><button className="details" onClick={async()=>{const r=await fetch("/api/admin/traders?userId="+encodeURIComponent(selected.trader.id),{cache:"no-store"});const j=await r.json();if(r.ok)setRevealedMt5(j.credentials);else window.alert(j.error||"Unable to load credentials.");}}><KeyRound size={13}/> View credentials</button></div>}
               {revealedMt5 && <div className="trader-mt5-secret"><div><span>MT5 login</span><b>{revealedMt5.mt5Login}</b></div><div><span>Server</span><b>{revealedMt5.mt5Server}</b></div><div><span>Investor password</span><b>{revealedMt5.investorPassword}</b><button onClick={()=>setRevealedMt5(null)} aria-label="Hide credentials">{revealedMt5?<EyeOff size={13}/>:<Eye size={13}/>}</button></div></div>}
-            </div>}{selected.application && <div className="trader-drawer-decision"><span>DECISION</span><div><button className="approve" onClick={()=>action({action:"approve",applicationId:selected.application.id,note},"drawer-approve")}><CheckCircle2 size={13}/> Approve trader</button><button className="details" onClick={()=>action({action:"more_info",applicationId:selected.application.id,note},"drawer-info")}>Request more info</button><button className="reject" onClick={()=>action({action:"reject",applicationId:selected.application.id,note},"drawer-reject")}><XCircle size={13}/> Reject</button></div></div>}
+            </div>}{false && <div className="trader-drawer-decision"><span>DECISION</span><div><button className="approve" onClick={()=>action({action:"approve",applicationId:selected.application.id,note},"drawer-approve")}><CheckCircle2 size={13}/> Approve trader</button><button className="details" onClick={()=>action({action:"more_info",applicationId:selected.application.id,note},"drawer-info")}>Request more info</button><button className="reject" onClick={()=>action({action:"reject",applicationId:selected.application.id,note},"drawer-reject")}><XCircle size={13}/> Reject</button></div></div>}
           </aside>
         </div>
       )}
