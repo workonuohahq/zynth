@@ -1708,3 +1708,131 @@ html[data-theme="light"] .admin-list-item.active{background:#f2eadb;color:#3d352
   .admin-kpi{min-height:92px}
   .admin-kpi b{font-size:16px}
 }
+
+
+/* MONEY MOVEMENT — responsive navigation */
+.admin-money-nav{position:relative;min-width:0}
+.admin-money-nav>.admin-list-item{width:100%}
+.admin-money-chevron{
+  margin-left:auto;
+  display:grid;
+  place-items:center;
+  transition:transform .18s ease;
+  color:var(--muted);
+}
+.admin-money-nav.open .admin-money-chevron{transform:rotate(90deg);color:var(--gold-bright)}
+.admin-money-subnav{
+  display:grid;
+  gap:3px;
+  margin:3px 0 5px 36px;
+  padding-left:9px;
+  border-left:1px solid var(--border);
+}
+.admin-money-subnav button{
+  min-height:34px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  width:100%;
+  padding:7px 9px;
+  border:0;
+  border-radius:8px;
+  background:transparent;
+  color:var(--muted);
+  font:inherit;
+  font-size:8px;
+  font-weight:800;
+  text-align:left;
+  cursor:pointer;
+}
+.admin-money-subnav button:hover,
+.admin-money-subnav button.active{
+  background:var(--gold-surface);
+  color:var(--text);
+}
+.admin-money-subnav button svg{color:var(--muted)}
+.admin-money-subnav button.active svg{color:var(--gold-bright)}
+.admin-money-subnav button b{
+  margin-left:auto;
+  min-width:16px;
+  height:16px;
+  padding:0 4px;
+  display:grid;
+  place-items:center;
+  border-radius:999px;
+  background:var(--gold-bright);
+  color:#17130b;
+  font-size:6px;
+}
+@media(max-width:800px){
+  /* Money Movement becomes a contained accordion instead of another horizontal nav item. */
+  .admin-money-nav{
+    flex:0 0 auto;
+    width:auto;
+    min-width:0;
+  }
+  .admin-money-nav>.admin-list-item{
+    width:auto!important;
+    min-width:44px;
+    min-height:40px!important;
+    justify-content:center;
+    padding:0 10px!important;
+    gap:5px;
+  }
+  .admin-money-nav>.admin-list-item .admin-list-label{
+    display:inline!important;
+  }
+  .admin-money-nav>.admin-list-item .admin-money-chevron{
+    display:none;
+  }
+  .admin-money-nav>.admin-list-item em{
+    position:absolute;
+    top:-2px;
+    right:-2px;
+    min-width:17px;
+    height:17px;
+    padding:0 4px;
+    display:grid;
+    place-items:center;
+    border:2px solid var(--bg);
+    z-index:2;
+  }
+  .admin-money-subnav{
+    position:absolute;
+    top:calc(100% + 8px);
+    left:0;
+    z-index:120;
+    width:min(230px,calc(100vw - 28px));
+    margin:0;
+    padding:7px;
+    border:1px solid var(--border);
+    border-radius:12px;
+    border-left:1px solid var(--border);
+    background:var(--panel);
+    box-shadow:0 16px 36px rgba(0,0,0,.28);
+    backdrop-filter:blur(14px);
+  }
+  .admin-money-subnav button{
+    min-height:42px;
+    padding:9px 10px;
+    font-size:9px;
+    border-radius:8px;
+  }
+}
+@media(max-width:500px){
+  .admin-money-nav>.admin-list-item{
+    min-width:42px;
+    padding:0 8px!important;
+  }
+  .admin-money-nav>.admin-list-item .admin-list-label{
+    display:none!important;
+  }
+  .admin-money-subnav{
+    width:min(220px,calc(100vw - 24px));
+  }
+}
+html[data-theme="light"] .admin-money-subnav{
+  background:#fffdf8;
+  border-color:#ddd5c6;
+  box-shadow:0 16px 36px rgba(81,67,43,.12);
+}
