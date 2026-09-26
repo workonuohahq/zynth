@@ -16,9 +16,9 @@ export async function GET(req:Request){try{const {s,user}=await admin();if(!user
   return NextResponse.json({
    profile:{
     id:requestedUserId,user_id:requestedUserId,
-    email:userRow?.email||trader?.email||application?.email||null,
-    full_name:userRow?.full_name||trader?.full_name||application?.user_name||null,
-    display_name:trader?.display_name||application?.display_name||userRow?.full_name||userRow?.email?.split("@")[0]||"User",
+    email:userRow?.email||trader?.email||null,
+    full_name:userRow?.full_name||trader?.full_name||null,
+    display_name:trader?.display_name||userRow?.full_name||userRow?.email?.split("@")[0]||"User",
     role:userRow?.role||trader?.role||"user",
     account_type:accountType,
     account_status:userRow?.account_status||trader?.account_status||null,
