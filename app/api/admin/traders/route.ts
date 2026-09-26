@@ -84,7 +84,7 @@ export async function POST(req:Request){try{const {s,user}=await admin();if(!use
 }
 if(b.action==="save_reporting_settings"){
   const start=String(b.startTime||"").slice(0,8),end=String(b.endTime||"").slice(0,8);
-  if(!/^([01]\\d|2[0-3]):[0-5]\\d(:[0-5]\\d)?$/.test(start)||!/^([01]\\d|2[0-3]):[0-5]\\d(:[0-5]\\d)?$/.test(end))return NextResponse.json({error:"Enter valid reporting times."},{status:400});
+  if(!/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/.test(start)||!/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/.test(end))return NextResponse.json({error:"Enter valid reporting times."},{status:400});
   if(start.slice(0,5)===end.slice(0,5))return NextResponse.json({error:"Start and end time cannot be the same."},{status:400});
   const {data,error}=await s.from("system_settings").update({trader_report_start_time:start.slice(0,5)+":00",trader_report_end_time:end.slice(0,5)+":00",updated_at:new Date().toISOString()}).eq("id","00000000-0000-0000-0000-000000000001").select("trader_report_start_time,trader_report_end_time").single();
   if(error)return NextResponse.json({error:error.message},{status:400});
