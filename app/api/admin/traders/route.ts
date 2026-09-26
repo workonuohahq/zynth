@@ -35,7 +35,12 @@ export async function GET(req:Request){try{const {s,user}=await admin();if(!user
  }
  const {data,error}=await s.rpc("zynth_admin_trader_command_center",{p_admin_id:user.id});
  if(error)throw error;const payload=data||{};
- let pendingMt5:any[]=[];\n let pendingMt5Error:any=null;\n try{\n  const result=await s.from("zynth_trader_mt5_credentials").select("user_id,mt5_login,mt5_server,status,submitted_at,change_requested,change_requested_at").eq("status","pending").order("submitted_at",{ascending:true});\n  pendingMt5=result.data||[];pendingMt5Error=result.error||null;\n }catch(error){pendingMt5Error=error;}\n if(pendingMt5Error)console.error("MT5 verification queue unavailable; preserving trader register:",pendingMt5Error);
+ let pendingMt5:any[]=[];let pendingMt5Error:any=null;
+ try{
+  const result=await s.from("zynth_trader_mt5_credentials").select("user_id,mt5_login,mt5_server,status,submitted_at,change_requested,change_requested_at").eq("status","pending").order("submitted_at",{ascending:true});
+  pendingMt5=result.data||[];pendingMt5Error=result.error||null;
+ }catch(error){pendingMt5Error=error;}
+ if(pendingMt5Error)console.error("MT5 verification queue unavailable; preserving trader register:",pendingMt5Error);
  const pendingIds=(pendingMt5||[]).map((x:any)=>x.user_id);
  const traderRows=Array.isArray(payload.traders)?payload.traders:[];
  const userRows=Array.isArray(payload.users)?payload.users:[];
