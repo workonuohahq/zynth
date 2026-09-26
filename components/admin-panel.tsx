@@ -9,6 +9,7 @@ import AdminStrategyForm from "@/components/admin-strategy-form";
 import AdminTraders from "@/components/admin-traders";
 import AdminNotificationCenter from "@/components/admin-notification-center";
 import AdminReferralCenter from "@/components/admin-referral-center";
+import AdminSupportCenter from "@/components/admin-support-center";
 
 const money=(n:any)=>`₦${Number(n||0).toLocaleString("en-NG",{minimumFractionDigits:2,maximumFractionDigits:2})}`;
 const pct=(n:any)=>`${Number(n||0).toFixed(2)}%`;
@@ -56,6 +57,7 @@ export default function AdminPanel({initialData,adminEmail}:{initialData:any;adm
       {k:"investors",l:"Investors",i:Users,b:data.investors},
       {k:"traders",l:"Traders",i:ShieldCheck,b:data.mt5_pending_count||0},
       {k:"notifications",l:"Notifications",i:Bell,b:0},
+      {k:"support",l:"Customer Service",i:Headphones,b:0},
       {k:"referrals",l:"Referrals",i:Gift,b:0}
     ].map(({k,l,i:Icon,b})=><button key={k} className={tab===k?"admin-list-item active":"admin-list-item"} onClick={()=>setTab(k)}><span className="admin-list-icon"><Icon size={16}/></span><span className="admin-list-label">{l}</span>{b>0&&<em>{b}</em>}</button>)}
     <div className={"admin-money-nav "+(moneyOpen||["deposits","withdrawals","redemptions"].includes(tab)?"open":"")}>
@@ -111,7 +113,7 @@ export default function AdminPanel({initialData,adminEmail}:{initialData:any;adm
    {tab==="redemptions"&&<section className="admin-section"><section className="admin-card"><div className="admin-card-head"><div><span className="muted">INVESTMENT LIQUIDITY</span><h2>Investor exits</h2><p>Redemptions are unit-based, NAV-priced and released only after the configured approval and delay rules.</p></div><Link className="text-action" href="/admin/redemptions">Open redemption control <ChevronRight size={13}/></Link></div></section></section>}
 
    {tab==="settings"&&<section className="admin-section"><section className="admin-card settings-card"><div className="admin-card-head"><div><span className="muted">SYSTEM RULES</span><h2>Settlement & Vault controls</h2><p>Configure the investor engine, profit lock and operating thresholds. Changes are audited.</p></div></div><AdminInvestmentSettings refreshKey={refreshKey}/><div className="rule-list" style={{marginTop:20}}><div><span>Settlement model</span><b>Trader report → admin confirm → NAV</b></div><div><span>MT5 automation</span><b>Removed</b></div></div></section></section>}
-   {tab==="notifications"&&<AdminNotificationCenter initialTemplates={notificationTemplates} refreshKey={refreshKey}/>}
+   {tab==="notifications"&&<AdminNotificationCenter initialTemplates={notificationTemplates} refreshKey={refreshKey}/>}\n   {tab==="support"&&<AdminSupportCenter refreshKey={refreshKey}/>}
    {tab==="referrals"&&<AdminReferralCenter refreshKey={refreshKey}/>}
   </main>
 
