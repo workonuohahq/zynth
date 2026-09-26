@@ -1259,3 +1259,33 @@ html[data-theme="light"] .status-text.processing{color:#73531f!important}
   outline:2px solid var(--gold);
   outline-offset:2px;
 }
+
+/* Settlement review modal */
+.settlement-modal-backdrop{position:fixed;inset:0;z-index:100;background:#050505b8;backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:24px;overflow:auto}
+.settlement-modal{width:min(980px,100%);max-height:calc(100vh - 48px);overflow:auto;background:#11110f;border:1px solid #403522;border-radius:20px;box-shadow:0 30px 100px #0009;color:#f4efe6}
+.settlement-modal-head{display:flex;justify-content:space-between;gap:18px;padding:24px 26px;border-bottom:1px solid #30291f;position:sticky;top:0;background:#11110ff2;backdrop-filter:blur(12px);z-index:2}
+.settlement-modal-head h2{margin:8px 0 4px;font-size:26px;letter-spacing:-.04em}
+.settlement-modal-head p{margin:0;color:#777168;font-size:11px}
+.settlement-summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:20px 26px 10px}
+.settlement-summary-grid>div,.settlement-meta>div,.settlement-impact>div{border:1px solid #30291f;background:#17140f;border-radius:12px;padding:13px}
+.settlement-summary-grid span,.settlement-meta span,.settlement-impact span{display:block;color:#81796d;font-size:9px;text-transform:uppercase;letter-spacing:.08em}
+.settlement-summary-grid b,.settlement-meta b,.settlement-impact b{display:block;margin-top:7px;font-size:15px}
+.settlement-flow{margin:10px 26px;display:flex;align-items:center;justify-content:center;gap:14px;padding:14px;border:1px solid #30291f;border-radius:12px;background:#0d0d0c}
+.settlement-flow div{flex:1;text-align:center}.settlement-flow span{display:block;color:#81796d;font-size:9px;text-transform:uppercase}.settlement-flow b{display:block;margin-top:4px;font-size:16px}
+.settlement-flow svg{color:var(--gold-bright)}
+.settlement-meta{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:0 26px 10px}
+.settlement-meta a{display:flex;align-items:center;gap:5px;margin-top:7px;color:var(--gold-bright);font-size:11px;text-decoration:none}
+.settlement-impact{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:0 26px 18px}
+.settlement-investors{border-top:1px solid #30291f;margin-top:0;padding:18px 26px 0}
+.settlement-section-title{display:flex;justify-content:space-between;gap:15px;margin-bottom:8px}.settlement-section-title span{font-size:9px;letter-spacing:.12em;color:#81796d}.settlement-section-title b{font-size:10px;color:#a99f91}
+.settlement-investor-row{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:12px 0;border-bottom:1px solid #29231a}.settlement-investor-row:last-child{border-bottom:0}.settlement-investor-row>div:last-child{text-align:right}.settlement-investor-row b,.settlement-investor-row small{display:block}.settlement-investor-row b{font-size:11px}.settlement-investor-row small{color:#777168;font-size:9px;margin-top:3px}.settlement-note{margin:18px 26px;padding:14px;border:1px solid #3c3222;background:#17140f;border-radius:12px}.settlement-note span{font-size:9px;letter-spacing:.1em;color:#9b8a6b}.settlement-note p{margin:7px 0 0;color:#b4ada3;font-size:11px;line-height:1.6}.settlement-modal-actions{display:flex;justify-content:flex-end;gap:8px;padding:18px 26px;border-top:1px solid #30291f;position:sticky;bottom:0;background:#11110ff2;backdrop-filter:blur(12px)}
+@media(max-width:800px){.settlement-modal-backdrop{padding:8px}.settlement-modal{max-height:calc(100vh - 16px);border-radius:16px}.settlement-summary-grid,.settlement-meta{grid-template-columns:1fr 1fr;padding-left:16px;padding-right:16px}.settlement-impact{grid-template-columns:1fr;padding-left:16px;padding-right:16px}.settlement-flow,.settlement-note{margin-left:16px;margin-right:16px}.settlement-investors{padding-left:16px;padding-right:16px}.settlement-modal-head{padding:18px 16px}.settlement-modal-actions{padding:14px 16px;flex-wrap:wrap}.settlement-modal-actions .approve{flex:1}}
+html[data-theme="light"] .settlement-modal-backdrop{background:#312a1bb8}
+html[data-theme="light"] .settlement-modal{background:#fffdf8;border-color:#d8cdbb;color:#1d1b17;box-shadow:0 30px 100px #51432b2b}
+html[data-theme="light"] .settlement-modal-head{background:#fffdf8f2;border-bottom-color:#e2dbcf}
+html[data-theme="light"] .settlement-modal-head p,html[data-theme="light"] .settlement-summary-grid span,html[data-theme="light"] .settlement-meta span,html[data-theme="light"] .settlement-impact span,html[data-theme="light"] .settlement-investor-row small{color:#777168}
+html[data-theme="light"] .settlement-summary-grid>div,html[data-theme="light"] .settlement-meta>div,html[data-theme="light"] .settlement-impact>div,html[data-theme="light"] .settlement-note{background:#faf7f0;border-color:#e0d7c9}
+html[data-theme="light"] .settlement-flow{background:#f8f4ec;border-color:#e0d7c9}
+html[data-theme="light"] .settlement-investors,html[data-theme="light"] .settlement-investor-row,html[data-theme="light"] .settlement-modal-actions{border-color:#e2dbcf}
+html[data-theme="light"] .settlement-modal-actions{background:#fffdf8f2}
+html[data-theme="light"] .settlement-note p{color:#625d54}
