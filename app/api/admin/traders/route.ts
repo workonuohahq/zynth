@@ -22,7 +22,7 @@ export async function GET(req:Request){try{const {s,user}=await admin();if(!user
     role:userRow?.role||trader?.role||"user",
     account_type:accountType,
     account_status:userRow?.account_status||trader?.account_status||null,
-    created_at:userRow?.created_at||trader?.created_at||application?.created_at||null,
+    created_at:userRow?.created_at||trader?.created_at||null,
     ...(trader?.profile||{})
    },
    trader:trader||null,
