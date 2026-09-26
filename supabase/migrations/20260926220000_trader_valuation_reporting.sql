@@ -63,7 +63,7 @@ begin
  returning id into rid;
  return jsonb_build_object('report_id',rid,'report_date',cycle_date,'opening_balance',opening,'closing_balance',p_closing_balance,'trading_pnl',reported_pnl,'realized_pnl',p_realized_pnl,'unrealized_pnl',p_unrealized_pnl,'prior_unrealized_pnl',prior_unrealized,'report_window_start',start_t,'report_window_end',end_t);
 end;$function$;
-alter function public.zynth_submit_daily_report(uuid,date,numeric,numeric,numeric,text,boolean,numeric,numeric) security definer set search_path='public','pg_temp';
+alter function public.zynth_submit_daily_report(uuid,date,numeric,numeric,numeric,text,boolean,numeric,numeric) security definer set search_path='';
 revoke execute on function public.zynth_submit_daily_report(uuid,date,numeric,numeric,numeric,text,boolean,numeric,numeric) from public,anon;
 grant execute on function public.zynth_submit_daily_report(uuid,date,numeric,numeric,numeric,text,boolean,numeric,numeric) to authenticated;
 
