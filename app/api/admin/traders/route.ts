@@ -1,23 +1,34 @@
 export async function GET(req:Request){try{const {s,user}=await admin();if(!user)return NextResponse.json({error:"Administrator access required."},{status:403});
  const requestedUserId=new URL(req.url).searchParams.get("userId");
  if(requestedUserId){
-  const [{data:userRow,error:userError},{data:traderProfile,error:profileError},{data:application,error:applicationError},{data:mt5Row,error:mt5Error}]=await Promise.all([
-   s.from("users").select("id,email,full_name,role,kyc_verified,account_status,created_at").eq("id",requestedUserId).maybeSingle(),
-   s.from("zynth_trader_profiles").select("*").eq("user_id",requestedUserId).maybeSingle(),
-   s.from("zynth_trader_applications").select("*").eq("user_id",requestedUserId).order("created_at",{ascending:false}).limit(1).maybeSingle(),
-   s.from("zynth_trader_mt5_credentials").select("mt5_login,mt5_server,investor_password_ciphertext,status,submitted_at,verified_at,rejection_reason,change_requested,change_requested_at").eq("user_id",requestedUserId).maybeSingle()
-  ]);
-  if(userError)return NextResponse.json({error:userError.message},{status:400});
-  if(profileError)return NextResponse.json({error:profileError.message},{status:400});
-  if(applicationError)return NextResponse.json({error:applicationError.message},{status:400});
+  const {data:commandData,error:commandError}=await s.rpc("zynth_admin_trader_command_center",{p_admin_id:user.id});
+  if(commandError)throw commandError;
+  const command=commandData||{};
+  const traderRows=Array.isArray(command.traders)?command.traders:[];
+  const userRows=Array.isArray(command.users)?command.users:[];
+  const applicationRows=Array.isArray(command.applications)?command.applications:[];
+  const trader=traderRows.find((x:any)=>x.id===requestedUserId)||null;
+  const userRow=userRows.find((x:any)=>x.id===requestedUserId)||null;
+  const application=applicationRows.find((x:any)=>x.user_id===requestedUserId)||null;
+  const {data:mt5Row,error:mt5Error}=await s.from("zynth_trader_mt5_credentials").select("mt5_login,mt5_server,investor_password_ciphertext,status,submitted_at,verified_at,rejection_reason,change_requested,change_requested_at").eq("user_id",requestedUserId).maybeSingle();
   if(mt5Error)return NextResponse.json({error:mt5Error.message},{status:400});
-  if(!userRow)return NextResponse.json({error:"User profile not found."},{status:404});
+  if(!trader&&!userRow&&!application&&!mt5Row)return NextResponse.json({error:"User profile not found."},{status:404});
   let investorPassword="";if(mt5Row?.investor_password_ciphertext){try{investorPassword=decryptMt5Secret(mt5Row.investor_password_ciphertext)}catch{investorPassword=""}}
-  const profile=traderProfile||application||null;
-  const accountType=traderProfile?"trader":(userRow.role==="trader"||application?"trader":"investor");
+  const base=trader||application||userRow||{};
+  const accountType=trader?"trader":(application?"trader":"investor");
   return NextResponse.json({
-   profile:{id:userRow.id,user_id:userRow.id,email:userRow.email,full_name:userRow.full_name,display_name:profile?.display_name||userRow.full_name||userRow.email?.split("@")[0]||"User",role:userRow.role,account_type:accountType,kyc_verified:userRow.kyc_verified,account_status:userRow.account_status,created_at:userRow.created_at,...(profile||{})},
-   trader:traderProfile||null,
+   profile:{
+    id:requestedUserId,user_id:requestedUserId,
+    email:userRow?.email||trader?.email||application?.email||null,
+    full_name:userRow?.full_name||trader?.full_name||application?.user_name||null,
+    display_name:trader?.display_name||application?.display_name||userRow?.full_name||userRow?.email?.split("@")[0]||"User",
+    role:userRow?.role||trader?.role||"user",
+    account_type:accountType,
+    account_status:userRow?.account_status||trader?.account_status||null,
+    created_at:userRow?.created_at||trader?.created_at||application?.created_at||null,
+    ...(trader?.profile||application||{})
+   },
+   trader:trader||null,
    application:application||null,
    credentials:mt5Row?{mt5Login:mt5Row.mt5_login,mt5Server:mt5Row.mt5_server,investorPassword,status:mt5Row.status,submittedAt:mt5Row.submitted_at,verifiedAt:mt5Row.verified_at,rejectionReason:mt5Row.rejection_reason,changeRequested:mt5Row.change_requested,changeRequestedAt:mt5Row.change_requested_at}:null
   });
