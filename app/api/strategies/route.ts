@@ -1,2 +1,12 @@
-import {NextResponse} from "next/server";import {createSupabaseServerClient} from "@/lib/supabase/server";
-export async function GET(){const s=await createSupabaseServerClient();const {data:{user}}=await s.auth.getUser();if(!user)return NextResponse.json({error:"Authentication required."},{status:401});const {data:settings}=await s.from("system_settings").select("investment_enabled,strategy_entry_enabled").single();if(!settings?.investment_enabled||!settings?.strategy_entry_enabled)return NextResponse.json({strategies:[]});const {data,error}=await s.from("zynth_strategies").select("id,name,description,nav,minimum_investment,maximum_investment,status,trader_id").eq("status","active").order("created_at",{ascending:false});if(error)return NextResponse.json({error:error.message},{status:400});const ids=(data||[]).map(x=>x.trader_id).filter(Boolean);let names:any[]=[];if(ids.length){const r=await s.from("users").select("id,full_name").in("id",ids);names=r.data||[]}return NextResponse.json({strategies:(data||[]).map(x=>({...x,trader_name:names.find(n=>n.id===x.trader_id)?.full_name||null}))});}
+import {NextResponse} from "next/server";
+import {createSupabaseServerClient} from "@/lib/supabase/server";
+export async function GET(){
+ const s=await createSupabaseServerClient();
+ const {data:{user}}=await s.auth.getUser();
+ if(!user)return NextResponse.json({error:"Authentication required."},{status:401});
+ const {data:settings}=await s.from("system_settings").select("investment_enabled,strategy_entry_enabled").single();
+ if(!settings?.investment_enabled||!settings?.strategy_entry_enabled)return NextResponse.json({strategies:[]});
+ const {data,error}=await s.rpc("zynth_public_strategies");
+ if(error)return NextResponse.json({error:error.message},{status:400});
+ return NextResponse.json({strategies:Array.isArray(data)?data:[]});
+}
