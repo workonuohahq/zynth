@@ -45,7 +45,7 @@ export default function AdminPanel({initialData,adminEmail}:{initialData:any;adm
    <Link href="/dashboard" className="admin-brand"><span className="brand-mark">Z</span><span>ZYNTH</span><small>ADMIN</small></Link>
    <div className="admin-nav-label">CONTROL CENTER</div>
    <nav className="admin-list-nav">{[
-    {k:"overview",l:"Overview",i:BarChart3,b:data.pending_reports},{k:"settlements",l:"Settlements",i:Clock3,b:data.pending_reports},{k:"strategies",l:"Strategies",i:TrendingUp,b:data.strategies},{k:"investors",l:"Investors",i:Users,b:data.investors},{k:"traders",l:"Traders",i:ShieldCheck,b:data.traders},{k:"withdrawals",l:"Withdrawals",i:ArrowDownToLine,b:data.withdrawals_pending},{k:"settings",l:"Settings",i:Settings2}
+    {k:"overview",l:"Overview",i:BarChart3,b:data.pending_reports},{k:"settlements",l:"Settlements",i:Clock3,b:data.pending_reports},{k:"strategies",l:"Strategies",i:TrendingUp,b:data.strategies},{k:"investors",l:"Investors",i:Users,b:data.investors},{k:"traders",l:"Traders",i:ShieldCheck,b:data.traders},{k:"deposits",l:"Deposits",i:ArrowDownToLine,b:data.pending_deposits},{k:"withdrawals",l:"Withdrawals",i:ArrowDownToLine,b:data.withdrawals_pending},{k:"settings",l:"Settings",i:Settings2}
    ].map(({k,l,i:Icon,b})=><button key={k} className={tab===k?"admin-list-item active":"admin-list-item"} onClick={()=>setTab(k)}><span className="admin-list-icon"><Icon size={16}/></span><span className="admin-list-label">{l}</span>{b>0&&<em>{b}</em>}</button>)}</nav>
    <div className="admin-sidebar-bottom"><span className="admin-session"><i/>Online</span><div className="admin-identity"><span className="avatar">A</span><span><b>Administrator</b><small>{adminEmail}</small></span></div></div>
   </aside>
