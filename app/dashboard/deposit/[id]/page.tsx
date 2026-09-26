@@ -122,7 +122,7 @@ export default function DepositPaymentPage({params}:{params:{id:string}}){
           </div>
           <div className={`status-box status-${request.status}`}>
             {confirmed?<CheckCircle2/>:rejected||cancelled?<ExternalLink/>:<Clock3/>}
-            <div><b>{confirmed?"Vault funded":rejected?"Payment request unavailable":cancelled?"Payment request cancelled":"Payment request received"}</b><span>Request {request.reference} · {new Date(request.created_at).toLocaleString("en-NG")}</span>{request.admin_note&&<span>{request.admin_note}</span>}</div>
+            <div><b>{confirmed?"Payment confirmed":rejected?"Payment request unavailable":cancelled?"Payment request cancelled":"Payment request received"}</b><span>Request {request.reference} · {new Date(request.created_at).toLocaleString("en-NG")}</span>{request.admin_note&&<span>{request.admin_note}</span>}</div>
           </div>
           <div className="payment-actions">
             <Link className="payment-action payment-primary" href={returnTo}>{confirmed?"Continue to investment":"Return to investment"} <ArrowRight size={15}/></Link>
