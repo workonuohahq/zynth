@@ -36,7 +36,7 @@ export async function PATCH(req: Request) {
     p_settlement_enabled: Boolean(b.settlement_enabled),
     p_settlement_timezone: String(b.settlement_timezone || "Africa/Lagos"),
     p_settlement_cutoff_time: String(b.settlement_cutoff_time || "23:59:00"),
-    p_require_settlement_evidence: Boolean(b.require_settlement_evidence),
+    p_require_settlement_evidence: false,
     p_require_flat_trading_day: Boolean(b.require_flat_trading_day),
     p_deposit_page_title: String(b.deposit_page_title || "Fund your wallet"),
     p_deposit_page_subtitle: String(b.deposit_page_subtitle || ""),
