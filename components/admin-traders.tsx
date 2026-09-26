@@ -14,10 +14,18 @@ export default function AdminTraders({ onSaved }: { onSaved: () => void }) {
   const [status, setStatus] = useState("all");
   const [selected, setSelected] = useState<any>(null);
   const [tab, setTab] = useState<"applications" | "traders">("applications");
+  const [loadError, setLoadError] = useState("");
+  const [loading, setLoading] = useState(true);
 
   async function load() {
-    const r = await fetch("/api/admin/traders", { cache: "no-store" });
-    setData(await r.json());
+    setLoading(true); setLoadError("");
+    try {
+      const r = await fetch("/api/admin/traders", { cache: "no-store" });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || "Unable to load trader operations.");
+      setData({ traders: Array.isArray(j.traders) ? j.traders : [], applications: Array.isArray(j.applications) ? j.applications : [], users: Array.isArray(j.users) ? j.users : [] });
+    } catch (e: any) { setLoadError(e?.message || "Unable to load trader operations."); }
+    finally { setLoading(false); }
   }
   useEffect(() => { load(); }, []);
 
@@ -70,6 +78,8 @@ export default function AdminTraders({ onSaved }: { onSaved: () => void }) {
         </div>
         <div className="trader-command-badge"><Users size={15} /><strong>{stats.active}</strong><span>active traders</span></div>
       </div>
+
+      {loadError && <div className="trader-command-error"><ShieldAlert size={15}/><div><strong>Trader register unavailable</strong><span>{loadError}</span></div><button onClick={load}>Retry</button></div>}
 
       <div className="trader-command-stats">
         <div><span>ACTIVE TRADERS</span><strong>{stats.active}</strong><small>{stats.strategies} published strategies</small></div>
@@ -140,7 +150,8 @@ export default function AdminTraders({ onSaved }: { onSaved: () => void }) {
         <section className="admin-card trader-ops-card">
           <div className="admin-card-head"><div><span className="muted">OPERATOR REGISTER</span><h2>Active traders</h2><p>Trader profiles, risk characteristics and strategy footprint.</p></div></div>
           <div className="trader-active-grid">
-            {data.traders.map((t: Trader) => {
+            {loading && <div className="admin-empty"><Users size={22}/><p>Loading the active trader register…</p></div>}
+            {!loading && data.traders.map((t: Trader) => {
               const p = t.zynth_trader_profiles?.[0] || t.zynth_trader_profiles || {};
               return <article className="trader-active-card" key={t.id}>
                 <div className="trader-card-top"><div className="trader-avatar-large">{String(t.display_name || "T").slice(0,1).toUpperCase()}</div><div className="trader-card-identity"><strong>{t.display_name || t.full_name || "Trader"}</strong><span>{t.email} · {p.country || "Country not supplied"}</span></div><span className="trader-status-pill approved">{p.status || "active"}</span></div>
@@ -149,7 +160,7 @@ export default function AdminTraders({ onSaved }: { onSaved: () => void }) {
                 <button className="details trader-view-button" onClick={()=>setSelected({profile:p, trader:t})}>Open trader profile <ChevronRight size={13}/></button>
               </article>
             })}
-            {!data.traders.length && <div className="admin-empty"><Users size={22}/><p>No active traders yet.</p></div>}
+            {!loading && !data.traders.length && <div className="admin-empty"><Users size={22}/><p>No active traders yet.</p></div>}
           </div>
         </section>
       )}
