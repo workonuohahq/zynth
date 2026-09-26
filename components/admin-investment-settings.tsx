@@ -1,100 +1,21 @@
 "use client";
-
-import { useEffect, useState } from "react";
-import { LockKeyhole, Save, ShieldCheck } from "lucide-react";
-
-type Settings = {
-  investment_enabled: boolean;
-  strategy_entry_enabled: boolean;
-  strategy_exit_enabled: boolean;
-  vault_profit_lock_days: number;
-  global_min_deposit: number;
-  global_min_withdrawal: number;
-};
-
-export default function AdminInvestmentSettings() {
-  const [settings, setSettings] = useState<Settings | null>(null);
-  const [message, setMessage] = useState("");
-  const [busy, setBusy] = useState(false);
-
-  useEffect(() => {
-    fetch("/api/admin/investment-settings")
-      .then((r) => r.json())
-      .then((d) => setSettings(d.settings))
-      .catch(() => {});
-  }, []);
-
-  if (!settings) {
-    return <div className="admin-empty"><ShieldCheck size={20} /><p>Loading financial controls…</p></div>;
-  }
-
-  async function save() {
-    if (!settings) return;
-    const current = settings;
-    setBusy(true);
-    setMessage("");
-    const r = await fetch("/api/admin/investment-settings", {
-      method: "PATCH",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        investmentEnabled: current.investment_enabled,
-        strategyEntryEnabled: current.strategy_entry_enabled,
-        strategyExitEnabled: current.strategy_exit_enabled,
-        vaultProfitLockDays: current.vault_profit_lock_days,
-        minDeposit: current.global_min_deposit,
-        minWithdrawal: current.global_min_withdrawal
-      })
-    });
-    const d = await r.json();
-    setMessage(r.ok ? "Financial rules saved and audited." : (d.error || "Save failed."));
-    if (r.ok) setSettings((old) => old ? { ...old, ...d.settings } : old);
-    setBusy(false);
-  }
-
-  return (
-    <div>
-      <div className="settings-grid">
-        <label>
-          <span>Profit lock period</span>
-          <div className="setting-input">
-            <input type="number" min="0" max="3650" value={settings.vault_profit_lock_days} onChange={(e) => setSettings({ ...settings, vault_profit_lock_days: Number(e.target.value) })} />
-            <b>DAYS</b>
-          </div>
-        </label>
-        <label>
-          <span>Minimum deposit</span>
-          <div className="setting-input">
-            <input type="number" min="0" value={settings.global_min_deposit} onChange={(e) => setSettings({ ...settings, global_min_deposit: Number(e.target.value) })} />
-            <b>NGN</b>
-          </div>
-        </label>
-        <label>
-          <span>Minimum withdrawal</span>
-          <div className="setting-input">
-            <input type="number" min="0" value={settings.global_min_withdrawal} onChange={(e) => setSettings({ ...settings, global_min_withdrawal: Number(e.target.value) })} />
-            <b>NGN</b>
-          </div>
-        </label>
-      </div>
-
-      <label className="toggle-row">
-        <span><b>Investment engine</b><small>Master switch. Keep disabled for BTest until operations and compliance are ready.</small></span>
-        <input type="checkbox" checked={settings.investment_enabled} onChange={(e) => setSettings({ ...settings, investment_enabled: e.target.checked })} />
-      </label>
-      <label className="toggle-row">
-        <span><b>Strategy entry</b><small>Allow investors to create new strategy positions.</small></span>
-        <input type="checkbox" checked={settings.strategy_entry_enabled} onChange={(e) => setSettings({ ...settings, strategy_entry_enabled: e.target.checked })} />
-      </label>
-      <label className="toggle-row">
-        <span><b>Strategy exit</b><small>Controls future investment redemption workflows.</small></span>
-        <input type="checkbox" checked={settings.strategy_exit_enabled} onChange={(e) => setSettings({ ...settings, strategy_exit_enabled: e.target.checked })} />
-      </label>
-
-      <div className="notice"><LockKeyhole size={15} /> Profit lots generated after settlement use this lock period. Changing it does not rewrite already-created unlock dates.</div>
-      <button className="primary save-settings" onClick={save} disabled={busy}>
-        {busy ? "Saving…" : <><Save size={15} /> Save financial rules</>}
-      </button>
-      {message && <div className="form-feedback success">{message}</div>}
-    </div>
-  );
-}
+import {useEffect,useState} from "react";
+import {AlertTriangle,Banknote,Clock3,CreditCard,LockKeyhole,Save,Settings2,ShieldCheck,WalletCards} from "lucide-react";
+const DEF:any={investment_enabled:false,strategy_entry_enabled:false,strategy_exit_enabled:false,vault_profit_lock_days:30,global_min_deposit:5500,global_min_withdrawal:100,deposits_enabled:true,withdrawals_enabled:true,exit_fee_pct:0,settlement_enabled:true,settlement_timezone:"Africa/Lagos",settlement_cutoff_time:"23:59:00",require_settlement_evidence:true,require_flat_trading_day:true,deposit_page_title:"Fund your wallet",deposit_page_subtitle:"",deposit_page_notice:"",deposit_instructions:"",flutterwave_enabled:false,flutterwave_title:"Flutterwave",flutterwave_account_name:"",flutterwave_account_number:"",flutterwave_bank_name:"",flutterwave_extra:"",paystack_enabled:false,paystack_title:"Paystack",paystack_account_name:"",paystack_account_number:"",paystack_bank_name:"",paystack_extra:"",withdrawal_processing_notice:"Withdrawals are reviewed manually."};
+const groups=[
+ {icon:Settings2,title:"Platform operations",desc:"Master switches and financial thresholds.",fields:[["toggle","investment_enabled","Investment engine","Master switch for investor positions."],["toggle","strategy_entry_enabled","Strategy entry","Allow new strategy positions."],["toggle","strategy_exit_enabled","Strategy exit","Allow strategy redemption."],["toggle","deposits_enabled","Deposits","Allow wallet funding requests."],["toggle","withdrawals_enabled","Withdrawals","Allow withdrawal requests."],["num","global_min_deposit","Minimum deposit","NGN"],["num","global_min_withdrawal","Minimum withdrawal","NGN"],["num","exit_fee_pct","Exit fee","Percentage on strategy redemption."]]},
+ {icon:LockKeyhole,title:"Vault & profit rules",desc:"Controls when realized profit becomes withdrawable.",fields:[["num","vault_profit_lock_days","Profit lock period","Days. Existing lots keep their original unlock date."]]},
+ {icon:Clock3,title:"Daily settlement",desc:"Controls trader reporting and the daily NAV cutoff.",fields:[["toggle","settlement_enabled","Settlement engine","Allow reports into the settlement queue."],["text","settlement_timezone","Timezone","Example: Africa/Lagos"],["time","settlement_cutoff_time","Daily cutoff","Local strategy cutoff."],["toggle","require_settlement_evidence","Require evidence","Require supporting evidence before confirmation."],["toggle","require_flat_trading_day","Require flat day","Require positions to be closed at cutoff."]]},
+ {icon:WalletCards,title:"Deposit experience",desc:"User-facing funding page content.",fields:[["text","deposit_page_title","Page title",""],["text","deposit_page_subtitle","Subtitle",""],["text","deposit_page_notice","Payment notice",""],["text","deposit_instructions","Payment instructions",""]]},
+ {icon:CreditCard,title:"Payment channels",desc:"Operational payment instructions shown to users.",fields:[["toggle","flutterwave_enabled","Flutterwave enabled","Show this funding channel."],["text","flutterwave_title","Flutterwave display name",""],["text","flutterwave_account_name","Flutterwave account name",""],["text","flutterwave_account_number","Flutterwave account number",""],["text","flutterwave_bank_name","Flutterwave bank name",""],["text","flutterwave_extra","Flutterwave extra instructions",""],["toggle","paystack_enabled","Paystack enabled","Show this funding channel."],["text","paystack_title","Paystack display name",""],["text","paystack_account_name","Paystack account name",""],["text","paystack_account_number","Paystack account number",""],["text","paystack_bank_name","Paystack bank name",""],["text","paystack_extra","Paystack extra instructions",""]]},
+ {icon:Banknote,title:"Withdrawal operations",desc:"Rules and messaging for manual withdrawal processing.",fields:[["text","withdrawal_processing_notice","Processing notice","Shown to investors during withdrawal."]]}
+];
+function Field({f,s,u}:{f:any;s:any;u:any}){const[k,key,label,help]=f;if(k==="toggle")return <label className="zst"><span><b>{label}</b><small>{help}</small></span><input type="checkbox" checked={!!s[key]} onChange={e=>u(key,e.target.checked)}/></label>;return <label className="zsf"><span>{label}</span><input type={k==="num"?"number":k==="time"?"time":"text"} value={s[key]??""} onChange={e=>u(key,k==="num"?Number(e.target.value):e.target.value)}/><small>{help}</small></label>}
+export default function AdminInvestmentSettings(){
+ const[s,setS]=useState<any>(null),[err,setErr]=useState(""),[msg,setMsg]=useState(""),[busy,setBusy]=useState(false),[dirty,setDirty]=useState(false);
+ useEffect(()=>{fetch("/api/admin/investment-settings").then(async r=>{const d=await r.json();if(!r.ok)throw Error(d.error);setS({...DEF,...d.settings})}).catch(e=>setErr(e.message||"Unable to load settings."))},[]);
+ const u=(k:string,v:any)=>{setS((x:any)=>({...x,[k]:v}));setDirty(true);setMsg("")};
+ async function save(){setBusy(true);setErr("");const r=await fetch("/api/admin/investment-settings",{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify(s)});const d=await r.json();if(!r.ok)setErr(d.error||"Save failed.");else{setS({...DEF,...d.settings});setDirty(false);setMsg("All settings saved and audited.")}setBusy(false)}
+ if(err)return <div className="zse"><AlertTriangle/><div><b>Settings unavailable</b><p>{err}</p><button className="ghost" onClick={()=>location.reload()}>Retry</button></div></div>;
+ if(!s)return <div className="admin-empty"><ShieldCheck size={20}/><p>Loading system controls…</p></div>;
+ return <div className="zsw"><div className="zstatus"><span className={s.investment_enabled?"on":"off"}>● Investment {s.investment_enabled?"LIVE":"OFF"}</span><span className={s.deposits_enabled?"on":"off"}>● Deposits {s.deposits_enabled?"OPEN":"PAUSED"}</span><span className={s.withdrawals_enabled?"on":"off"}>● Withdrawals {s.withdrawals_enabled?"OPEN":"PAUSED"}</span></div>{groups.map(g=><section className="zss" key={g.title}><header><i><g.icon size={17}/></i><div><h3>{g.title}</h3><p>{g.desc}</p></div></header><div className="zsb"><div className="zg">{g.fields.map((f:any)=><Field key={f[1]} f={f} s={s} u={u}/>)}</div>{g.title==="Vault & profit rules"&&<div className="zcall"><LockKeyhole size={15}/>Principal is separate from Vault profit; eligible profit is also capped by current realized portfolio profit.</div>}{g.title==="Withdrawal operations"&&<div className="zcall"><ShieldCheck size={15}/>Withdrawal approval remains admin-controlled money movement.</div>}{g.title==="Payment channels"&&<div className="zcall">Do not store payment API secrets in these fields.</div>}</div></section>)}<section className="zss"><header><i><ShieldCheck size={17}/></i><div><h3>Operational safeguards</h3><p>Important rules for the manual-settlement model.</p></div></header><div className="zsb"><div className="zcall warning"><AlertTriangle size={15}/>Keep the Investment engine OFF until KYC/AML, custody, legal and operational controls are ready. These switches control software behavior; they do not establish regulatory approval.</div><div className="zg"><div className="zro"><small>Settlement model</small><b>Trader report → admin verification → NAV settlement</b></div><div className="zro"><small>Investor accounting</small><b>NAV + units + profit lots</b></div></div></div></section><div className="zfooter"><span>{dirty?"Unsaved changes":"All changes saved"}{msg&&" · "+msg}</span><button className="primary" disabled={busy||!dirty} onClick={save}>{busy?<><Save size={15}/>Saving…</>:<><Save size={15}/>Save all settings</>}</button></div><style jsx global>{`.zsw{display:grid;gap:14px}.zstatus{display:flex;gap:8px;flex-wrap:wrap}.zstatus span{padding:7px 10px;border:1px solid #453721;border-radius:99px;background:#18140e;color:#d7c59e;font-size:9px;font-weight:800}.zstatus .off{color:#8f8980;border-color:#302b23;background:#12110f}.zss{background:#10100f;border:1px solid #2d2922;border-radius:16px;overflow:hidden}.zss>header{display:flex;gap:12px;padding:20px 22px;border-bottom:1px solid #29251f}.zss>header i{width:34px;height:34px;display:grid;place-items:center;background:#211a10;border:1px solid #493a25;border-radius:10px;color:#ead5a0}.zss h3{margin:1px 0 4px;font-size:16px}.zss header p{margin:0;color:#817b72;font-size:11px}.zsb{padding:20px 22px;display:grid;gap:15px}.zg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.zsf{display:grid;gap:7px}.zsf>span{font-size:11px;font-weight:800;color:#d8d0c3}.zsf small,.zst small{font-size:9px;color:#746f67}.zsf input{width:100%;background:#0b0b0a;color:#f4efe7;border:1px solid #332e26;border-radius:9px;padding:11px 12px}.zst{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:13px 14px;min-height:65px;border:1px solid #302b23;background:#0d0d0c;border-radius:11px}.zst b,.zst small{display:block}.zst b{font-size:11px}.zst small{margin-top:3px;line-height:1.5}.zst input{appearance:none;width:42px;height:23px;border-radius:99px;background:#39342c;border:1px solid #4c453a;position:relative;flex:none}.zst input:before{content:"";position:absolute;width:17px;height:17px;left:2px;top:2px;border-radius:50%;background:#999}.zst input:checked{background:#7f6332}.zst input:checked:before{left:21px;background:#fff3d2}.zcall{display:flex;gap:8px;padding:11px 12px;border:1px solid #4c3f2b;background:#1a160f;color:#bba477;border-radius:10px;font-size:10px;line-height:1.5}.zcall.warning{border-color:#59452b}.zro{padding:13px;border:1px dashed #383229;border-radius:10px}.zro small{display:block;color:#777168;font-size:9px}.zro b{display:block;margin-top:5px;font-size:11px}.zfooter{position:sticky;bottom:10px;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 14px;background:#11110ff2;border:1px solid #393125;border-radius:12px;color:#9c9487;font-size:10px}.zfooter .primary{margin:0}html[data-theme="light"] .zss{background:#fffdf8;border-color:#ddd6c8}html[data-theme="light"] .zss>header{border-color:#e5dfd5}html[data-theme="light"] .zss header p{color:#716b62}html[data-theme="light"] .zss>header i{background:#f2e9d8;border-color:#dccaa5;color:#8e692d}html[data-theme="light"] .zsf>span{color:#38342e}html[data-theme="light"] .zsf small,html[data-theme="light"] .zst small{color:#777168}html[data-theme="light"] .zsf input{background:#fffdf8;color:#1d1b17;border-color:#d5cec0}html[data-theme="light"] .zst{background:#faf8f3;border-color:#ddd6c8}html[data-theme="light"] .zst input{background:#d6d0c5;border-color:#c5beb1}html[data-theme="light"] .zst input:checked{background:#b88b3e}html[data-theme="light"] .zcall{background:#faf4e7;border-color:#dfc98f;color:#80652f}html[data-theme="light"] .zfooter{background:#fffdf8f2;border-color:#d8d1c5;color:#706a61}@media(max-width:700px){.zg{grid-template-columns:1fr}.zss>header,.zsb{padding:16px}}`}</style></div>
