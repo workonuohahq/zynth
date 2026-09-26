@@ -4,25 +4,25 @@ import { FormEvent, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
-export default function LoginForm({ initialMode = "login" }: { initialMode?: "login" | "signup" }) {
+export default function LoginForm({ initialMode = "login", referralCode = "" }: { initialMode?: "login" | "signup"; referralCode?: string }) {
   const router = useRouter();
   const [mode, setMode] = useState<"login" | "signup">(initialMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [message, setMessage] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState(false);\n  const [refCode] = useState(referralCode || "");
 
   async function submit(e: FormEvent) {
     e.preventDefault();
     setBusy(true);
     setMessage("");
     try {
-      const supabase = createSupabaseBrowserClient();
+      const supabase = createSupabaseBrowserClient();\n      if (refCode) localStorage.setItem("zynth_referral_code", refCode);
       if (mode === "login") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) setMessage(error.message);
-        else router.push("/dashboard");
+        else { const code=refCode||localStorage.getItem("zynth_referral_code"); if(code) { await fetch("/api/referral",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({code})}).catch(()=>{}); localStorage.removeItem("zynth_referral_code"); } router.push("/dashboard"); }
       } else {
         const { data, error } = await supabase.auth.signUp({
           email,
@@ -30,7 +30,7 @@ export default function LoginForm({ initialMode = "login" }: { initialMode?: "lo
           options: { data: { full_name: name }, emailRedirectTo: `${window.location.origin}/auth/confirmed` }
         });
         if (error) setMessage(error.message);
-        else if (data.session) router.push("/dashboard");
+        else if (data.session) { const code=refCode||localStorage.getItem("zynth_referral_code"); if(code) { await fetch("/api/referral",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({code})}).catch(()=>{}); localStorage.removeItem("zynth_referral_code"); } router.push("/dashboard"); }
         else router.push(`/auth/confirmed?email=${encodeURIComponent(email)}`);
       }
     } catch (error) {
