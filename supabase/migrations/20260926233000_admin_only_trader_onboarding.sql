@@ -7,3 +7,6 @@ revoke execute on function public.zynth_admin_review_trader_application(uuid,uui
 drop function if exists public.zynth_admin_review_trader_application(uuid,uuid,text,text);
 
 comment on table public.zynth_trader_applications is 'Legacy trader application records retained for historical audit only. New trader access is granted exclusively by administrator onboarding.';
+
+revoke insert, update, delete, truncate, references, trigger on table public.zynth_trader_applications from anon, authenticated;
+revoke select on table public.zynth_trader_applications from anon;
