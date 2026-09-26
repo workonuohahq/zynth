@@ -133,10 +133,13 @@ export default function AdminTraders({ onSaved, refreshKey }: { onSaved: () => v
         <div className="trader-mt5-queue-list">
           {data.mt5_pending.map((m:any) => {
             const trader = data.traders.find((t:any) => t.id === m.user_id);
-            const name = trader?.display_name || trader?.full_name || "Unnamed trader";
-            const initials = String(name).trim().slice(0,1).toUpperCase() || "T";
+            const queueUser = m.user || {};
+            const queueProfile = m.profile || {};
+            const name = queueProfile.display_name || queueProfile.full_name || queueUser.full_name || queueUser.email?.split("@")[0] || trader?.display_name || trader?.full_name || "User";
+            const email = queueUser.email || trader?.email || "Email unavailable";
+            const initials = String(name).trim().slice(0,1).toUpperCase() || "U";
             return <div key={m.user_id} className="trader-mt5-queue-item">
-              <div className="trader-mt5-person"><div className="trader-avatar">{initials}</div><div><strong>{name}</strong><span>{trader?.email || "Email unavailable"}</span></div></div>
+              <div className="trader-mt5-person"><div className="trader-avatar">{initials}</div><div><strong>{name}</strong><span>{email}</span></div></div>
               <div className="trader-mt5-account"><strong>{m.mt5_login || "—"}</strong><span>{m.mt5_server || "Server not supplied"}</span></div>
               <div className="trader-mt5-submitted"><strong>{m.submitted_at ? new Date(m.submitted_at).toLocaleDateString("en-NG",{day:"2-digit",month:"short",year:"numeric"}) : "—"}</strong><span>{m.submitted_at ? new Date(m.submitted_at).toLocaleTimeString("en-NG",{hour:"2-digit",minute:"2-digit"}) : ""}</span></div>
               <div><span className="trader-mt5-pending-badge"><i/> Pending</span></div>
