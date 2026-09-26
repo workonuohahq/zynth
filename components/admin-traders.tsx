@@ -7,7 +7,7 @@ type Trader = any;
 type Application = any;
 
 export default function AdminTraders({ onSaved, refreshKey }: { onSaved: () => void; refreshKey?: number }) {
-  const [data, setData] = useState<any>({ traders: [], applications: [], users: [], mt5_pending: [], mt5_pending_count: 0 });
+  const [data, setData] = useState<any>({ traders: [], applications: [], users: [], mt5_pending: [], mt5_pending_count: 0, reporting_settings:{trader_report_start_time:"06:00:00",trader_report_end_time:"23:00:00"} });
   const [busy, setBusy] = useState("");
   const [note, setNote] = useState("");
   const [query, setQuery] = useState("");
@@ -17,6 +17,8 @@ export default function AdminTraders({ onSaved, refreshKey }: { onSaved: () => v
   const [loadError, setLoadError] = useState("");
   const [loading, setLoading] = useState(true);
   const [revealedMt5, setRevealedMt5] = useState<any>(null);
+  const [reportingForm, setReportingForm] = useState({startTime:"06:00",endTime:"23:00"});
+  const [reportingBusy, setReportingBusy] = useState(false);
 
   async function load() {
     setLoading(true); setLoadError("");
@@ -24,7 +26,9 @@ export default function AdminTraders({ onSaved, refreshKey }: { onSaved: () => v
       const r = await fetch("/api/admin/traders", { cache: "no-store" });
       const j = await r.json();
       if (!r.ok) throw new Error(j.error || "Unable to load trader operations.");
-      setData({ traders: Array.isArray(j.traders) ? j.traders : [], applications: Array.isArray(j.applications) ? j.applications : [], users: Array.isArray(j.users) ? j.users : [], mt5_pending: Array.isArray(j.mt5_pending) ? j.mt5_pending : [], mt5_pending_count: Number(j.mt5_pending_count || 0) });
+      const settings=j.reporting_settings||{trader_report_start_time:"06:00:00",trader_report_end_time:"23:00:00"};
+      setData({ traders: Array.isArray(j.traders) ? j.traders : [], applications: Array.isArray(j.applications) ? j.applications : [], users: Array.isArray(j.users) ? j.users : [], mt5_pending: Array.isArray(j.mt5_pending) ? j.mt5_pending : [], mt5_pending_count: Number(j.mt5_pending_count || 0), reporting_settings:settings });
+      setReportingForm({startTime:String(settings.trader_report_start_time||"06:00").slice(0,5),endTime:String(settings.trader_report_end_time||"23:00").slice(0,5)});
     } catch (e: any) { setLoadError(e?.message || "Unable to load trader operations."); }
     finally { setLoading(false); }
   }
@@ -64,6 +68,19 @@ export default function AdminTraders({ onSaved, refreshKey }: { onSaved: () => v
     } finally {
       setBusy("");
     }
+  }
+
+  async function saveReportingSettings(){
+    setReportingBusy(true);
+    try{
+      const r=await fetch("/api/admin/traders",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({action:"save_reporting_settings",...reportingForm})});
+      const j=await r.json();
+      if(!r.ok)throw new Error(j.error||"Unable to save reporting window.");
+      setNote("Reporting window saved.");
+      await load();
+      onSaved();
+    }catch(e:any){window.alert(e?.message||"Unable to save reporting window.");}
+    finally{setReportingBusy(false);}
   }
 
   async function action(body: any, key: string) {
@@ -119,6 +136,19 @@ export default function AdminTraders({ onSaved, refreshKey }: { onSaved: () => v
       </div>
 
       {loadError && <div className="trader-command-error"><ShieldAlert size={15}/><div><strong>Trader register unavailable</strong><span>{loadError}</span></div><button onClick={load}>Retry</button></div>}
+
+      <section className="admin-card trader-reporting-settings-card">
+        <div className="admin-card-head">
+          <div><span className="muted">TRADER GOVERNANCE</span><h2>Daily reporting window</h2><p>Traders may submit one valuation report per strategy during this window. Open positions are allowed to carry forward across reporting cycles.</p></div>
+          <span className="admin-count">1 report / cycle</span>
+        </div>
+        <div className="trader-reporting-settings-grid">
+          <label><span>REPORTING OPENS</span><input type="time" value={reportingForm.startTime} onChange={e=>setReportingForm({...reportingForm,startTime:e.target.value})}/></label>
+          <label><span>REPORTING CLOSES</span><input type="time" value={reportingForm.endTime} onChange={e=>setReportingForm({...reportingForm,endTime:e.target.value})}/></label>
+          <div className="trader-reporting-rule"><ShieldCheck size={16}/><div><strong>Open positions remain valid</strong><small>Submitting a report no longer requires the trader to close every position. Unrealised P&L is carried into the next cycle.</small></div></div>
+          <button className="approve trader-reporting-save" onClick={saveReportingSettings} disabled={reportingBusy}>{reportingBusy?"Saving…":"Save reporting rules"} <CheckCircle2 size={13}/></button>
+        </div>
+      </section>
 
       {stats.mt5Pending > 0 && <section className="admin-card trader-mt5-queue-card">
         <div className="trader-mt5-queue-head">
