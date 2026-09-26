@@ -26,7 +26,6 @@ export async function GET(req:Request){try{const {s,user}=await admin();if(!user
     ...(trader?.profile||{})
    },
    trader:trader||null,
-   application:application||null,
    credentials:mt5Row?{mt5Login:mt5Row.mt5_login,mt5Server:mt5Row.mt5_server,investorPassword,status:mt5Row.status,submittedAt:mt5Row.submitted_at,verifiedAt:mt5Row.verified_at,rejectionReason:mt5Row.rejection_reason,changeRequested:mt5Row.change_requested,changeRequestedAt:mt5Row.change_requested_at}:null
   });
  }
