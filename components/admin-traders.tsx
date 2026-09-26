@@ -84,19 +84,30 @@ export default function AdminTraders({ onSaved, refreshKey }: { onSaved: () => v
 
       {loadError && <div className="trader-command-error"><ShieldAlert size={15}/><div><strong>Trader register unavailable</strong><span>{loadError}</span></div><button onClick={load}>Retry</button></div>}
 
-      {stats.mt5Pending > 0 && <section className="admin-card trader-mt5-attention-card">
-        <div className="admin-card-head">
-          <div><span className="muted">ACTION REQUIRED</span><h2>MT5 verification queue</h2><p>{stats.mt5Pending} trader{stats.mt5Pending === 1 ? "" : "s"} submitted MT5 details and cannot access Trader Desk until Operations reviews the submission.</p></div>
-          <span className="trader-status-pill pending">{stats.mt5Pending} pending</span>
+      {stats.mt5Pending > 0 && <section className="admin-card trader-mt5-queue-card">
+        <div className="trader-mt5-queue-head">
+          <div className="trader-mt5-queue-title">
+            <span className="muted">OPERATIONS · VERIFICATION</span>
+            <div><h2>MT5 verification</h2><span className="trader-mt5-live"><i/> Attention required</span></div>
+            <p>Review broker credentials before granting Trader Desk access. Pending submissions remain locked until an administrator makes a decision.</p>
+          </div>
+          <div className="trader-mt5-queue-summary"><strong>{stats.mt5Pending}</strong><span>Pending review</span><small>Trader Desk locked</small></div>
         </div>
-        <div className="trader-mt5-queue">
+        <div className="trader-mt5-table-head"><span>TRADER</span><span>MT5 ACCOUNT</span><span>SUBMITTED</span><span>STATUS</span><span></span></div>
+        <div className="trader-mt5-queue-list">
           {data.mt5_pending.map((m:any) => {
             const trader = data.traders.find((t:any) => t.id === m.user_id);
-            return <button key={m.user_id} className="trader-mt5-queue-row" onClick={() => { setTab("traders"); if (trader) setSelected({profile: trader.profile || {}, trader}); }}>
-              <div className="trader-avatar">{String(trader?.display_name || trader?.full_name || "T").slice(0,1).toUpperCase()}</div>
-              <div><strong>{trader?.display_name || trader?.full_name || trader?.email || "Trader"}</strong><span>MT5 {m.mt5_login || "—"} · {m.mt5_server || "Server not supplied"}</span></div>
-              <span>Review <ChevronRight size={13}/></span>
-            </button>
+            const name = trader?.display_name || trader?.full_name || "Unnamed trader";
+            const initials = String(name).trim().slice(0,1).toUpperCase() || "T";
+            return <div key={m.user_id} className="trader-mt5-queue-item">
+              <div className="trader-mt5-person"><div className="trader-avatar">{initials}</div><div><strong>{name}</strong><span>{trader?.email || "Email unavailable"}</span></div></div>
+              <div className="trader-mt5-account"><strong>{m.mt5_login || "—"}</strong><span>{m.mt5_server || "Server not supplied"}</span></div>
+              <div className="trader-mt5-submitted"><strong>{m.submitted_at ? new Date(m.submitted_at).toLocaleDateString("en-NG",{day:"2-digit",month:"short",year:"numeric"}) : "—"}</strong><span>{m.submitted_at ? new Date(m.submitted_at).toLocaleTimeString("en-NG",{hour:"2-digit",minute:"2-digit"}) : ""}</span></div>
+              <div><span className="trader-mt5-pending-badge"><i/> Pending</span></div>
+              <div className="trader-mt5-row-actions">
+                <button className="details" onClick={() => { setTab("traders"); if (trader) setSelected({profile: trader.profile || {}, trader}); }}><Eye size={13}/> Review</button>
+              </div>
+            </div>
           })}
         </div>
       </section>}
