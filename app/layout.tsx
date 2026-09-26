@@ -1,11 +1,10 @@
 import "./globals.css";
-import "./btest/btest.css";
 import "./dashboard/dashboard-features.css";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "ZYNTH — Wealth, Compounded",
-  description: "Goal-based savings and wealth-building platform.",
+  title: "ZYNTH — Strategy Performance Platform",
+  description: "Investor portfolios, strategy performance and controlled daily settlement.",
   robots: { index: false, follow: false }
 };
 
