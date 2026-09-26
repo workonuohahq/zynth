@@ -2071,3 +2071,17 @@ html[data-theme="light"] .support-launcher{background:linear-gradient(145deg,#ff
 
 .admin-list-item .admin-support-badge{background:#b42318!important;border-color:#b42318!important;color:#fff!important;box-shadow:0 0 0 3px rgba(180,35,24,.10),0 4px 12px rgba(180,35,24,.20)}
 html[data-theme="light"] .admin-list-item .admin-support-badge{background:#c62828!important;border-color:#c62828!important;color:#fff!important;box-shadow:0 0 0 3px rgba(198,40,40,.10),0 4px 12px rgba(198,40,40,.16)}
+
+/* TRADER REPORT — SYSTEM-CALCULATED EQUITY */
+.trader-equity-readonly{margin:16px 0;border:1px solid var(--border);border-radius:16px;background:linear-gradient(145deg,var(--surface-soft,rgba(255,255,255,.035)),var(--surface));overflow:hidden}
+.trader-equity-readonly-head{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 19px;border-bottom:1px solid var(--border)}
+.trader-equity-readonly-head>div{display:grid;gap:5px}
+.trader-equity-readonly-head span{font-size:9px;letter-spacing:.12em;font-weight:900;color:var(--muted)}
+.trader-equity-readonly-head strong{font-size:28px;letter-spacing:-.04em;line-height:1.05}
+.trader-equity-readonly-head small{font-size:10px;color:var(--muted)}
+.trader-equity-readonly-head>svg{color:var(--gold-bright,var(--gold));flex:0 0 auto}
+.trader-equity-readonly .trader-report-reconciliation{margin:0;border:0;border-radius:0;background:transparent;padding:13px 15px}
+.trader-equity-readonly .trader-report-reconciliation>div{padding:7px 4px}
+.trader-equity-readonly .trader-report-reconciliation .total{margin-top:4px;padding-top:12px;border-top:1px solid var(--border)}
+.trader-equity-readonly .trader-report-reconciliation .total b{font-size:15px}
+@media(max-width:650px){.trader-equity-readonly-head{padding:16px}.trader-equity-readonly-head strong{font-size:24px}}
