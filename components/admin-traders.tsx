@@ -6,7 +6,7 @@ import { CheckCircle2, ChevronRight, ExternalLink, Filter, ShieldAlert, ShieldCh
 type Trader = any;
 type Application = any;
 
-export default function AdminTraders({ onSaved }: { onSaved: () => void }) {
+export default function AdminTraders({ onSaved, refreshKey }: { onSaved: () => void; refreshKey?: number }) {
   const [data, setData] = useState<any>({ traders: [], applications: [], users: [] });
   const [busy, setBusy] = useState("");
   const [note, setNote] = useState("");
@@ -27,7 +27,7 @@ export default function AdminTraders({ onSaved }: { onSaved: () => void }) {
     } catch (e: any) { setLoadError(e?.message || "Unable to load trader operations."); }
     finally { setLoading(false); }
   }
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [refreshKey]);
 
   async function action(body: any, key: string) {
     setBusy(key);
