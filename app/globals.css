@@ -1882,3 +1882,63 @@ html[data-theme="light"] .admin-money-subnav{
     border-color:var(--gold-line)!important;
   }
 }
+
+
+/* ADMIN NAV SCROLL RECOVERY — keep the compact desk nav touch-scrollable */
+@media(max-width:800px){
+  .admin-sidebar{
+    overflow:visible!important;
+    min-width:0!important;
+  }
+  .admin-list-nav{
+    flex:1 1 0!important;
+    width:0!important;
+    min-width:0!important;
+    max-width:none!important;
+    height:40px!important;
+    display:flex!important;
+    flex-direction:row!important;
+    flex-wrap:nowrap!important;
+    align-items:center!important;
+    justify-content:flex-start!important;
+    gap:5px!important;
+    overflow-x:auto!important;
+    overflow-y:hidden!important;
+    white-space:nowrap!important;
+    touch-action:pan-x!important;
+    -webkit-overflow-scrolling:touch!important;
+    overscroll-behavior-x:contain;
+    scrollbar-width:none;
+    scroll-behavior:smooth;
+    scroll-snap-type:none;
+    padding:0 2px;
+  }
+  .admin-list-nav::-webkit-scrollbar{display:none!important;width:0!important;height:0!important}
+  .admin-list-nav > .admin-list-item,
+  .admin-list-nav > .admin-money-nav{
+    flex:0 0 auto!important;
+    width:max-content!important;
+    min-width:max-content!important;
+    max-width:none!important;
+  }
+  .admin-list-nav > .admin-money-nav{
+    display:block!important;
+  }
+  .admin-money-nav > .admin-list-item{
+    flex:0 0 auto!important;
+    width:max-content!important;
+    min-width:max-content!important;
+  }
+  .admin-money-subnav{
+    max-width:calc(100vw - 80px);
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+}
+@media(max-width:500px){
+  .admin-list-nav{
+    height:38px!important;
+    gap:4px!important;
+    padding-right:12px;
+  }
+}
