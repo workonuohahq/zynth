@@ -43,7 +43,6 @@ export async function GET(req:Request){try{const {s,user}=await admin();if(!user
  const enrichedTraders=traderRows.map((t:any)=>({...t,mt5:t.mt5||null}));
  const traderMap=new Map(traderRows.map((t:any)=>[t.id,t]));
  const userMap=new Map(userRows.map((u:any)=>[u.id,u]));
- const applicationMap=new Map(applicationRows.map((x:any)=>[x.user_id,x]));
  const enrichedPending=(pendingMt5||[]).map((m:any)=>({
   ...m,
   user:userMap.get(m.user_id)||traderMap.get(m.user_id)||null,
