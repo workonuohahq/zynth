@@ -12,7 +12,8 @@ export async function GET(){try{const {s,user}=await admin();if(!user)return Nex
   traderIds.length ? s.from("zynth_trader_profiles").select("*").in("user_id",traderIds) : Promise.resolve({data:[],error:null} as any),
   traderIds.length ? s.from("zynth_strategies").select("id,trader_id").in("trader_id",traderIds) : Promise.resolve({data:[],error:null} as any)
  ]);
- if(profilesError||strategiesError) throw new Error(profilesError?.message||strategiesError?.message||"Unable to load trader profiles.");
+ // Profile/strategy enrichment is optional. A trader must never disappear from the operator register
+ // because a related profile/strategy query is restricted or temporarily unavailable.
  const apps=(applications||[]).map((a:any)=>({...a,email:a.users?.email||null,user_name:a.users?.full_name||null,users:undefined}));
  const ts=(traders||[]).map((t:any)=>{
    const profile=(profiles||[]).find((p:any)=>p.user_id===t.id)||null;
