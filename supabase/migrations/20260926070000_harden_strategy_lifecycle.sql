@@ -134,3 +134,47 @@ begin
  from public.zynth_investments inv where inv.strategy_id=s.id and inv.status='active';
  return jsonb_build_object('settlement_id',st.id,'return_pct',ret*100,'nav',newnav,'investor_value_before',beforev,'investor_value_after',afterv);
 end $$;
+
+
+-- Performance hardening for strategy-related RLS and foreign keys.
+drop policy if exists "zynth_reports_trader_insert" on public.zynth_daily_reports;
+create policy "zynth_reports_trader_insert" on public.zynth_daily_reports for insert to authenticated
+with check (
+ (trader_id=(select auth.uid()))
+ and exists(select 1 from public.zynth_strategies s where s.id=zynth_daily_reports.strategy_id and s.trader_id=(select auth.uid()))
+);
+drop policy if exists "zynth_reports_trader_read" on public.zynth_daily_reports;
+create policy "zynth_reports_trader_read" on public.zynth_daily_reports for select to authenticated
+using (
+ (trader_id=(select auth.uid()))
+ or exists(select 1 from public.users u where u.id=(select auth.uid()) and u.role='admin' and u.account_status='active')
+);
+drop policy if exists "zynth_investment_events_read" on public.zynth_investment_events;
+create policy "zynth_investment_events_read" on public.zynth_investment_events for select to authenticated
+using (
+ (user_id=(select auth.uid()))
+ or exists(select 1 from public.users u where u.id=(select auth.uid()) and u.role='admin' and u.account_status='active')
+);
+drop policy if exists "zynth_profit_lots_read" on public.zynth_profit_lots;
+create policy "zynth_profit_lots_read" on public.zynth_profit_lots for select to authenticated
+using (
+ (user_id=(select auth.uid()))
+ or exists(select 1 from public.users u where u.id=(select auth.uid()) and u.role='admin' and u.account_status='active')
+);
+drop policy if exists "zynth_settlements_read" on public.zynth_settlements;
+create policy "zynth_settlements_read" on public.zynth_settlements for select to authenticated
+using (
+ exists(select 1 from public.zynth_investments i where i.strategy_id=zynth_settlements.strategy_id and i.user_id=(select auth.uid()))
+ or exists(select 1 from public.users u where u.id=(select auth.uid()) and u.role='admin' and u.account_status='active')
+);
+
+create index if not exists zynth_daily_reports_confirmed_by_idx on public.zynth_daily_reports(confirmed_by);
+create index if not exists zynth_daily_reports_corrected_by_idx on public.zynth_daily_reports(corrected_by);
+create index if not exists zynth_investment_events_investment_id_idx on public.zynth_investment_events(investment_id);
+create index if not exists zynth_investment_events_strategy_id_idx on public.zynth_investment_events(strategy_id);
+create index if not exists zynth_investments_strategy_id_idx on public.zynth_investments(strategy_id);
+create index if not exists zynth_investments_user_id_idx on public.zynth_investments(user_id);
+create index if not exists zynth_profit_lots_settlement_id_idx on public.zynth_profit_lots(settlement_id);
+create index if not exists zynth_profit_lots_strategy_id_idx on public.zynth_profit_lots(strategy_id);
+create index if not exists zynth_settlements_settled_by_idx on public.zynth_settlements(settled_by);
+drop index if exists public.zynth_settlements_strategy_date_idx;
