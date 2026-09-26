@@ -7,13 +7,13 @@ type Trader = any;
 type Application = any;
 
 export default function AdminTraders({ onSaved, refreshKey }: { onSaved: () => void; refreshKey?: number }) {
-  const [data, setData] = useState<any>({ traders: [], applications: [], users: [] });
+  const [data, setData] = useState<any>({ traders: [], applications: [], users: [], mt5_pending: [], mt5_pending_count: 0 });
   const [busy, setBusy] = useState("");
   const [note, setNote] = useState("");
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("all");
   const [selected, setSelected] = useState<any>(null);
-  const [tab, setTab] = useState<"applications" | "traders">("applications");
+  const [tab, setTab] = useState<"applications" | "traders">("traders");
   const [loadError, setLoadError] = useState("");
   const [loading, setLoading] = useState(true);
   const [revealedMt5, setRevealedMt5] = useState<any>(null);
@@ -24,7 +24,7 @@ export default function AdminTraders({ onSaved, refreshKey }: { onSaved: () => v
       const r = await fetch("/api/admin/traders", { cache: "no-store" });
       const j = await r.json();
       if (!r.ok) throw new Error(j.error || "Unable to load trader operations.");
-      setData({ traders: Array.isArray(j.traders) ? j.traders : [], applications: Array.isArray(j.applications) ? j.applications : [], users: Array.isArray(j.users) ? j.users : [] });
+      setData({ traders: Array.isArray(j.traders) ? j.traders : [], applications: Array.isArray(j.applications) ? j.applications : [], users: Array.isArray(j.users) ? j.users : [], mt5_pending: Array.isArray(j.mt5_pending) ? j.mt5_pending : [], mt5_pending_count: Number(j.mt5_pending_count || 0) });
     } catch (e: any) { setLoadError(e?.message || "Unable to load trader operations."); }
     finally { setLoading(false); }
   }
@@ -65,6 +65,7 @@ export default function AdminTraders({ onSaved, refreshKey }: { onSaved: () => v
     pending: data.applications.filter((a: Application) => a.status === "pending").length,
     review: data.applications.filter((a: Application) => ["under_review", "more_info"].includes(a.status)).length,
     strategies: data.traders.reduce((n: number, t: Trader) => n + (t.strategy_count || 0), 0),
+    mt5Pending: Number(data.mt5_pending_count || 0),
   };
 
   const profile = selected?.profile || selected?.application || selected;
@@ -83,11 +84,29 @@ export default function AdminTraders({ onSaved, refreshKey }: { onSaved: () => v
 
       {loadError && <div className="trader-command-error"><ShieldAlert size={15}/><div><strong>Trader register unavailable</strong><span>{loadError}</span></div><button onClick={load}>Retry</button></div>}
 
+      {stats.mt5Pending > 0 && <section className="admin-card trader-mt5-attention-card">
+        <div className="admin-card-head">
+          <div><span className="muted">ACTION REQUIRED</span><h2>MT5 verification queue</h2><p>{stats.mt5Pending} trader{stats.mt5Pending === 1 ? "" : "s"} submitted MT5 details and cannot access Trader Desk until Operations reviews the submission.</p></div>
+          <span className="trader-status-pill pending">{stats.mt5Pending} pending</span>
+        </div>
+        <div className="trader-mt5-queue">
+          {data.mt5_pending.map((m:any) => {
+            const trader = data.traders.find((t:any) => t.id === m.user_id);
+            return <button key={m.user_id} className="trader-mt5-queue-row" onClick={() => { setTab("traders"); if (trader) setSelected({profile: trader.profile || {}, trader}); }}>
+              <div className="trader-avatar">{String(trader?.display_name || trader?.full_name || "T").slice(0,1).toUpperCase()}</div>
+              <div><strong>{trader?.display_name || trader?.full_name || trader?.email || "Trader"}</strong><span>MT5 {m.mt5_login || "—"} · {m.mt5_server || "Server not supplied"}</span></div>
+              <span>Review <ChevronRight size={13}/></span>
+            </button>
+          })}
+        </div>
+      </section>}
+
       <div className="trader-command-stats">
         <div><span>ACTIVE TRADERS</span><strong>{stats.active}</strong><small>{stats.strategies} published strategies</small></div>
         <div><span>OPEN APPLICATIONS</span><strong>{stats.open}</strong><small>{stats.pending} awaiting first review</small></div>
         <div><span>IN REVIEW</span><strong>{stats.review}</strong><small>More info / under review</small></div>
         <div><span>APPROVAL PIPELINE</span><strong>{stats.pending + stats.review}</strong><small>Admin decisions required</small></div>
+        <div><span>MT5 VERIFICATION</span><strong>{stats.mt5Pending}</strong><small>{stats.mt5Pending ? "Requires admin attention" : "Queue clear"}</small></div>
       </div>
 
       <div className="trader-command-tabs">
