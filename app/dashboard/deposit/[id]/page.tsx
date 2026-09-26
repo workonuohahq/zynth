@@ -118,14 +118,14 @@ export default function DepositPaymentPage({params}:{params:{id:string}}){
           <div className="payment-steps">
             <div className="step"><span className="step-num">01</span><b>Pay the exact amount</b><span>Use one of the configured payment channels above.</span></div>
             <div className="step"><span className="step-num">02</span><b>Use your reference</b><span>Paste the payment reference above into your bank transfer description / narration.</span></div>
-            <div className="step"><span className="step-num">03</span><b>Complete your payment</b><span>Once your payment is verified, the funds are credited to your available ZYNTH cash balance so you can complete the investment.</span></div>
+            <div className="step"><span className="step-num">03</span><b>Complete your payment</b><span>Once your payment is verified, your deposit is automatically invested into the selected strategy and your position becomes active.</span></div>
           </div>
           <div className={`status-box status-${request.status}`}>
             {confirmed?<CheckCircle2/>:rejected||cancelled?<ExternalLink/>:<Clock3/>}
-            <div><b>{confirmed?"Payment confirmed":rejected?"Payment request unavailable":cancelled?"Payment request cancelled":"Payment request received"}</b><span>Request {request.reference} · {new Date(request.created_at).toLocaleString("en-NG")}</span>{request.admin_note&&<span>{request.admin_note}</span>}</div>
+            <div><b>{confirmed?"Investment activated":rejected?"Payment request unavailable":cancelled?"Payment request cancelled":"Payment request received"}</b><span>Request {request.reference} · {new Date(request.created_at).toLocaleString("en-NG")}</span>{request.admin_note&&<span>{request.admin_note}</span>}</div>
           </div>
           <div className="payment-actions">
-            <Link className="payment-action payment-primary" href={returnTo}>{confirmed?"Continue to investment":"Return to investment"} <ArrowRight size={15}/></Link>
+            <Link className="payment-action payment-primary" href={returnTo}>{confirmed?"View investment":"Return to investment"} <ArrowRight size={15}/></Link>
             {request.status==="pending"&&<button className="payment-action payment-secondary" onClick={cancelRequest}>Cancel request</button>}
             <Link className="payment-action payment-secondary" href="/dashboard/transactions">View activity</Link>
           </div>
