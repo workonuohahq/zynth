@@ -1289,3 +1289,6 @@ html[data-theme="light"] .settlement-flow{background:#f8f4ec;border-color:#e0d7c
 html[data-theme="light"] .settlement-investors,html[data-theme="light"] .settlement-investor-row,html[data-theme="light"] .settlement-modal-actions{border-color:#e2dbcf}
 html[data-theme="light"] .settlement-modal-actions{background:#fffdf8f2}
 html[data-theme="light"] .settlement-note p{color:#625d54}
+
+.status-settled,.status-reversed{font-size:9px;text-transform:uppercase;letter-spacing:.08em;padding:5px 8px;border:1px solid #3a342b;border-radius:999px}.status-settled{color:#a9b99a}.status-reversed{color:#c5a28c}.settlement-history-card{margin-top:16px}.settlement-history-card .admin-row{grid-template-columns:minmax(180px,1.5fr) 1fr auto auto auto}@media(max-width:800px){.settlement-history-card .admin-row{grid-template-columns:1fr;gap:8px}}
+html[data-theme="light"] .status-settled,html[data-theme="light"] .status-reversed{border-color:#d8cdbb;color:#665d51}
