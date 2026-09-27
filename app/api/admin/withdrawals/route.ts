@@ -7,6 +7,6 @@ export async function GET(){
   if(!user)return NextResponse.json({error:"Authentication required."},{status:401});
   const {data,error}=await client.rpc("admin_withdrawal_queue");
   if(error)return NextResponse.json({error:"Unable to load withdrawal queue."},{status:403});
-  return NextResponse.json({rows:data||[]});
+  return NextResponse.json({withdrawals:Array.isArray(data)?data:[]});
  }catch{return NextResponse.json({error:"Unable to load withdrawal queue."},{status:500});}
 }
