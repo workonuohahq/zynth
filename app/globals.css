@@ -2143,3 +2143,52 @@ html[data-theme="light"] .admin-list-item .admin-support-badge{background:#c6282
  .pwa-benefits-premium small{font-size:8px}
  .pwa-trust-footer{font-size:7.5px}
 }
+
+/* ZYNTH INSTALL — FINAL INSTITUTIONAL OVERRIDE */
+.pwa-gate{background:#090a0b;padding:28px;place-items:center}
+.pwa-gate-glow{background:linear-gradient(90deg,rgba(255,255,255,.015) 1px,transparent 1px),linear-gradient(rgba(255,255,255,.015) 1px,transparent 1px);background-size:72px 72px;inset:0}
+.pwa-install-premium{width:min(1040px,100%);min-height:610px;display:grid;grid-template-columns:34% 66%;padding:0;border:1px solid rgba(255,255,255,.09);border-radius:0;background:#0e1012;box-shadow:0 45px 130px rgba(0,0,0,.58);text-align:left;overflow:hidden}
+.pwa-install-premium .pwa-premium-topline{grid-column:1;grid-row:1 / span 4;margin:0;padding:38px 34px;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;border-right:1px solid rgba(255,255,255,.08);background:linear-gradient(145deg,#111416,#0b0d0f)}
+.pwa-install-premium .pwa-brand{margin:0;justify-content:flex-start;font-size:15px;letter-spacing:.22em}
+.pwa-install-premium .pwa-brand-mark{display:none}
+.pwa-install-premium .pwa-secure-status{order:3;padding:0;border:0;border-radius:0;font-size:7px;letter-spacing:.18em;color:#656a70}
+.pwa-install-premium .pwa-secure-status .pwa-status-dot{width:5px;height:5px}
+.pwa-hero-mark{display:none}
+.pwa-install-premium .pwa-eyebrow{grid-column:2;grid-row:1;margin:66px 72px 0;font-size:8px;letter-spacing:.19em;color:#b99a61}
+.pwa-install-premium h1{grid-column:2;grid-row:2;margin:19px 72px 17px;font-size:clamp(42px,5.2vw,62px);line-height:.97;letter-spacing:-.055em;font-weight:650;color:#f0eee8}
+.pwa-install-premium .pwa-copy{grid-column:2;grid-row:3;margin:0 72px;max-width:520px;text-align:left;color:#858a90;font-size:13px;line-height:1.8}
+.pwa-benefits-premium{grid-column:2;grid-row:4;margin:30px 72px 0;display:flex;gap:0;border-top:1px solid rgba(255,255,255,.08);border-bottom:1px solid rgba(255,255,255,.08);padding:16px 0}
+.pwa-benefits-premium>div{display:flex;flex:1;padding:0 17px 0 0;margin-right:17px;border:0;border-radius:0;background:transparent}
+.pwa-benefits-premium>div:not(:last-child){border-right:1px solid rgba(255,255,255,.08)}
+.pwa-benefits-premium>div>span:first-child,.pwa-benefits-premium>div>svg{display:none}
+.pwa-benefits-premium b{font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:#c7c7c2}
+.pwa-benefits-premium small{font-size:8px;color:#62676d;margin-top:5px;line-height:1.4}
+.pwa-install-premium>.pwa-checking,.pwa-install-premium>.pwa-success-guide,.pwa-install-premium>.pwa-manual-guide,.pwa-install-premium>.pwa-install-premium-btn{grid-column:2;grid-row:5;margin:24px 72px 0}
+.pwa-install-premium-btn{height:55px;border-radius:0;background:#e9e7df;color:#101214;font-size:11px;box-shadow:none;justify-content:space-between;padding:0 18px}
+.pwa-install-premium-btn:hover{box-shadow:none;background:#fffdf5}
+.pwa-success-guide,.pwa-manual-guide{border-radius:0;background:rgba(185,154,97,.045);border:1px solid rgba(185,154,97,.2);padding:15px}
+.pwa-guide-icon{border-radius:0;background:transparent;border-color:rgba(185,154,97,.25)}
+.pwa-install-premium .pwa-secondary-link{display:none}
+.pwa-trust-footer{grid-column:2;grid-row:6;margin:18px 72px 0;justify-content:flex-start;color:#4f545a;font-size:7px;letter-spacing:.12em}
+.pwa-install-premium .pwa-footnote{grid-column:2;grid-row:7;margin:11px 72px 30px;text-align:left;color:#4b5056;font-size:8px}
+@media(max-width:760px){
+ .pwa-gate{padding:0;place-items:stretch}
+ .pwa-install-premium{width:100%;min-height:100dvh;display:flex;flex-direction:column;border:0}
+ .pwa-install-premium .pwa-premium-topline{padding:26px 22px;border-right:0;border-bottom:1px solid rgba(255,255,255,.08);flex-direction:row;align-items:center;background:#0e1012}
+ .pwa-install-premium .pwa-secure-status{order:initial}
+ .pwa-install-premium .pwa-eyebrow{margin:58px 22px 0}
+ .pwa-install-premium h1{margin:17px 22px 15px;font-size:39px}
+ .pwa-install-premium .pwa-copy{margin:0 22px;font-size:12px;line-height:1.75}
+ .pwa-benefits-premium{margin:27px 22px 0;overflow:hidden}
+ .pwa-benefits-premium>div{padding-right:12px;margin-right:12px}
+ .pwa-benefits-premium small{font-size:7px}
+ .pwa-install-premium>.pwa-checking,.pwa-install-premium>.pwa-success-guide,.pwa-install-premium>.pwa-manual-guide,.pwa-install-premium>.pwa-install-premium-btn{margin:22px 22px 0}
+ .pwa-trust-footer{margin:17px 22px 0}
+ .pwa-install-premium .pwa-footnote{margin:10px 22px 25px}
+}
+@media(max-width:430px){
+ .pwa-install-premium h1{font-size:35px}
+ .pwa-benefits-premium{display:block}
+ .pwa-benefits-premium>div{border:0!important;padding:7px 0;margin:0}
+ .pwa-benefits-premium>div:nth-child(2),.pwa-benefits-premium>div:nth-child(3){display:none}
+}
