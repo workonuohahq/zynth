@@ -5,7 +5,7 @@ self.addEventListener("push",event=>{
   let data={};
   try{data=event.data?event.data.json():{body:event.data?event.data.text():""}}catch{data={}};
   const title=data.title||"ZYNTH";
-  const options={body:data.body||"You have a new ZYNTH notification.",icon:data.icon||"/icons/zynth-icon.svg",badge:data.badge||"/icons/zynth-icon.svg",tag:data.tag||"zynth-notification",renotify:true,data:{url:data.url||"/dashboard/notifications"}};
+  const options={body:data.body||"You have a new ZYNTH notification.",icon:data.icon||"/icons/zynth-icon.svg",badge:data.badge||"/icons/zynth-icon.svg",tag:data.tag||"zynth-notification",renotify:true,silent:false,data:{url:data.url||"/dashboard/notifications"}};
   event.waitUntil(self.registration.showNotification(title,options));
 });
 self.addEventListener("notificationclick",event=>{
