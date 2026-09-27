@@ -36,3 +36,18 @@ begin
     end if;
   end loop;
 end $$;
+
+-- Admin RPCs are invoked through authenticated server routes; do not expose them to anon.
+do $$
+declare r record;
+begin
+  for r in
+    select p.proname, pg_get_function_identity_arguments(p.oid) as args
+    from pg_proc p
+    join pg_namespace n on n.oid=p.pronamespace
+    where n.nspname='public'
+      and (p.proname ilike 'admin_%' or p.proname ilike 'zynth_admin_%' or p.proname='process_withdrawal_action')
+  loop
+    execute format('revoke execute on function public.%I(%s) from anon', r.proname, r.args);
+  end loop;
+end $$;
