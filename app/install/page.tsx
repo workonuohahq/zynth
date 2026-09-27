@@ -10,7 +10,7 @@ declare global {
     userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
   }
 }
-function isStandalone(){return window.matchMedia("(display-mode: standalone)").matches || (navigator as Navigator & {standalone?:boolean}).standalone===true;}
+function isStandalone(){return window.matchMedia("(display-mode: standalone)").matches || (navigator as Navigator & {standalone?:boolean}).standalone===true || document.referrer.startsWith("android-app://");}
 function getNextPath(){const next=new URLSearchParams(window.location.search).get("next");return next&&next.startsWith("/")&&!next.startsWith("//")?next:"/dashboard";}
 
 export default function InstallPage(){
