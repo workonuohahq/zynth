@@ -4,7 +4,6 @@ import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from "@/lib/supabase/config";
 import { PWA_TOKEN_HEADER, validatePwaCredential } from "@/lib/pwa/server";
 
 const PUBLIC_API_PREFIXES = ["/api/health", "/api/pwa", "/api/webhooks"];
-const ADMIN_API_PREFIX = "/api/admin";
 
 function isPath(path: string, prefix: string) {
   return path === prefix || path.startsWith(`${prefix}/`);
@@ -16,8 +15,7 @@ function isInvestorPage(path: string) { return isPath(path, "/dashboard"); }
 function isAdminPage(path: string) { return isPath(path, "/admin"); }
 function isTraderPage(path: string) { return isPath(path, "/trader"); }
 function isPublicApi(path: string) { return startsWithAny(path, PUBLIC_API_PREFIXES); }
-function isAdminApi(path: string) { return isPath(path, ADMIN_API_PREFIX); }
-function isProtectedApi(path: string) { return path.startsWith("/api/") && !isPublicApi(path) && !isAdminApi(path); }
+function isProtectedApi(path: string) { return path.startsWith("/api/") && !isPublicApi(path) && !isPath(path, "/api/admin"); }
 
 function getRoleKeys(roleRows: unknown) {
   if (!Array.isArray(roleRows)) return new Set<string>();
@@ -92,11 +90,6 @@ export async function middleware(request: NextRequest) {
       if (isTrader) return NextResponse.redirect(new URL("/trader", request.url));
       return NextResponse.redirect(new URL("/login", request.url));
     }
-    return response;
-  }
-
-  if (isAdminApi(path)) {
-    if (!isAdmin) return jsonDenied("ADMIN_REQUIRED", "Admin access required.");
     return response;
   }
 
