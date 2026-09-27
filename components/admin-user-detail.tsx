@@ -18,7 +18,23 @@ export default function AdminUserDetail({initial}:{initial:any}){
  const copy=async(v:string)=>{try{await navigator.clipboard.writeText(v);setNotice("User ID copied.")}catch{}};
  const catalog=data.role_catalog||[];
  const toggleRole=(key:string)=>setRoles(x=>x.includes(key)?x.filter(v=>v!==key):[...x,key]);
- return <section className="user-command-page">
+<style jsx global>{`
+.role-management{margin-top:24px;padding-top:22px;border-top:1px solid var(--border,#2a2f38)}
+.role-management-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:16px}
+.role-management-head h3{margin:5px 0 4px;font-size:18px}.role-management-head p{margin:0;color:var(--muted,#8d96a6);font-size:13px}
+.role-count{padding:6px 10px;border:1px solid var(--border,#2a2f38);border-radius:999px;font-size:12px;color:var(--muted,#8d96a6)}
+.role-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.role-option{display:flex;gap:12px;align-items:flex-start;text-align:left;padding:14px;border:1px solid var(--border,#2a2f38);background:var(--card,#11151b);color:inherit;border-radius:12px;cursor:pointer;transition:.18s}
+.role-option:hover{border-color:rgba(120,140,170,.55);transform:translateY(-1px)}
+.role-option.selected{border-color:rgba(72,150,255,.75);background:rgba(72,150,255,.08)}
+.role-option-check{width:20px;height:20px;display:grid;place-items:center;flex:0 0 20px;border:1px solid var(--border,#2a2f38);border-radius:6px}
+.role-option.selected .role-option-check{color:#6ea8ff;border-color:#6ea8ff}
+.role-option b{display:block;font-size:14px}.role-option small{display:block;margin-top:4px;color:var(--muted,#8d96a6);line-height:1.4}
+.role-selected,.role-chip-row{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.role-chip{display:inline-flex;align-items:center;padding:3px 8px;border-radius:999px;font-size:10px;font-weight:700;letter-spacing:.02em;border:1px solid var(--border,#2a2f38);background:rgba(255,255,255,.04)}
+.role-chip.role-admin{border-color:rgba(200,120,255,.4)}.role-chip.role-trader{border-color:rgba(80,170,255,.4)}.role-chip.role-investor{border-color:rgba(80,190,140,.4)}.role-chip.role-zpa{border-color:rgba(245,180,70,.4)}
+@media(max-width:720px){.role-grid{grid-template-columns:1fr}.role-management-head{flex-direction:column}}
+`}</style> return <section className="user-command-page">
   <header className="user-command-header"><div><Link href="/admin" className="back-admin"><ArrowLeft size={15}/> Admin control center</Link><div className="user-hero"><span className="user-hero-avatar">{(p.full_name||p.email||"U").slice(0,1).toUpperCase()}</span><div><div className="eyebrow-row"><span className="eyebrow">USER COMMAND CENTER</span><span className={`user-status ${p.account_status}`}>{p.account_status}</span></div><h1>{p.full_name||"Unnamed user"}</h1><p><Mail size={13}/>{p.email}<button className="copy-id" onClick={()=>copy(p.id)}><Copy size={12}/>{p.id.slice(0,8)}…</button></p></div></div></div><div className="user-header-actions"><button className="ghost" onClick={reload} disabled={busy==="reload"}><RefreshCw size={15}/>{busy==="reload"?"Refreshing":"Refresh"}</button></div></header>
   {notice&&<div className="admin-notice">{notice}</div>}
   <div className="user-summary-grid"><div><WalletCards size={17}/><small>AVAILABLE</small><b>{naira(p.main_wallet_balance)}</b><span>Withdrawable balance</span></div><div><Vault size={17}/><small>LOCKED</small><b>{naira(p.locked_vault_balance)}</b><span>{data.stats.active_vaults} active vaults</span></div><div><CreditCard size={17}/><small>DEPOSITED</small><b>{naira(data.stats.total_deposited)}</b><span>Completed deposits</span></div><div><ShieldCheck size={17}/><small>VERIFICATION</small><b>{p.kyc_verified?"Verified":"Pending"}</b><span>{(roles||[]).map(k=>catalog.find((r:any)=>r.key===k)?.name||k).join(" · ")||"No role"}</span></div></div>
