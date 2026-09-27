@@ -7,7 +7,7 @@ export async function GET(req:Request){
  if(!user)return NextResponse.json({error:"Administrator access required."},{status:403});
  const {searchParams}=new URL(req.url);
  const limit=Math.max(1,Math.min(Number(searchParams.get("limit")||12),50));
- const {data,error}=await s.from("notifications").select("id,title,body,type,read_at,created_at,metadata").eq("user_id",user.id).order("created_at",{ascending:false}).limit(limit);
+ const {data,error}=await s.from("notifications").select("id,title,body,type,read_at,created_at,updated_at,metadata").eq("user_id",user.id).order("updated_at",{ascending:false}).limit(limit);
  if(error)return NextResponse.json({error:error.message},{status:400});
  const {count:unreadCount,error:countError}=await s.from("notifications").select("id",{count:"exact",head:true}).eq("user_id",user.id).is("read_at",null);
  if(countError)return NextResponse.json({error:countError.message},{status:400});
