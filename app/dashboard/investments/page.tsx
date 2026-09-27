@@ -40,7 +40,6 @@ export default function Investments(){
       <div><span className="muted">ACTIVE STRATEGY</span><h2>{s.name}</h2></div>
       <span className="status-badge"><i/> LIVE</span>
      </div>
-     <p className="copy strategy-market-summary">{s.description||"A ZYNTH-managed strategy with daily performance confirmed by operations."}</p>
      <div className="health-grid strategy-market-metrics">
       <div><span>Current NAV</span><b>₦{Number(s.nav).toFixed(4)}</b></div>
       <div><span>Minimum</span><b>{money(s.minimum_investment)}</b></div>
@@ -50,13 +49,14 @@ export default function Investments(){
       <button type="button" className={"strategy-details-trigger"+(strategyDetailsOpen[s.id]?" is-open":"")} aria-expanded={!!strategyDetailsOpen[s.id]} aria-controls={"strategy-details-"+s.id} onClick={()=>setStrategyDetailsOpen({...strategyDetailsOpen,[s.id]:!strategyDetailsOpen[s.id]})}>
        <span className="strategy-details-trigger-copy">
         <SlidersHorizontal size={15}/>
-        <span><b>View strategy details</b><small>Review investment terms and start a position</small></span>
+        <span><b>View strategy details</b><small>Review the strategy, terms and start a position</small></span>
        </span>
        <ChevronDown size={17} className="strategy-details-chevron"/>
       </button>
       <div id={"strategy-details-"+s.id} className={"strategy-details-panel"+(strategyDetailsOpen[s.id]?" is-open":"")} aria-hidden={!strategyDetailsOpen[s.id]}>
        <div>
         <div className="strategy-details-body">
+         <div className="strategy-details-description"><span>STRATEGY OVERVIEW</span><p>{s.description||"A ZYNTH-managed strategy with daily performance confirmed by operations."}</p></div>
          <div className="strategy-detail-term">
           <span>MAXIMUM INVESTMENT</span>
           <b>{s.maximum_investment?money(s.maximum_investment):"No cap"}</b>
