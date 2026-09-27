@@ -2,12 +2,7 @@ import { NextResponse } from "next/server";
 import { getAdminContext } from "@/lib/admin/auth";
 
 async function adminContext() {
-  const s = await createSupabaseServerClient();
-  const { data: { user } } = await s.auth.getUser();
-  if (!user) return { s, user: null, error: NextResponse.json({ error: "Authentication required." }, { status: 401 }) };
-  const { data: p } = await s.from("users").select("role").eq("id", user.id).single();
-  if (p?.role !== "admin") return { s, user, error: NextResponse.json({ error: "Administrator access required." }, { status: 403 }) };
-  return { s, user, error: null };
+  return getAdminContext();
 }
 
 export async function GET() {
@@ -19,8 +14,8 @@ export async function GET() {
 }
 
 export async function PATCH(req: Request) {
-  const { s, user, error } = await adminContext();
-  if (error || !user) return error!;
+  const { supabase: s, user } = await adminContext();
+  if (!user) return NextResponse.json({ error: "Administrator access required." }, { status: 403 });
   const b = await req.json().catch(() => ({}));
   const { data, error: rpcError } = await s.rpc("zynth_admin_set_investment_settings", {
     p_admin_id: user.id,
