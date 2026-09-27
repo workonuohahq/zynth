@@ -27,7 +27,7 @@ export async function GET(req:Request){
  return NextResponse.json({tickets:tickets||[],attention_count:attentionCount});
 }
 export async function POST(req:Request){
- const {s,user}=await admin();if(!user)return NextResponse.json({error:"Administrator access required."},{status:403});
+ const {supabase:s,user}=await admin();if(!user)return NextResponse.json({error:"Administrator access required."},{status:403});
  const b=await req.json().catch(()=>({}));const ticketId=String(b.ticketId||"");const body=String(b.body||"").trim();const action=String(b.action||"message");
  if(action==="message"){
   if(!ticketId||!body)return NextResponse.json({error:"Message cannot be empty."},{status:400});
