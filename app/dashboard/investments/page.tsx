@@ -28,6 +28,62 @@ export default function Investments(){
  </div>
  </div><small>Exits use the latest confirmed NAV. Fees, approval and release timing are controlled by operations.</small></article>)}</div>{!positions.filter(x=>x.status==="active").length&&<div className="premium-empty"><TrendingUp size={21}/><h3>No active investments yet</h3><p>Choose a live strategy below to start building your portfolio.</p></div>}</section>
  <section className="panel"><div className="panel-head"><div><span className="muted">REDEMPTION ACTIVITY</span><h2>Exit timeline</h2></div></div><div className="activity-list">{redemptions.map(r=><div className="activity-row" key={r.id}><span className="activity-icon neutral">{r.status==="released"?<WalletCards size={16}/>:<Clock3 size={16}/>}</span><span className="activity-info"><b>{r.zynth_strategies?.name||"Strategy"} · {money(r.net_amount)} net</b><small>{r.status.toUpperCase()} · Requested {dt(r.requested_at)} · Release {dt(r.release_at)}</small></span><span>{r.status==="pending"&&<button className="text-action" disabled={busy==="cancel:"+r.id} onClick={()=>cancel(r.id)}>Cancel</button>}</span></div>)}{!redemptions.length&&<div className="activity-empty"><Clock3 size={18}/><span>No redemption requests yet.</span></div>}</div></section>
- <section className="panel"><div className="panel-head"><div><span className="muted">STRATEGY MARKET</span><h2>Explore live strategies</h2></div><span className="secure-chip"><ShieldCheck size={12}/> Confirmed settlement</span></div><div className="dashboard-grid">{strategies.map(s=><section className="panel strategy-market-card" key={s.id}><div className="panel-head"><div><span className="muted">ACTIVE STRATEGY</span><h2>{s.name}</h2></div><span className="status-badge"><i/> LIVE</span></div><p className="copy strategy-market-summary">{s.description||"A ZYNTH-managed strategy with daily performance confirmed by operations."}</p><div className="health-grid strategy-market-metrics"><div><span>Current NAV</span><b>₦{Number(s.nav).toFixed(4)}</b></div><div><span>Minimum</span><b>{money(s.minimum_investment)}</b></div><div><span>Trader</span><b>{s.trader_name||"Assigned"}</b></div></div><div className="strategy-details"><button type="button" className={"strategy-details-trigger"+(strategyDetailsOpen[s.id]?" is-open":"")} aria-expanded={!!strategyDetailsOpen[s.id]} aria-controls={"strategy-details-"+s.id} onClick={()=>setStrategyDetailsOpen({...strategyDetailsOpen,[s.id]:!strategyDetailsOpen[s.id]})}><span className="strategy-details-trigger-copy"><SlidersHorizontal size={15}/><span><b>View strategy details</b><small>Review terms and start a position</small></span></span><ChevronDown size={17} className="strategy-details-chevron"/></button><div id={"strategy-details-"+s.id} className={"strategy-details-panel"+(strategyDetailsOpen[s.id]?" is-open":"")} aria-hidden={!strategyDetailsOpen[s.id]}><div><div className="strategy-details-body"><div className="strategy-details-description"><span>STRATEGY OVERVIEW</span><p>{s.description||"A ZYNTH-managed strategy with daily performance confirmed by operations."}</p></div><div className="health-grid strategy-details-metrics"><div><span>Current NAV</span><b>₦{Number(s.nav).toFixed(4)}</b></div><div><span>Minimum</span><b>{money(s.minimum_investment)}</b></div><div><span>Maximum</span><b>{s.maximum_investment?money(s.maximum_investment):"No cap"}</b></div><div><span>Trader</span><b>{s.trader_name||"Assigned"}</b></div></div><div className="investment-action-stack strategy-invest-action"><div className="investment-action-row"><div className="investment-action-label"><span>START POSITION</span><small>Fund via the secure deposit flow</small></div><div className="investment-command"><div className="money-input investment-money-input"><span>₦</span><input inputMode="decimal" placeholder="0.00" value={amounts[s.id]||""} onChange={e=>setAmounts({...amounts,[s.id]:e.target.value})}/></div><button className="investment-action-button primary" disabled={!strategyDetailsOpen[s.id]||busy==="invest:"+s.id} onClick={()=>invest(s.id)}><TrendingUp size={16}/> Invest in <span className="investment-action-name">{s.name}</span></button></div></div></div></div></div></div></section>)}</div>{!strategies.length&&<div className="premium-empty"><TrendingUp size={21}/><h3>No strategies are open yet</h3><p>The operations team will publish strategies here when ready.</p></div>}</section>
+ <section className="panel">
+  <div className="panel-head">
+   <div><span className="muted">STRATEGY MARKET</span><h2>Explore live strategies</h2></div>
+   <span className="secure-chip"><ShieldCheck size={12}/> Confirmed settlement</span>
+  </div>
+  <div className="dashboard-grid">
+   {strategies.map(s=>(
+    <section className="panel strategy-market-card" key={s.id}>
+     <div className="panel-head">
+      <div><span className="muted">ACTIVE STRATEGY</span><h2>{s.name}</h2></div>
+      <span className="status-badge"><i/> LIVE</span>
+     </div>
+     <p className="copy strategy-market-summary">{s.description||"A ZYNTH-managed strategy with daily performance confirmed by operations."}</p>
+     <div className="health-grid strategy-market-metrics">
+      <div><span>Current NAV</span><b>₦{Number(s.nav).toFixed(4)}</b></div>
+      <div><span>Minimum</span><b>{money(s.minimum_investment)}</b></div>
+      <div><span>Trader</span><b>{s.trader_name||"Assigned"}</b></div>
+     </div>
+     <div className="strategy-details">
+      <button type="button" className={"strategy-details-trigger"+(strategyDetailsOpen[s.id]?" is-open":"")} aria-expanded={!!strategyDetailsOpen[s.id]} aria-controls={"strategy-details-"+s.id} onClick={()=>setStrategyDetailsOpen({...strategyDetailsOpen,[s.id]:!strategyDetailsOpen[s.id]})}>
+       <span className="strategy-details-trigger-copy">
+        <SlidersHorizontal size={15}/>
+        <span><b>View strategy details</b><small>Review terms and start a position</small></span>
+       </span>
+       <ChevronDown size={17} className="strategy-details-chevron"/>
+      </button>
+      <div id={"strategy-details-"+s.id} className={"strategy-details-panel"+(strategyDetailsOpen[s.id]?" is-open":"")} aria-hidden={!strategyDetailsOpen[s.id]}>
+       <div>
+        <div className="strategy-details-body">
+         <div className="strategy-details-description">
+          <span>STRATEGY OVERVIEW</span>
+          <p>{s.description||"A ZYNTH-managed strategy with daily performance confirmed by operations."}</p>
+         </div>
+         <div className="health-grid strategy-details-metrics">
+          <div><span>Current NAV</span><b>₦{Number(s.nav).toFixed(4)}</b></div>
+          <div><span>Minimum</span><b>{money(s.minimum_investment)}</b></div>
+          <div><span>Maximum</span><b>{s.maximum_investment?money(s.maximum_investment):"No cap"}</b></div>
+          <div><span>Trader</span><b>{s.trader_name||"Assigned"}</b></div>
+         </div>
+         <div className="investment-action-stack strategy-invest-action">
+          <div className="investment-action-row">
+           <div className="investment-action-label"><span>START POSITION</span><small>Fund via the secure deposit flow</small></div>
+           <div className="investment-command">
+            <div className="money-input investment-money-input"><span>₦</span><input inputMode="decimal" placeholder="0.00" value={amounts[s.id]||""} onChange={e=>setAmounts({...amounts,[s.id]:e.target.value})}/></div>
+            <button className="investment-action-button primary" disabled={!strategyDetailsOpen[s.id]||busy==="invest:"+s.id} onClick={()=>invest(s.id)}><TrendingUp size={16}/> Invest in <span className="investment-action-name">{s.name}</span></button>
+           </div>
+          </div>
+         </div>
+        </div>
+       </div>
+      </div>
+     </div>
+    </section>
+   ))}
+  </div>
+  {!strategies.length&&<div className="premium-empty"><TrendingUp size={21}/><h3>No strategies are open yet</h3><p>The operations team will publish strategies here when ready.</p></div>}
+ </section>
  </section>
 }
