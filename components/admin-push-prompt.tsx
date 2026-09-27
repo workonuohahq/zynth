@@ -34,11 +34,18 @@ export default function AdminPushPrompt(){
    const registration=await navigator.serviceWorker.register("/sw.js",{scope:"/"});
    await navigator.serviceWorker.ready;
    const configResponse=await fetch("/api/push/config",{cache:"no-store"});
-   if(!configResponse.ok)throw new Error("Push service is temporarily unavailable.");
-   const config=await configResponse.json();
+   const config=await configResponse.json().catch(()=>({}));
+   if(!configResponse.ok)throw new Error(config.error||`Push service unavailable (${configResponse.status}).`);
    if(!config.publicKey)throw new Error("Push service is not configured yet.");
    let subscription=await registration.pushManager.getSubscription();
+   const keyFingerprint=`zynth-vapid:${String(config.publicKey).slice(0,16)}`;
+   const previousFingerprint=window.localStorage.getItem("zynth-vapid-fingerprint");
+   if(subscription&&previousFingerprint&&previousFingerprint!==keyFingerprint){
+    await subscription.unsubscribe().catch(()=>false);
+    subscription=null;
+   }
    if(!subscription)subscription=await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:config.publicKey});
+   window.localStorage.setItem("zynth-vapid-fingerprint",keyFingerprint);
    const payload=subscription.toJSON();
    const response=await fetch("/api/push/subscribe",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({endpoint:payload.endpoint,keys:payload.keys,userAgent:navigator.userAgent})});
    if(!response.ok){const body=await response.json().catch(()=>({}));throw new Error(body.error||"Unable to activate notifications.");}
