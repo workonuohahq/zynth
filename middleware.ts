@@ -35,6 +35,13 @@ export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
   const path = request.nextUrl.pathname;
 
+  // Authenticated ZYNTH surfaces are user-specific. Never allow an intermediary
+  // or browser cache to retain a workspace response.
+  response.headers.set("Cache-Control", "private, no-store, max-age=0, must-revalidate");
+  response.headers.set("Pragma", "no-cache");
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+
   const supabase = createServerClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     cookies: {
       getAll: () => request.cookies.getAll(),
