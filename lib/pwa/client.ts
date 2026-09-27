@@ -23,8 +23,12 @@ function openDb(): Promise<IDBDatabase | null> {
 
 export function isPwaStandalone() {
   if (typeof window === "undefined") return false;
-  return window.matchMedia("(display-mode: standalone)").matches ||
-    (navigator as Navigator & { standalone?: boolean }).standalone === true;
+  const standaloneMedia = window.matchMedia("(display-mode: standalone)").matches;
+  const iosStandalone = (navigator as Navigator & { standalone?: boolean }).standalone === true;
+  // Android WebAPK launches can expose an android-app:// referrer even when
+  // a browser build reports display-mode inconsistently.
+  const androidAppLaunch = document.referrer.startsWith("android-app://");
+  return standaloneMedia || iosStandalone || androidAppLaunch;
 }
 
 export function getPwaCredential(): string | null {
