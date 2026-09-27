@@ -30,8 +30,7 @@ export default function AdminNotificationCenter({initialTemplates=[],refreshKey}
  },[]);
  useEffect(()=>{void loadLive();const t=window.setInterval(loadLive,15000);return()=>window.clearInterval(t)},[loadLive]);
  const refresh=async()=>{const r=await fetch("/api/admin/notification-templates");const j=await r.json();if(r.ok)setItems(j.templates||[]);else setNotice(j.error||"Could not load notification templates.");};
- useEffect(()=>{setItems(initialTemplates);},[initialTemplates]);
- useEffect(()=>{if(refreshKey!==undefined){void refresh();}},[refreshKey]);
+  useEffect(()=>{setItems(initialTemplates);if(refreshKey!==undefined){refresh();}},[initialTemplates,refreshKey]);
  const markRead=async(id:string)=>{await fetch("/api/admin/notifications",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({id})});await loadLive();};
  const markAll=async()=>{setBusy(true);try{await fetch("/api/admin/notifications",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({all:true}));await loadLive()}finally{setBusy(false)}};
  const openLive=async(n:Notice)=>{if(!n.read_at)await markRead(n.id);const url=String(n.metadata?.action_url||"/admin");if(url.startsWith("/"))window.location.assign(url);};
