@@ -33,6 +33,12 @@ export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
   const path = request.nextUrl.pathname;
 
+  // The Supabase push trigger calls this private worker endpoint directly.
+  // It is authenticated with a dedicated secret, not a user session.
+  if (path === "/api/internal/push/process" && request.headers.get("x-zynth-push-secret") === process.env.ZYNTH_PUSH_WORKER_SECRET) {
+    return response;
+  }
+
   // Authenticated ZYNTH surfaces are user-specific. Never allow an intermediary
   // or browser cache to retain a workspace response.
   response.headers.set("Cache-Control", "private, no-store, max-age=0, must-revalidate");
