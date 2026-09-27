@@ -19,8 +19,6 @@
 
 
 /* Strategy Market details drawer — scoped to the Investments tab. */
-.strategy-market-summary{margin-bottom:16px}
-.strategy-market-metrics{margin-bottom:2px}
 .strategy-details{margin-top:18px;border-top:1px solid var(--line)}
 .strategy-details-trigger{width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;border:0;background:transparent;color:inherit;padding:14px 2px 10px;text-align:left;cursor:pointer}
 .strategy-details-trigger-copy{display:flex;align-items:center;gap:10px;min-width:0}
@@ -35,8 +33,11 @@
 .strategy-details-panel.is-open{grid-template-rows:1fr}
 .strategy-details-panel.is-open>div{opacity:1;transform:translateY(0)}
 .strategy-details-body{padding:2px 0 2px}
-.strategy-details-description{padding:2px 0 16px}
-.strategy-details-description>span{display:block;font-size:8px;font-weight:800;letter-spacing:.12em;color:#69716d;margin-bottom:6px}
-.strategy-details-description p{margin:0;color:#8b948f;font-size:10px;line-height:1.65}
-.strategy-details-metrics{margin-bottom:16px}
 @media(prefers-reduced-motion:reduce){.strategy-details-chevron,.strategy-details-panel,.strategy-details-panel>div{transition:none}}
+
+/* Strategy Market refinement — details reveal only what is not already visible. */
+.strategy-market-card .copy{margin-bottom:16px}
+.strategy-detail-term{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:11px 12px;margin-bottom:14px;border:1px solid var(--line);border-radius:9px;background:var(--surface-subtle,#0d100f)}
+.strategy-detail-term span{font-size:8px;font-weight:800;letter-spacing:.12em;color:#69716d}
+.strategy-detail-term b{font-size:11px;color:var(--text-primary,#e8ecea)}
+.strategy-details-body .investment-action-stack{margin-top:0}
