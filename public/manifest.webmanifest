@@ -1,0 +1,15 @@
+{
+  "name": "ZYNTH",
+  "short_name": "ZYNTH",
+  "description": "Your investment portfolio, strategy performance and account controls.",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0b0d0f",
+  "theme_color": "#0b0d0f",
+  "categories": ["finance", "business"],
+  "icons": [
+    { "src": "/icons/zynth-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
