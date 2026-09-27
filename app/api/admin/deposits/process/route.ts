@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getAdminContext } from "@/lib/admin/auth";
 
 export async function POST(request: Request) {
   try {
-    const client = await createSupabaseServerClient();
-    const { data: { user } } = await client.auth.getUser();
-    if (!user) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+    const { supabase: client, user } = await getAdminContext();
+    if (!user) return NextResponse.json({ error: "Administrator access required." }, { status: 403 });
 
     const body = await request.json();
     const depositId = String(body?.depositId || "");
