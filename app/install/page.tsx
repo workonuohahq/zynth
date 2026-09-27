@@ -3,7 +3,6 @@
 import {
   ArrowRight,
   CheckCircle2,
-  Download,
   LockKeyhole,
   ShieldCheck,
   Smartphone,
@@ -173,8 +172,8 @@ export default function InstallPage() {
             onClick={install}
             disabled={installing}
           >
-            {installing ? "Opening installation…" : "Install ZYNTH"}
-            {!installing && <Download size={17} />}
+            <span className="pwa-install-btn-label">{installing ? "Opening installation…" : "Install ZYNTH App"}</span>
+            {!installing && <ArrowRight size={16} />}
           </button>
         ) : (
           <div className="pwa-ios-guide pwa-manual-guide">
