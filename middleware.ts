@@ -213,8 +213,6 @@ export const config = {
     "/admin/:path*",
     "/trader/:path*",
     "/api/:path*",
-    "/btest/:path*",
-    "/api/btest/:path*",
     "/login",
   ],
 };
