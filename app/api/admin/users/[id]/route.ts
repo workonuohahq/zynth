@@ -1,13 +1,7 @@
 import { NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getAdminContext } from "@/lib/admin/auth";
 
-async function getAdmin(){
-  const supabase=await createSupabaseServerClient();
-  const {data:{user}}=await supabase.auth.getUser();
-  if(!user)return {supabase,user:null};
-  const {data:ok}=await supabase.rpc("zynth_has_role",{p_user_id:user.id,p_role_key:"admin"});
-  return ok?{supabase,user}:{supabase,user:null};
-}
+async function getAdmin(){ return getAdminContext(); }
 
 export async function GET(_request:Request,{params}:{params:{id:string}}){
   try{
