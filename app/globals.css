@@ -2192,3 +2192,14 @@ html[data-theme="light"] .admin-list-item .admin-support-badge{background:#c6282
  .pwa-benefits-premium>div{border:0!important;padding:7px 0;margin:0}
  .pwa-benefits-premium>div:nth-child(2),.pwa-benefits-premium>div:nth-child(3){display:none}
 }
+
+/* ADMIN SESSION CONTROLS */
+.admin-sidebar-bottom{display:grid;gap:9px}
+.admin-signout-form{margin:0}
+.admin-signout{width:100%;display:flex;align-items:center;justify-content:center;gap:7px;height:34px;border:1px solid rgba(255,255,255,.07);border-radius:9px;background:#0b0d0d;color:#73787d;font:inherit;font-size:9px;font-weight:800;cursor:pointer;transition:all .18s ease}
+.admin-signout:hover{border-color:rgba(185,154,97,.28);background:#17140f;color:#c7a76b}
+.admin-signout-top{display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 11px;border:1px solid var(--line);border-radius:9px;background:transparent;color:#777;font:inherit;font-size:9px;font-weight:800;cursor:pointer}
+.admin-signout-top:hover{border-color:#514229;background:#17140f;color:var(--gold)}
+@media(max-width:900px){.admin-signout-top span{display:none}}
+@media(max-width:700px){.admin-signout-top{display:inline-flex}.admin-signout-top{padding:0 9px}}
+@media(max-width:430px){.admin-signout-top{display:inline-flex}.admin-sidebar-bottom{display:none}}
