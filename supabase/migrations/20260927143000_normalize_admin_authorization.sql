@@ -48,6 +48,7 @@ begin
     where n.nspname='public'
       and (p.proname ilike 'admin_%' or p.proname ilike 'zynth_admin_%' or p.proname='process_withdrawal_action')
   loop
-    execute format('revoke execute on function public.%I(%s) from anon', r.proname, r.args);
+    execute format('revoke execute on function public.%I(%s) from public', r.proname, r.args);
+    execute format('grant execute on function public.%I(%s) to authenticated', r.proname, r.args);
   end loop;
 end $$;
