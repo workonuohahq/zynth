@@ -61,7 +61,7 @@ export async function GET(req:Request){try{const {supabase:s,user}=await admin()
 
 import {NextResponse} from "next/server";import { getAdminContext } from "@/lib/admin/auth";import {decryptMt5Secret} from "@/lib/mt5-credentials";
 async function admin(){ return getAdminContext(); }
-export async function POST(req:Request){try{const {s,user}=await admin();if(!user)return NextResponse.json({error:"Administrator access required."},{status:403});const b=await req.json();
+export async function POST(req:Request){try{const {supabase:s,user}=await admin();if(!user)return NextResponse.json({error:"Administrator access required."},{status:403});const b=await req.json();
  if(["verify_mt5","reject_mt5"].includes(b.action)){
   const userId=String(b.userId||"");if(!userId)return NextResponse.json({error:"Trader user is required."},{status:400});
   const {data:current,error:currentError}=await s.from("zynth_trader_mt5_credentials").select("*").eq("user_id",userId).maybeSingle();
