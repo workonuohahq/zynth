@@ -16,3 +16,27 @@
 .manage-investment-panel.is-open>div{opacity:1;transform:translateY(0)}
 .manage-investment-panel .investment-action-stack{padding:2px 0 2px}
 @media(prefers-reduced-motion:reduce){.manage-investment-chevron,.manage-investment-panel,.manage-investment-panel>div{transition:none}}
+
+
+/* Strategy Market details drawer — scoped to the Investments tab. */
+.strategy-market-summary{margin-bottom:16px}
+.strategy-market-metrics{margin-bottom:2px}
+.strategy-details{margin-top:18px;border-top:1px solid var(--line)}
+.strategy-details-trigger{width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;border:0;background:transparent;color:inherit;padding:14px 2px 10px;text-align:left;cursor:pointer}
+.strategy-details-trigger-copy{display:flex;align-items:center;gap:10px;min-width:0}
+.strategy-details-trigger-copy>svg{color:var(--green);flex:none}
+.strategy-details-trigger-copy span{display:flex;flex-direction:column;gap:3px;min-width:0}
+.strategy-details-trigger-copy b{font-size:11px;letter-spacing:.01em;color:var(--text-primary,#e8ecea)}
+.strategy-details-trigger-copy small{font-size:9px;color:#69716d}
+.strategy-details-chevron{color:#68706c;transition:transform .22s ease}
+.strategy-details-trigger.is-open .strategy-details-chevron{transform:rotate(180deg)}
+.strategy-details-panel{display:grid;grid-template-rows:0fr;transition:grid-template-rows .24s ease;overflow:hidden}
+.strategy-details-panel>div{min-height:0;overflow:hidden;opacity:0;transform:translateY(-4px);transition:opacity .18s ease,transform .24s ease}
+.strategy-details-panel.is-open{grid-template-rows:1fr}
+.strategy-details-panel.is-open>div{opacity:1;transform:translateY(0)}
+.strategy-details-body{padding:2px 0 2px}
+.strategy-details-description{padding:2px 0 16px}
+.strategy-details-description>span{display:block;font-size:8px;font-weight:800;letter-spacing:.12em;color:#69716d;margin-bottom:6px}
+.strategy-details-description p{margin:0;color:#8b948f;font-size:10px;line-height:1.65}
+.strategy-details-metrics{margin-bottom:16px}
+@media(prefers-reduced-motion:reduce){.strategy-details-chevron,.strategy-details-panel,.strategy-details-panel>div{transition:none}}
