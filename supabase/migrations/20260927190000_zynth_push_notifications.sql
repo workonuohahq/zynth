@@ -102,3 +102,77 @@ where id=p_id;
 $$;
 revoke all on function public.zynth_complete_push_job(uuid,text,text,integer) from public,anon,authenticated;
 grant execute on function public.zynth_complete_push_job(uuid,text,text,integer) to service_role;
+
+
+create or replace function public.zynth_push_secret_valid(p_secret text)
+returns boolean
+language sql
+security definer
+set search_path=public
+as $$
+select exists(select 1 from vault.decrypted_secrets where name='zynth_push_worker_secret' and decrypted_secret=p_secret);
+$$;
+revoke all on function public.zynth_push_secret_valid(text) from public,anon,authenticated;
+grant execute on function public.zynth_push_secret_valid(text) to anon,authenticated,service_role;
+
+create or replace function public.zynth_claim_push_jobs(p_limit integer default 25,p_secret text default null)
+returns setof public.zynth_push_jobs
+language plpgsql
+security definer
+set search_path=public
+as $$
+begin
+  if not public.zynth_push_secret_valid(p_secret) then raise exception 'Unauthorized'; end if;
+  return query
+  update public.zynth_push_jobs j
+  set status='processing',locked_at=now(),attempts=j.attempts+1
+  where j.id in(
+    select id from public.zynth_push_jobs
+    where(status='pending' and available_at<=now()) or(status='processing' and locked_at<now()-interval '5 minutes')
+    order by created_at for update skip locked limit greatest(1,least(p_limit,100))
+  )
+  returning j.*;
+end;
+$$;
+revoke all on function public.zynth_claim_push_jobs(integer,text) from public,authenticated;
+grant execute on function public.zynth_claim_push_jobs(integer,text) to anon,authenticated,service_role;
+
+create or replace function public.zynth_get_push_job_context(p_job_id uuid,p_secret text)
+returns jsonb
+language plpgsql
+security definer
+set search_path=public
+as $$
+declare v_job public.zynth_push_jobs; v_notice jsonb; v_preferences jsonb; v_subscriptions jsonb;
+begin
+  if not public.zynth_push_secret_valid(p_secret) then raise exception 'Unauthorized'; end if;
+  select * into v_job from public.zynth_push_jobs where id=p_job_id;
+  if v_job.id is null then return null; end if;
+  select to_jsonb(n) into v_notice from public.notifications n where n.id=v_job.notification_id;
+  select coalesce(to_jsonb(p),'{}'::jsonb) into v_preferences from public.zynth_notification_preferences p where p.user_id=v_job.user_id;
+  select coalesce(jsonb_agg(to_jsonb(s)),'[]'::jsonb) into v_subscriptions from public.zynth_push_subscriptions s where s.user_id=v_job.user_id and s.revoked_at is null;
+  return jsonb_build_object('job',to_jsonb(v_job),'notification',v_notice,'preferences',v_preferences,'subscriptions',v_subscriptions);
+end;
+$$;
+revoke all on function public.zynth_get_push_job_context(uuid,text) from public,authenticated;
+grant execute on function public.zynth_get_push_job_context(uuid,text) to anon,authenticated,service_role;
+
+create or replace function public.zynth_complete_push_job(p_id uuid,p_status text,p_error text default null,p_delay_seconds integer default 0,p_secret text default null)
+returns void
+language plpgsql
+security definer
+set search_path=public
+as $$
+begin
+  if not public.zynth_push_secret_valid(p_secret) then raise exception 'Unauthorized'; end if;
+  update public.zynth_push_jobs
+  set status=case when p_status='sent' then 'sent' else 'pending' end,
+      sent_at=case when p_status='sent' then now() else sent_at end,
+      last_error=p_error,
+      available_at=case when p_status='sent' then available_at else now()+make_interval(secs=>greatest(5,least(p_delay_seconds,3600))) end,
+      locked_at=null
+  where id=p_id;
+end;
+$$;
+revoke all on function public.zynth_complete_push_job(uuid,text,text,integer) from public,authenticated;
+grant execute on function public.zynth_complete_push_job(uuid,text,text,integer,text) to anon,authenticated,service_role;
