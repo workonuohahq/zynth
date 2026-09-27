@@ -29,8 +29,8 @@ export async function POST(req:Request){
         admin.from("zynth_push_subscriptions").select("id,endpoint,p256dh,auth").eq("user_id",job.user_id).is("revoked_at",null)
       ]);
       if(!notice){await admin.rpc("zynth_complete_push_job",{p_id:job.id,p_status:"sent"});skipped++;continue;}
-      const category=categoryFor(notice.type);
-      if(preferences?.push_enabled===false || (preferences && preferences[category]===false)){await admin.rpc("zynth_complete_push_job",{p_id:job.id,p_status:"sent"});skipped++;continue;}
+      const category=categoryFor(notice.type);\n      const preferenceValue=preferences?(preferences as Record<string, boolean | null>)[category]:undefined;
+      if(preferences?.push_enabled===false || preferenceValue===false){await admin.rpc("zynth_complete_push_job",{p_id:job.id,p_status:"sent"});skipped++;continue;}
       const metadata=notice.metadata&&typeof notice.metadata==="object"?notice.metadata:{};
       const actionUrl=typeof metadata.action_url==="string"&&metadata.action_url.startsWith("/")?metadata.action_url:"/dashboard/notifications";
       const payload=JSON.stringify({title:notice.title,body:notice.body,url:actionUrl,tag:"zynth-"+notice.id,icon:"/icons/zynth-icon.svg",badge:"/icons/zynth-icon.svg"});
