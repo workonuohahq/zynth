@@ -8,7 +8,7 @@ export async function POST() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
   const token = randomBytes(32).toString("base64url");
-  const { error } = await supabase.from("zynth_pwa_devices").insert({ user_id: user.id, token_hash: hashPwaToken(token) });
+  const { error } = await supabase.from("zynth_pwa_devices").insert({ user_id: user.id, token_hash: await hashPwaToken(token) });
   if (error) return NextResponse.json({ error: "Unable to create secure app credential." }, { status: 500 });
   return NextResponse.json({ ok: true, token });
 }
