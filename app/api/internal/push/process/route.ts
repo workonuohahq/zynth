@@ -1,6 +1,6 @@
 import {NextResponse} from "next/server";
 import webpush from "web-push";
-import {createSupabaseAdminClient} from "@/lib/supabase/admin";
+import {createClient} from "@supabase/supabase-js";
 
 export const dynamic="force-dynamic";
 
@@ -22,21 +22,21 @@ export async function POST(req:Request){
   if(!publicKey||!privateKey)return NextResponse.json({error:"Push credentials are not configured."},{status:503});
 
   webpush.setVapidDetails(subject,publicKey,privateKey);
-  const admin=createSupabaseAdminClient();
-  const {data:jobs,error:claimError}=await admin.rpc("zynth_claim_push_jobs",{p_limit:25});
+  const admin=createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!,process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,{auth:{autoRefreshToken:false,persistSession:false}});
+  const {data:jobs,error:claimError}=await admin.rpc("zynth_claim_push_jobs",{p_limit:25,p_secret:secret});
   if(claimError)return NextResponse.json({error:claimError.message},{status:500});
 
   let sent=0,skipped=0,failed=0;
   for(const job of jobs||[]){
     try{
-      const [{data:notice},{data:preferences},{data:subscriptions}]=await Promise.all([
-        admin.from("notifications").select("id,title,body,type,metadata").eq("id",job.notification_id).maybeSingle(),
-        admin.from("zynth_notification_preferences").select("push_enabled,money,investments,security,system,trader").eq("user_id",job.user_id).maybeSingle(),
-        admin.from("zynth_push_subscriptions").select("id,endpoint,p256dh,auth").eq("user_id",job.user_id).is("revoked_at",null)
-      ]);
+      const {data:context,error:contextError}=await admin.rpc("zynth_get_push_job_context",{p_job_id:job.id,p_secret:secret});
+      if(contextError)throw contextError;
+      const notice=context?.notification;
+      const preferences=context?.preferences;
+      const subscriptions=context?.subscriptions||[];
 
       if(!notice){
-        await admin.rpc("zynth_complete_push_job",{p_id:job.id,p_status:"sent"});
+        await admin.rpc("zynth_complete_push_job",{p_id:job.id,p_status:"sent",p_secret:secret});
         skipped++;
         continue;
       }
@@ -44,7 +44,7 @@ export async function POST(req:Request){
       const category=categoryFor(notice.type);
       const preferenceValue=preferences?(preferences as Record<string, boolean | null>)[category]:undefined;
       if(preferences?.push_enabled===false || preferenceValue===false){
-        await admin.rpc("zynth_complete_push_job",{p_id:job.id,p_status:"sent"});
+        await admin.rpc("zynth_complete_push_job",{p_id:job.id,p_status:"sent",p_secret:secret});
         skipped++;
         continue;
       }
@@ -74,10 +74,10 @@ export async function POST(req:Request){
             payload,
             {TTL:86400}
           );
-          await admin.from("zynth_push_subscriptions").update({last_seen_at:new Date().toISOString()}).eq("id",sub.id);
+          
         }catch(error:any){
           if(error?.statusCode===404||error?.statusCode===410){
-            await admin.from("zynth_push_subscriptions").update({revoked_at:new Date().toISOString()}).eq("id",sub.id);
+            
           }else{
             throw error;
           }
