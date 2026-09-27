@@ -1,11 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getPwaCredential } from "@/lib/pwa/client";
+import { getPwaCredential, pwaFetch } from "@/lib/pwa/client";
 
 export default function PwaWorkspaceGate({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
-
   useEffect(() => {
     let cancelled = false;
     async function verify() {
@@ -15,7 +14,7 @@ export default function PwaWorkspaceGate({ children }: { children: React.ReactNo
         return;
       }
       try {
-        const response = await fetch("/api/pwa/validate", { cache: "no-store", credentials: "include" });
+        const response = await pwaFetch("/api/pwa/validate", { cache: "no-store" });
         if (!response.ok) {
           window.location.replace("/install?next=" + encodeURIComponent(window.location.pathname));
           return;
@@ -28,9 +27,6 @@ export default function PwaWorkspaceGate({ children }: { children: React.ReactNo
     verify();
     return () => { cancelled = true; };
   }, []);
-
-  if (!ready) {
-    return <div className="pwa-workspace-loading" aria-live="polite"><span />Securing your ZYNTH workspace…</div>;
-  }
+  if (!ready) return <div className="pwa-workspace-loading" aria-live="polite"><span />Securing your ZYNTH workspace…</div>;
   return <>{children}</>;
 }
