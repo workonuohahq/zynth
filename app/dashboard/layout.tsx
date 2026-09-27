@@ -9,7 +9,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
-  const { data: profile } = await supabase.from("users").select("account_status,role").eq("id",user.id).single();
+  const [{ data: profile }, { data: roleRows }] = await Promise.all([
+    supabase.from("users").select("account_status").eq("id", user.id).single(),
+    supabase.from("zynth_user_roles").select("role:zynth_roles(key)").eq("user_id", user.id).eq("is_active", true)
+  ]);
   if(profile?.account_status==="suspended" || profile?.account_status==="deactivated") redirect("/account-disabled");
-  return <div className="dashboard-frame"><DashboardNav isTrader={profile?.role==="trader"} /><NotificationBell /><ThemeSwitcher /><SupportLauncher /><main className="dashboard-main">{children}</main></div>;
+  const roleKeys=(roleRows||[]).map((row:any)=>row.role?.key).filter(Boolean);
+  return <div className="dashboard-frame"><DashboardNav roles={roleKeys} /><NotificationBell /><ThemeSwitcher /><SupportLauncher /><main className="dashboard-main">{children}</main></div>;
 }
