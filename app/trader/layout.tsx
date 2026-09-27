@@ -11,7 +11,7 @@ export default async function TraderLayout({children}:{children:React.ReactNode}
   s.from("zynth_user_roles").select("role:zynth_roles(key)").eq("user_id",user.id).eq("is_active",true)
  ]);
  if(profile?.account_status==="suspended"||profile?.account_status==="deactivated")redirect("/account-disabled");
- const roles=Array.isArray(roleKeys)?roleKeys:[];
+ const roles=Array.isArray(roleRows)?roleRows:[];
  if(!roles.includes("trader"))redirect("/dashboard");
  const {data:mt5}=await s.from("zynth_trader_mt5_credentials").select("status").eq("user_id",user.id).maybeSingle();
  const verified=mt5?.status==="verified";
