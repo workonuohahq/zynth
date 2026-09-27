@@ -60,7 +60,7 @@ export async function GET(req:Request){try{const {s,user}=await admin();if(!user
  }catch(e:any){console.error(e);return NextResponse.json({error:"Unable to load trader operations."},{status:500});}}
 
 import {NextResponse} from "next/server";import {createSupabaseServerClient} from "@/lib/supabase/server";import {decryptMt5Secret} from "@/lib/mt5-credentials";
-async function admin(){const s=await createSupabaseServerClient();const {data:{user}}=await s.auth.getUser();if(!user)return {s,user:null};const {data:p}=await s.from("users").select("role").eq("id",user.id).single();return p?.role==="admin"?{s,user}:{s,user:null};}
+async function admin(){const s=await createSupabaseServerClient();const {data:{user}}=await s.auth.getUser();if(!user)return {s,user:null};const {data:isAdmin}=await s.rpc("zynth_has_role",{p_user_id:user.id,p_role_key:"admin"});return isAdmin?{s,user}:{s,user:null};}
 export async function POST(req:Request){try{const {s,user}=await admin();if(!user)return NextResponse.json({error:"Administrator access required."},{status:403});const b=await req.json();
  if(["verify_mt5","reject_mt5"].includes(b.action)){
   const userId=String(b.userId||"");if(!userId)return NextResponse.json({error:"Trader user is required."},{status:400});
