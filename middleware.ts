@@ -4,6 +4,11 @@ import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from "@/lib/supabase/config";
 import { PWA_TOKEN_HEADER, validatePwaCredential } from "@/lib/pwa/server";
 
 const PUBLIC_API_PREFIXES = ["/api/health", "/api/pwa", "/api/webhooks"];
+// Push registration is authenticated by its route handlers, but it is not a
+// PWA-protected workspace API. This is intentional: browser users, including
+// administrators, must be able to opt into device notifications without
+// installing the ZYNTH PWA.
+const PUSH_API_PREFIXES = ["/api/push"];
 
 function isPath(path: string, prefix: string) {
   return path === prefix || path.startsWith(`${prefix}/`);
@@ -15,7 +20,13 @@ function isInvestorPage(path: string) { return isPath(path, "/dashboard"); }
 function isAdminPage(path: string) { return isPath(path, "/admin"); }
 function isTraderPage(path: string) { return isPath(path, "/trader"); }
 function isPublicApi(path: string) { return startsWithAny(path, PUBLIC_API_PREFIXES); }
-function isProtectedApi(path: string) { return path.startsWith("/api/") && !isPublicApi(path) && !isPath(path, "/api/admin"); }
+function isPushApi(path: string) { return startsWithAny(path, PUSH_API_PREFIXES); }
+function isProtectedApi(path: string) {
+  return path.startsWith("/api/") &&
+    !isPublicApi(path) &&
+    !isPushApi(path) &&
+    !isPath(path, "/api/admin");
+}
 
 function getRoleKeys(roleRows: unknown) {
   if (!Array.isArray(roleRows)) return new Set<string>();
@@ -63,7 +74,7 @@ export async function middleware(request: NextRequest) {
   const protectedApi = isProtectedApi(path);
 
   if (!user) {
-    if (protectedApi) return jsonDenied("AUTH_REQUIRED", "Authentication required.");
+    if (protectedApi || isPushApi(path)) return jsonDenied("AUTH_REQUIRED", "Authentication required.");
     if (protectedPage) return NextResponse.redirect(new URL("/login", request.url));
     return response;
   }
@@ -105,6 +116,10 @@ export async function middleware(request: NextRequest) {
     if (!valid) return jsonDenied("PWA_REQUIRED", "Install and open ZYNTH as an app to access protected workspace features.");
     return response;
   }
+
+  // Push endpoints perform their own authentication/validation. They deliberately
+  // bypass the PWA credential check so notification opt-in remains browser-capable.
+  if (isPushApi(path)) return response;
 
   return response;
 }
