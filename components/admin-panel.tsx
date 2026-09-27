@@ -10,6 +10,7 @@ import AdminTraders from "@/components/admin-traders";
 import AdminNotificationCenter from "@/components/admin-notification-center";
 import AdminReferralCenter from "@/components/admin-referral-center";
 import AdminSupportCenter from "@/components/admin-support-center";
+import AdminTraderGovernance from "@/components/admin-trader-governance";
 
 const money=(n:any)=>`₦${Number(n||0).toLocaleString("en-NG",{minimumFractionDigits:2,maximumFractionDigits:2})}`;
 const pct=(n:any)=>`${Number(n||0).toFixed(2)}%`;
@@ -57,6 +58,7 @@ export default function AdminPanel({initialData,adminEmail}:{initialData:any;adm
       {k:"strategies",l:"Strategies",i:TrendingUp,b:data.strategies},
       {k:"investors",l:"Investors",i:Users,b:data.investors},
       {k:"traders",l:"Traders",i:ShieldCheck,b:data.mt5_pending_count||0},
+      {k:"trader-governance",l:"Trader Governance",i:ShieldCheck,b:0},
       {k:"notifications",l:"Notifications",i:Bell,b:0},
       {k:"support",l:"Customer Service",i:Headphones,b:Number(data.support_unread_count||0)},
       {k:"referrals",l:"Referrals",i:Gift,b:0}
@@ -108,6 +110,7 @@ export default function AdminPanel({initialData,adminEmail}:{initialData:any;adm
    {tab==="investors"&&<section className="admin-section"><section className="admin-card admin-users-card"><div className="admin-card-head"><div><span className="muted">INVESTOR DIRECTORY</span><h2>Investors</h2><p>Account status and portfolio controls.</p></div></div><AdminUsers initialUsers={[]} refreshKey={refreshKey}/></section></section>}
 
    {tab==="traders"&&<AdminTraders onSaved={load} refreshKey={refreshKey}/>} 
+   {tab==="trader-governance"&&<AdminTraderGovernance/>} 
 
    {tab==="deposits"&&<section className="admin-section"><section className="admin-card"><div className="admin-card-head"><div><span className="muted">MONEY MOVEMENT</span><h2>Deposit operations</h2><p>Review and confirm incoming payment requests. Strategy-linked deposits activate an investment directly and never become spendable cash.</p></div><Link className="text-action" href="/admin/deposits">Open deposit queue <ChevronRight size={13}/></Link></div></section></section>}
    {tab==="withdrawals"&&<section className="admin-section"><section className="admin-card"><div className="admin-card-head"><div><span className="muted">MONEY MOVEMENT</span><h2>Withdrawal operations</h2><p>Existing withdrawal controls remain available while profit eligibility is enforced by the Vault layer.</p></div><Link className="text-action" href="/admin/withdrawals">Open queue <ChevronRight size={13}/></Link></div></section></section>}
