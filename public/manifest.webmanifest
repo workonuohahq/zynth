@@ -2,7 +2,7 @@
   "name": "ZYNTH",
   "short_name": "ZYNTH",
   "description": "Your investment portfolio, strategy performance and account controls.",
-  "start_url": "/dashboard",
+  "start_url": "/pwa-boot",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
