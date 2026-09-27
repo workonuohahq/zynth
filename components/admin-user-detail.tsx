@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import AdminRoleStyles from "@/components/admin-role-styles";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowLeft, CheckCircle2, Clock3, Copy, CreditCard, FileText, LockKeyhole, Mail, RefreshCw, ShieldAlert, ShieldCheck, UsersRound, Vault, WalletCards, XCircle } from "lucide-react";
 
 const naira=(n:number)=>`₦${Number(n||0).toLocaleString("en-NG",{maximumFractionDigits:2})}`;
@@ -19,6 +19,7 @@ export default function AdminUserDetail({initial}:{initial:any}){
  const copy=async(v:string)=>{try{await navigator.clipboard.writeText(v);setNotice("User ID copied.")}catch{}};
  const catalog=data.role_catalog||[];
  const toggleRole=(key:string)=>setRoles(x=>x.includes(key)?x.filter(v=>v!==key):[...x,key]);
+ useEffect(()=>{if(catalog.length===0){fetch(`/api/admin/users/${p.id}`,{cache:"no-store"}).then(r=>r.json()).then(j=>{if(Array.isArray(j.role_catalog))setData((d:any)=>({...d,roles:j.roles||[],role_catalog:j.role_catalog||[]}));}).catch(()=>{});}},[p.id,catalog.length]);
 return <section className="user-command-page"><AdminRoleStyles/>
   <header className="user-command-header"><div><Link href="/admin" className="back-admin"><ArrowLeft size={15}/> Admin control center</Link><div className="user-hero"><span className="user-hero-avatar">{(p.full_name||p.email||"U").slice(0,1).toUpperCase()}</span><div><div className="eyebrow-row"><span className="eyebrow">USER COMMAND CENTER</span><span className={`user-status ${p.account_status}`}>{p.account_status}</span></div><h1>{p.full_name||"Unnamed user"}</h1><p><Mail size={13}/>{p.email}<button className="copy-id" onClick={()=>copy(p.id)}><Copy size={12}/>{p.id.slice(0,8)}…</button></p></div></div></div><div className="user-header-actions"><button className="ghost" onClick={reload} disabled={busy==="reload"}><RefreshCw size={15}/>{busy==="reload"?"Refreshing":"Refresh"}</button></div></header>
   {notice&&<div className="admin-notice">{notice}</div>}
@@ -27,11 +28,6 @@ return <section className="user-command-page"><AdminRoleStyles/>
   {tab==="overview"&&<div className="user-command-grid">
    <section className="admin-card"><div className="admin-card-head"><div><span className="muted">ACCOUNT PROFILE</span><h2>Identity & access</h2><p>Roles are additive. A user can be an Investor, Trader and Administrator simultaneously when each capability is explicitly granted.</p></div></div>
     <div className="profile-edit-grid"><label><span>Full name</span><input value={name} onChange={e=>setName(e.target.value)} placeholder="User name"/></label><label><span>Email</span><input value={p.email} disabled/></label><label><span>KYC status</span><select value={kyc?"verified":"unverified"} onChange={e=>setKyc(e.target.value==="verified")}><option value="unverified">Unverified</option><option value="verified">Verified</option></select></label></div>
-    <div className="role-management"><div className="role-management-head"><div><span className="muted">ACCESS ROLES</span><h3>Assigned roles</h3><p>Roles combine; assigning one never removes another.</p></div><span className="role-count">{roles.length} assigned</span></div>
-     <div className="role-grid">{catalog.map((r:any)=><button type="button" key={r.key} className={`role-option ${roles.includes(r.key)?"selected":""}`} onClick={()=>toggleRole(r.key)}><span className="role-option-check">{roles.includes(r.key)?<CheckCircle2 size={15}/>:<span/>}</span><span><b>{r.name}</b><small>{r.description}</small></span></button>)}</div>
-     <div className="role-selected">{roles.map(k=><em key={k} className={`role-chip role-${k}`}>{catalog.find((r:any)=>r.key===k)?.name||k}</em>)}</div>
-     <button className="primary" onClick={()=>act("roles",{roles})} disabled={busy==="roles"||roles.length===0}>{busy==="roles"?"Saving roles…":"Save role assignments"}</button>
-    </div>
     <div style={{display:"flex",gap:10,flexWrap:"wrap",marginTop:14}}><button className="ghost" onClick={()=>act("profile",{full_name:name,kyc_verified:kyc})} disabled={busy==="profile"}>{busy==="profile"?"Saving…":"Save profile"}</button></div>
    </section>
    <section className="admin-card"><div className="admin-card-head"><div><span className="muted">ACCOUNT CONTROL</span><h2>Access state</h2><p>Use restrictions deliberately. Every change is written to the admin audit trail.</p></div></div><div className="status-control-list">{[["active","Active","Full platform access",ShieldCheck],["restricted","Restricted","Account visible; financial actions can be limited",LockKeyhole],["suspended","Suspended","Access should be blocked",ShieldAlert],["deactivated","Deactivated","Soft-deactivated; history retained",XCircle]].map(([s,label,desc,Icon]:any)=><button key={s} className={`status-control ${p.account_status===s?"selected":""}`} onClick={()=>p.account_status!==s&&statusAction(s)} disabled={busy==="status"}><Icon size={17}/><span><b>{label}</b><small>{desc}</small></span>{p.account_status===s&&<CheckCircle2 size={16}/>}</button>)}</div></section>
