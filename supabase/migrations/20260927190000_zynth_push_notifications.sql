@@ -12,7 +12,7 @@ create table if not exists public.zynth_push_subscriptions (
 );
 create index if not exists idx_zynth_push_subscriptions_user_active on public.zynth_push_subscriptions(user_id) where revoked_at is null;
 alter table public.zynth_push_subscriptions enable row level security;
-create policy "Users manage own push subscriptions" on public.zynth_push_subscriptions for all to authenticated using ((select auth.uid())=user_id) with check ((select auth.uid())=user_id);
+drop policy if exists "Users manage own push subscriptions" on public.zynth_push_subscriptions;\ncreate policy "Users manage own push subscriptions" on public.zynth_push_subscriptions for all to authenticated using ((select auth.uid())=user_id) with check ((select auth.uid())=user_id);
 
 create table if not exists public.zynth_push_jobs (
   id uuid primary key default gen_random_uuid(),
@@ -50,7 +50,7 @@ create table if not exists public.zynth_notification_preferences (
   updated_at timestamptz not null default now()
 );
 alter table public.zynth_notification_preferences enable row level security;
-create policy "Users manage own notification preferences" on public.zynth_notification_preferences for all to authenticated using ((select auth.uid())=user_id) with check ((select auth.uid())=user_id);
+drop policy if exists "Users manage own notification preferences" on public.zynth_notification_preferences;\ncreate policy "Users manage own notification preferences" on public.zynth_notification_preferences for all to authenticated using ((select auth.uid())=user_id) with check ((select auth.uid())=user_id);
 
 revoke all on public.zynth_push_jobs from anon,authenticated;
 grant select,insert,update,delete on public.zynth_push_subscriptions to authenticated;
