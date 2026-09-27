@@ -42,6 +42,12 @@ export default function PwaAccessGate({ children }: { children: React.ReactNode 
     };
 
     window.addEventListener("beforeinstallprompt", onBeforeInstallPrompt);
+    const onAppInstalled = () => {
+      setInstallPrompt(null);
+      setState("installed");
+      setBusy(false);
+    };
+    window.addEventListener("appinstalled", onAppInstalled);
     const timer = window.setTimeout(() => {
       if (isStandalone()) setState("installed");
       else if (isIOS()) setState("ios");
@@ -60,6 +66,7 @@ export default function PwaAccessGate({ children }: { children: React.ReactNode 
     return () => {
       window.clearTimeout(timer);
       window.removeEventListener("beforeinstallprompt", onBeforeInstallPrompt);
+      window.removeEventListener("appinstalled", onAppInstalled);
       document.removeEventListener("visibilitychange", onVisibility);
     };
   }, []);
