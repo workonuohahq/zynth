@@ -1,11 +1,11 @@
 "use client";
 import {useEffect,useMemo,useState} from "react";
-import {Activity,ArrowUpRight,BarChart3,BookOpen,CheckCircle2,ChevronRight,Clock3,FileCheck2,Lightbulb,Plus,RefreshCw,Save,Settings2,ShieldCheck,Target,TrendingUp,UploadCloud,UserRound,X,Zap,Eye,EyeOff} from "lucide-react";
+import {Activity,ArrowUpRight,BarChart3,BookOpen,CheckCircle2,ChevronRight,Clock3,FileCheck2,Lightbulb,Plus,RefreshCw,Save,Settings2,ShieldCheck,Target,TrendingUp,UploadCloud,UserRound,X,Zap} from "lucide-react";
 const money=(n:any)=>`₦${Number(n||0).toLocaleString("en-NG",{minimumFractionDigits:2,maximumFractionDigits:2})}`;
 const pct=(n:any)=>`${Number(n||0).toFixed(2)}%`;
 export default function TraderPage(){
  const[data,setData]=useState<any>({strategies:[],reports:[],profile:null,mt5:null}),[selected,setSelected]=useState(""),[tab,setTab]=useState("overview"),[loading,setLoading]=useState(true),[saving,setSaving]=useState(false),[msg,setMsg]=useState("");
- const[mt5Form,setMt5Form]=useState({mt5Login:"",mt5Server:"",investorPassword:""}),[mt5Busy,setMt5Busy]=useState(false),[showMt5Password,setShowMt5Password]=useState(false),[mt5ChangeOpen,setMt5ChangeOpen]=useState(false);
+ const[mt5Form,setMt5Form]=useState({mt5Login:"",mt5Server:"",investorPassword:""}),[mt5Busy,setMt5Busy]=useState(false),[mt5ChangeOpen,setMt5ChangeOpen]=useState(false);
  const[dep,setDep]=useState("0"),[wd,setWd]=useState("0"),[realized,setRealized]=useState("0"),[unrealized,setUnrealized]=useState("0"),[note,setNote]=useState("");
  const[newName,setNewName]=useState(""),[newDesc,setNewDesc]=useState(""),[newStart,setNewStart]=useState("200000"),[newMin,setNewMin]=useState("5000"),[newMax,setNewMax]=useState("");
  const[profile,setProfile]=useState<any>({});
