@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from "@/lib/supabase/config";
 
-const PWA_COOKIE = "zynth_pwa_access";
+const PWA_COOKIE = "zynth_pwa_v2";
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
