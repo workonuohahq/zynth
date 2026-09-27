@@ -1,6 +1,6 @@
 import {NextResponse} from "next/server";
 import { getAdminContext } from "@/lib/admin/auth";
-async function admin(){ return getAdminContext(); }}=await s.auth.getUser();if(!user)return{s,user:null};const {data:ok}=await s.rpc("zynth_has_role",{p_user_id:user.id,p_role_key:"admin"});if(!ok)return{s,user:null};const {data:p}=await s.from("users").select("account_status").eq("id",user.id).single();return{s,user:p?.account_status==="active"?user:null};}
+async function admin(){ return getAdminContext(); }
 export async function GET(req:Request){
  const {supabase:s,user}=await admin();if(!user)return NextResponse.json({error:"Administrator access required."},{status:403});
  const {searchParams}=new URL(req.url);const ticketId=searchParams.get("ticket");const status=searchParams.get("status");
