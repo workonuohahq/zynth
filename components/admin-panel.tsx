@@ -9,6 +9,7 @@ import AdminStrategyForm from "@/components/admin-strategy-form";
 import AdminTraders from "@/components/admin-traders";
 import AdminNotificationCenter from "@/components/admin-notification-center";
 import AdminNotificationBell from "@/components/admin-notification-bell";
+import AdminPushPrompt from "@/components/admin-push-prompt";
 import AdminReferralCenter from "@/components/admin-referral-center";
 import AdminSupportCenter from "@/components/admin-support-center";
 import AdminTraderGovernance from "@/components/admin-trader-governance";
@@ -83,6 +84,7 @@ export default function AdminPanel({initialData,adminEmail}:{initialData:any;adm
   <main className="admin-main">
    <header className="admin-topbar"><div><div className="eyebrow-row"><span className="eyebrow">ZYNTH / ADMIN</span><span className="live-dot"><i/> CONTROL ONLINE</span></div><h1>{tab==="overview"?"Control center":tab.charAt(0).toUpperCase()+tab.slice(1)}</h1><p>Portfolio operations, strategy settlement and investor controls.</p></div><div className="admin-top-actions"><AdminNotificationBell/><ThemeSwitcher/><form action="/auth/signout" method="post"><button className="ghost admin-signout-top" type="submit"><LogOut size={14}/> Sign out</button></form><button className="ghost admin-refresh" onClick={refreshData} disabled={refreshing}><RefreshCw size={15} className={refreshing?"spin":""}/> {refreshing?"Refreshing…":"Refresh data"}</button></div></header>
    {notice&&<div className="admin-notice">{notice}</div>}
+   <AdminPushPrompt/>
 
    {tab==="overview"&&<section className="admin-section"><div className="admin-kpis">{[[TrendingUp,"AUM",money(data.aumm),"PORTFOLIO"],[Users,"Investors",data.investors,"ACCOUNTS"],[ShieldCheck,"Traders",data.traders,"OPERATORS"],[Clock3,"Pending reports",data.pending_reports,"ACTION"],[ArrowDownToLine,"Withdrawals",data.withdrawals_pending,"ACTION"]].map(([Icon,label,val,tag]:any)=><div className="admin-kpi" key={label}><div className="admin-kpi-top"><span className="admin-kpi-icon"><Icon size={16}/></span><em>{tag}</em></div><small>{label}</small><b>{val}</b></div>)}</div><section className="admin-card admin-feature-card"><div className="admin-card-head"><div><span className="muted">SETTLEMENT QUEUE</span><h2>What needs attention</h2><p>Trader reports do not change investor balances until an administrator confirms them.</p></div><button className="text-action" onClick={()=>setTab("settlements")}>Open queue <ChevronRight size={13}/></button></div><div className="admin-table">{(data.pending_report_queue||[]).slice(0,6).map((r:any)=><div className="admin-row" key={r.id}><div className="admin-person"><span className="avatar">T</span><span><b>{r.strategy_name}</b><small>{r.trader_name||"Trader"} · {new Date(r.report_date).toLocaleDateString("en-NG")}</small></span></div><span>{money(r.closing_balance)}</span><span>{pct(r.return_pct)}</span><strong>Pending</strong></div>)}{!data.pending_report_queue?.length&&<div className="admin-empty"><CheckCircle2 size={22}/><p>No settlement reports waiting.</p></div>}</div></section></section>}
 
