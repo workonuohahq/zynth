@@ -4,7 +4,7 @@ import {useEffect,useState} from "react";
 import {Search,ShieldCheck,TrendingUp,UserRound,UsersRound} from "lucide-react";
 
 type Row={id:string;email:string|null;full_name:string|null;role:string;roles?:{key:string;name:string}[];kyc_verified:boolean;account_status:string;main_wallet_balance:number;portfolio_value:number;investment_count:number;active_investments:number;total_deposited:number;total_withdrawn:number;created_at:string};
-const money=(n:any)=>`₦${Number(n||0).toLocaleString("en-NG",{maximumFractionDigits:2})`;
+const money=(n:any)=>`₦${Number(n||0).toLocaleString("en-NG",{maximumFractionDigits:2})}`;
 
 export default function AdminUsers({initialUsers,refreshKey}:{initialUsers:Row[];refreshKey?:number}){
  const[rows,setRows]=useState<Row[]>(initialUsers||[]),[q,setQ]=useState(""),[loading,setLoading]=useState(false);
