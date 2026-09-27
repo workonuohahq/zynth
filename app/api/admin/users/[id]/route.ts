@@ -5,8 +5,8 @@ async function getAdmin(){
   const supabase=await createSupabaseServerClient();
   const {data:{user}}=await supabase.auth.getUser();
   if(!user)return {supabase,user:null};
-  const {data:profile}=await supabase.from("users").select("role").eq("id",user.id).single();
-  return profile?.role==="admin"?{supabase,user}:{supabase,user:null};
+  const {data:ok}=await supabase.rpc("zynth_has_role",{p_user_id:user.id,p_role_key:"admin"});
+  return ok?{supabase,user}:{supabase,user:null};
 }
 
 export async function GET(_request:Request,{params}:{params:{id:string}}){
@@ -15,7 +15,13 @@ export async function GET(_request:Request,{params}:{params:{id:string}}){
     if(!user)return NextResponse.json({error:"Admin authorization required."},{status:403});
     const {data,error}=await supabase.rpc("admin_get_user_detail",{p_admin_user_id:user.id,p_user_id:params.id});
     if(error)throw error;
-    return NextResponse.json(data);
+    const [roles,catalog]=await Promise.all([
+      supabase.rpc("zynth_admin_get_user_roles",{p_admin_id:user.id,p_user_id:params.id}),
+      supabase.rpc("zynth_admin_role_catalog",{p_admin_id:user.id})
+    ]);
+    if(roles.error)throw roles.error;
+    if(catalog.error)throw catalog.error;
+    return NextResponse.json({...data,roles:roles.data||[],role_catalog:catalog.data||[]});
   }catch(error){
     console.error(error);
     return NextResponse.json({error:"Unable to load this user."},{status:500});
@@ -32,8 +38,9 @@ export async function PATCH(request:Request,{params}:{params:{id:string}}){
       ({data,error}=await supabase.rpc("admin_update_user",{p_admin_user_id:user.id,p_user_id:params.id,p_full_name:String(body.full_name||""),p_kyc_verified:Boolean(body.kyc_verified)}));
     }else if(body.action==="status"){
       ({data,error}=await supabase.rpc("admin_set_user_status",{p_admin_user_id:user.id,p_user_id:params.id,p_status:String(body.status),p_reason:String(body.reason||"")}));
-    }else if(body.action==="role"){
-      ({data,error}=await supabase.rpc("admin_set_user_role",{p_admin_user_id:user.id,p_user_id:params.id,p_role:String(body.role)}));
+    }else if(body.action==="roles"){
+      const roles=Array.isArray(body.roles)?body.roles.map((x:any)=>String(x).trim().toLowerCase()).filter(Boolean):[];
+      ({data,error}=await supabase.rpc("zynth_admin_set_user_roles",{p_admin_id:user.id,p_user_id:params.id,p_role_keys:roles}));
     }else if(body.action==="wallet"){
       ({data,error}=await supabase.rpc("admin_adjust_wallet",{p_admin_user_id:user.id,p_user_id:params.id,p_direction:String(body.direction),p_amount:Number(body.amount),p_reason:String(body.reason||"")}));
     }else if(body.action==="note"){
