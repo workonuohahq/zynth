@@ -48,7 +48,7 @@ export async function GET(req:Request){try{const {s,user}=await admin();if(!user
   user:userMap.get(m.user_id)||traderMap.get(m.user_id)||null,
   profile:(traderMap.get(m.user_id) as any)?.profile||null
  }));
- const {data:reportSettings}=await s.from("system_settings").select("trader_report_start_time,trader_report_end_time").limit(1).maybeSingle();
+ const {data:reportSettings,error:settingsError}=await s.rpc("zynth_admin_get_settings",{p_admin_id:user.id}); if(settingsError)throw settingsError;
  return NextResponse.json({
   traders:enrichedTraders,
   users:Array.isArray(payload.users)?payload.users:[],
@@ -79,9 +79,8 @@ if(b.action==="save_reporting_settings"){
   const start=String(b.startTime||"").slice(0,8),end=String(b.endTime||"").slice(0,8);
   if(!/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/.test(start)||!/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/.test(end))return NextResponse.json({error:"Enter valid reporting times."},{status:400});
   if(start.slice(0,5)===end.slice(0,5))return NextResponse.json({error:"Start and end time cannot be the same."},{status:400});
-  const {data,error}=await s.from("system_settings").update({trader_report_start_time:start.slice(0,5)+":00",trader_report_end_time:end.slice(0,5)+":00",updated_at:new Date().toISOString()}).eq("id","00000000-0000-0000-0000-000000000001").select("trader_report_start_time,trader_report_end_time").single();
+  const {data,error}=await s.rpc("zynth_admin_update_trader_reporting_window",{p_admin_id:user.id,p_start_time:start.slice(0,5)+":00",p_end_time:end.slice(0,5)+":00"});
   if(error)return NextResponse.json({error:error.message},{status:400});
-  await s.from("audit_logs").insert({actor_user_id:user.id,action:"trader.reporting_window_updated",target_type:"system_settings",target_id:"00000000-0000-0000-0000-000000000001",metadata:{start_time:data.trader_report_start_time,end_time:data.trader_report_end_time}});
   return NextResponse.json({success:true,reporting_settings:data});
 }
 if(b.action==="promote"){const {data,error}=await s.rpc("zynth_admin_promote_trader",{p_user_id:b.userId,p_admin_id:user.id});if(error)return NextResponse.json({error:error.message},{status:400});return NextResponse.json(data);}
