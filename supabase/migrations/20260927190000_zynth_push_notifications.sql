@@ -49,7 +49,7 @@ begin
       url := 'https://zynth-lywd.onrender.com/api/internal/push/process',
       body := jsonb_build_object('notification_id',new.id),
       headers := jsonb_build_object('Content-Type','application/json','x-zynth-push-secret',v_secret),
-      timeout_milliseconds := 2000
+      timeout_milliseconds := 10000
     );
   end if;
   return new;
