@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getAdminContext } from "@/lib/admin/auth";
 
 async function adminContext() {
   const s = await createSupabaseServerClient();
@@ -11,8 +11,8 @@ async function adminContext() {
 }
 
 export async function GET() {
-  const { s, user, error } = await adminContext();
-  if (error || !user) return error!;
+  const { supabase: s, user } = await adminContext();
+  if (!user) return NextResponse.json({ error: "Administrator access required." }, { status: 403 });
   const { data, error: rpcError } = await s.rpc("zynth_admin_get_settings", { p_admin_id: user.id });
   if (rpcError) return NextResponse.json({ error: rpcError.message }, { status: 400 });
   return NextResponse.json({ settings: data });
