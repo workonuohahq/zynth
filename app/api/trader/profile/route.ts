@@ -3,7 +3,9 @@ import {createSupabaseServerClient} from "@/lib/supabase/server";
 const allowed=["display_name","bio","country","years_experience","markets","trading_style","holding_period","risk_management","typical_risk_pct","historical_drawdown_pct","broker_platform","track_record_url"];
 export async function PATCH(req:Request){
  const s=await createSupabaseServerClient();const {data:{user}}=await s.auth.getUser();if(!user)return NextResponse.json({error:"Authentication required."},{status:401});
- const {data:u}=await s.from("users").select("role").eq("id",user.id).single();if(u?.role!=="trader")return NextResponse.json({error:"Trader access required."},{status:403});
+ const {data:u}=await s.from("users").select("account_status").eq("id",user.id).single();
+ const {data:hasTrader}=await s.rpc("zynth_has_role",{p_user_id:user.id,p_role_key:"trader"});
+ if(u?.account_status!=="active"||!hasTrader)return NextResponse.json({error:"Trader access required."},{status:403});
  const body=await req.json();const patch:any={updated_at:new Date().toISOString()};
  for(const key of allowed)if(Object.prototype.hasOwnProperty.call(body,key))patch[key]=body[key];
  if(patch.years_experience!==undefined)patch.years_experience=Math.max(0,Math.min(80,Number(patch.years_experience)||0));
