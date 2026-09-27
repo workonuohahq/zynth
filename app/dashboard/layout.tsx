@@ -4,6 +4,8 @@ import DashboardNav from "@/components/dashboard-nav";
 import NotificationBell from "@/components/notification-bell";
 import ThemeSwitcher from "@/components/theme-switcher";
 import SupportLauncher from "@/components/support-launcher";
+import PwaWorkspaceGate from "@/components/pwa-workspace-gate";
+import PwaFetchBridge from "@/components/pwa-fetch-bridge";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createSupabaseServerClient();
@@ -21,12 +23,15 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   const roles = Array.isArray(roleKeys) ? roleKeys : [];
   return (
-    <div className="dashboard-frame">
-      <DashboardNav roles={roles} />
-      <NotificationBell />
-      <ThemeSwitcher />
-      <SupportLauncher />
-      <main className="dashboard-main">{children}</main>
-    </div>
+    <PwaWorkspaceGate>
+      <PwaFetchBridge />
+      <div className="dashboard-frame">
+        <DashboardNav roles={roles} />
+        <NotificationBell />
+        <ThemeSwitcher />
+        <SupportLauncher />
+        <main className="dashboard-main">{children}</main>
+      </div>
+    </PwaWorkspaceGate>
   );
 }
