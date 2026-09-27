@@ -7,7 +7,15 @@ export const metadata: Metadata = {
   description: "Investor portfolios, strategy performance and controlled daily settlement.",
   manifest: "/manifest.webmanifest",
   robots: { index: false, follow: false },
-  icons: { icon: "/icons/zynth-icon.svg", apple: "/icons/zynth-icon.svg" }
+  icons: {
+    icon: "/icons/zynth-icon.svg",
+    apple: "/icons/zynth-apple-touch-icon.png"
+  },
+  appleWebApp: {
+    capable: true,
+    title: "ZYNTH",
+    statusBarStyle: "black-translucent"
+  }
 };
 
 export const viewport: Viewport = {
