@@ -1,3 +1,6 @@
+create schema if not exists extensions;
+create extension if not exists pg_net with schema extensions;
+
 create table if not exists public.zynth_push_subscriptions (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
@@ -30,12 +33,28 @@ create table if not exists public.zynth_push_jobs (
 create index if not exists idx_zynth_push_jobs_pending on public.zynth_push_jobs(status,available_at,created_at) where status in ('pending','processing');
 alter table public.zynth_push_jobs enable row level security;
 
-create or replace function public.zynth_enqueue_notification_push() returns trigger language plpgsql security invoker set search_path=public as $$
+create or replace function public.zynth_enqueue_notification_push()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $
+declare
+  v_secret text;
 begin
   insert into public.zynth_push_jobs(notification_id,user_id) values(new.id,new.user_id) on conflict(notification_id) do nothing;
+  select decrypted_secret into v_secret from vault.decrypted_secrets where name='zynth_push_worker_secret' limit 1;
+  if v_secret is not null then
+    perform net.http_post(
+      url := 'https://zynth-lywd.onrender.com/api/internal/push/process',
+      body := jsonb_build_object('notification_id',new.id),
+      headers := jsonb_build_object('Content-Type','application/json','x-zynth-push-secret',v_secret),
+      timeout_milliseconds := 2000
+    );
+  end if;
   return new;
 end;
-$$;
+$;
 drop trigger if exists trg_zynth_enqueue_notification_push on public.notifications;
 create trigger trg_zynth_enqueue_notification_push after insert on public.notifications for each row execute function public.zynth_enqueue_notification_push();
 
