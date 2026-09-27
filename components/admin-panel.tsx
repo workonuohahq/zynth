@@ -1,7 +1,7 @@
 "use client";
 import {useEffect,useState} from "react";
 import Link from "next/link";
-import {ArrowDownToLine,ArrowLeftRight,BarChart3,Bell,CheckCircle2,ChevronRight,Clock3,ExternalLink,Eye,RefreshCw,Settings2,ShieldCheck,TrendingUp,Users,X,XCircle,Pencil,Pause,Play,Archive,Trash2,Gift,Headphones,LogOut} from "lucide-react";
+import {ArrowDownToLine,ArrowDownLeft,ArrowUpRight,ArrowLeftRight,BarChart3,Bell,CheckCircle2,ChevronRight,Clock3,ExternalLink,Eye,RefreshCw,Settings2,ShieldCheck,TrendingUp,Users,X,XCircle,Pencil,Pause,Play,Archive,Trash2,Gift,Headphones,LogOut} from "lucide-react";
 import AdminUsers from "@/components/admin-users";
 import ThemeSwitcher from "@/components/theme-switcher";
 import AdminInvestmentSettings from "@/components/admin-investment-settings";
@@ -66,14 +66,14 @@ export default function AdminPanel({initialData,adminEmail}:{initialData:any;adm
       {k:"referrals",l:"Referrals",i:Gift,b:0}
     ].map(({k,l,i:Icon,b})=><button key={k} className={tab===k?"admin-list-item active":"admin-list-item"} onClick={()=>setTab(k)}><span className="admin-list-icon"><Icon size={16}/></span><span className="admin-list-label">{l}</span>{b>0&&<em className={k==="support"?"admin-support-badge":""}>{b}</em>}</button>)}
     <div className={"admin-money-nav "+(moneyOpen||["deposits","withdrawals","redemptions"].includes(tab)?"open":"")}>
-      <button className={["deposits","withdrawals","redemptions"].includes(tab)?"admin-list-item active":"admin-list-item"} onClick={()=>setMoneyOpen(v=>!v)} aria-expanded={moneyOpen}>
-        <span className="admin-list-icon"><ArrowLeftRight size={16}/></span><span className="admin-list-label">Money Movement</span><span className="admin-money-chevron"><ChevronRight size={13}/></span>
+      <button className={["deposits","withdrawals","redemptions"].includes(tab)?"admin-list-item active":"admin-list-item"} onClick={()=>setMoneyOpen(v=>!v)} aria-expanded={moneyOpen} aria-controls="admin-money-subnav">
+        <span className="admin-list-icon"><ArrowLeftRight size={16}/></span><span className="admin-list-label">Money Movement</span><span className="admin-money-meta">FLOW</span><span className="admin-money-chevron"><ChevronRight size={13}/></span>
         {((Number(data.pending_deposits)||0)+(Number(data.withdrawals_pending)||0))>0&&<em>{(Number(data.pending_deposits)||0)+(Number(data.withdrawals_pending)||0)}</em>}
       </button>
-      {(moneyOpen||["deposits","withdrawals","redemptions"].includes(tab))&&<div className="admin-money-subnav">
-        <button className={tab==="deposits"?"active":""} onClick={()=>{setTab("deposits");setMoneyOpen(true)}}><ArrowDownToLine size={13}/><span>Deposits</span>{Number(data.pending_deposits||0)>0&&<b>{data.pending_deposits}</b>}</button>
-        <button className={tab==="withdrawals"?"active":""} onClick={()=>{setTab("withdrawals");setMoneyOpen(true)}}><ArrowDownToLine size={13}/><span>Withdrawals</span>{Number(data.withdrawals_pending||0)>0&&<b>{data.withdrawals_pending}</b>}</button>
-        <button className={tab==="redemptions"?"active":""} onClick={()=>{setTab("redemptions");setMoneyOpen(true)}}><ArrowDownToLine size={13}/><span>Redemptions</span></button>
+      {(moneyOpen||["deposits","withdrawals","redemptions"].includes(tab))&&<div className="admin-money-subnav" id="admin-money-subnav"><div className="admin-money-subnav-head"><span>MONEY MOVEMENT</span><small>Operational queues</small></div>
+        <button className={tab==="deposits"?"active":""} onClick={()=>{setTab("deposits");setMoneyOpen(true)}}><span className="admin-money-subicon deposit"><ArrowDownLeft size={13}/></span><span><b>Deposits</b><small>Incoming funds</small></span>{Number(data.pending_deposits||0)>0&&<b>{data.pending_deposits}</b>}</button>
+        <button className={tab==="withdrawals"?"active":""} onClick={()=>{setTab("withdrawals");setMoneyOpen(true)}}><span className="admin-money-subicon withdrawal"><ArrowUpRight size={13}/></span><span><b>Withdrawals</b><small>Outgoing funds</small></span>{Number(data.withdrawals_pending||0)>0&&<b>{data.withdrawals_pending}</b>}</button>
+        <button className={tab==="redemptions"?"active":""} onClick={()=>{setTab("redemptions");setMoneyOpen(true)}}><span className="admin-money-subicon redemption"><ArrowLeftRight size={13}/></span><span><b>Redemptions</b><small>Investor exits</small></span></button>
       </div>}
     </div>
     <button className={tab==="settings"?"admin-list-item active":"admin-list-item"} onClick={()=>setTab("settings")}><span className="admin-list-icon"><Settings2 size={16}/></span><span className="admin-list-label">Settings</span></button>
