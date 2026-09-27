@@ -1,7 +1,7 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
-const PWA_COOKIE = "zynth_pwa_access";
+const PWA_COOKIE = "zynth_pwa_v2";
 
 export async function POST() {
   const supabase = await createSupabaseServerClient();
