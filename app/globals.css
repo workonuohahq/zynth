@@ -2117,8 +2117,13 @@ html[data-theme="light"] .admin-list-item .admin-support-badge{background:#c6282
 .pwa-benefits-premium small{display:block;color:#777d84;font-size:8.5px;line-height:1.35;margin-top:3px}
 .pwa-benefit-icon{width:31px;height:31px;display:grid;place-items:center;flex:0 0 auto;border-radius:9px;color:#d2b574;background:rgba(201,168,106,.08);border:1px solid rgba(201,168,106,.12)}
 .pwa-benefits-premium>div>svg{color:#777d75;flex:0 0 auto}
-.pwa-install-premium-btn{height:54px;margin-top:8px;border-radius:15px;font-size:13px;box-shadow:0 10px 30px rgba(0,0,0,.22),0 0 0 1px rgba(255,255,255,.12) inset}
-.pwa-install-premium-btn:hover{transform:translateY(-2px);box-shadow:0 14px 34px rgba(0,0,0,.3),0 0 0 1px rgba(255,255,255,.16) inset}
+.pwa-install-premium-btn{position:relative;width:100%;height:58px;margin-top:10px;border:1px solid rgba(201,168,106,.42);border-radius:12px;background:linear-gradient(180deg,#191711,#12120f);color:#e8e4da;font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;padding:0 17px;box-shadow:inset 0 1px 0 rgba(255,255,255,.055),0 12px 28px rgba(0,0,0,.2);cursor:pointer;transition:background .18s ease,border-color .18s ease,box-shadow .18s ease,transform .18s ease}
+.pwa-install-premium-btn:before{content:"";width:7px;height:7px;border-radius:50%;background:#c9a86a;box-shadow:0 0 0 5px rgba(201,168,106,.07),0 0 12px rgba(201,168,106,.35);margin-right:auto}
+.pwa-install-premium-btn .pwa-install-btn-label{position:absolute;left:50%;transform:translateX(-50%);white-space:nowrap}
+.pwa-install-premium-btn svg{color:#c9a86a;transition:transform .18s ease}
+.pwa-install-premium-btn:hover{transform:translateY(-1px);border-color:rgba(201,168,106,.68);background:linear-gradient(180deg,#201d15,#15140f);box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 16px 34px rgba(0,0,0,.28),0 0 0 1px rgba(201,168,106,.05)}
+.pwa-install-premium-btn:hover svg{transform:translateX(2px)}
+.pwa-install-premium-btn:disabled{opacity:.72;cursor:wait;transform:none}
 .pwa-success-guide,.pwa-manual-guide{display:flex;align-items:flex-start;gap:11px;text-align:left;padding:13px}
 .pwa-guide-icon{width:32px;height:32px;display:grid;place-items:center;flex:0 0 auto;border-radius:9px;background:rgba(201,168,106,.08);color:#d0b374;border:1px solid rgba(201,168,106,.14)}
 .pwa-success-guide .pwa-guide-icon{color:#c9a86a}
