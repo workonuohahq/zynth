@@ -9,6 +9,9 @@ const PUBLIC_API_PREFIXES = ["/api/health", "/api/pwa", "/api/webhooks"];
 // administrators, must be able to opt into device notifications without
 // installing the ZYNTH PWA.
 const PUSH_API_PREFIXES = ["/api/push"];
+// The VAPID public key is intentionally public. This endpoint is only a
+// configuration bridge for deployments that do not hold the push key locally.
+const PUBLIC_PUSH_CONFIG_PATH = "/api/push/public-config";
 
 function isPath(path: string, prefix: string) {
   return path === prefix || path.startsWith(`${prefix}/`);
@@ -43,6 +46,14 @@ function jsonDenied(code: string, message: string) {
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
   const path = request.nextUrl.pathname;
+
+  // The VAPID public key is not a credential. Keep this tiny endpoint public so
+  // the Vercel deployment can source the same key that the Render push worker
+  // actually uses, avoiding two independently managed VAPID configurations.
+  if (path === PUBLIC_PUSH_CONFIG_PATH) {
+    response.headers.set("Cache-Control", "public, max-age=300, stale-while-revalidate=600");
+    return response;
+  }
 
   // The Supabase push trigger calls this private worker endpoint directly.
   // It is authenticated with a dedicated secret, not a user session.
