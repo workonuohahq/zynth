@@ -1,8 +1,8 @@
 import {NextResponse} from "next/server";
-import {createSupabaseServerClient} from "@/lib/supabase/server";
-async function admin(){const s=await createSupabaseServerClient();const {data:{user}}=await s.auth.getUser();if(!user)return{s,user:null};const {data:ok}=await s.rpc("zynth_has_role",{p_user_id:user.id,p_role_key:"admin"});if(!ok)return{s,user:null};const {data:p}=await s.from("users").select("account_status").eq("id",user.id).single();return{s,user:p?.account_status==="active"?user:null};}
+import { getAdminContext } from "@/lib/admin/auth";
+async function admin(){ return getAdminContext(); }}=await s.auth.getUser();if(!user)return{s,user:null};const {data:ok}=await s.rpc("zynth_has_role",{p_user_id:user.id,p_role_key:"admin"});if(!ok)return{s,user:null};const {data:p}=await s.from("users").select("account_status").eq("id",user.id).single();return{s,user:p?.account_status==="active"?user:null};}
 export async function GET(req:Request){
- const {s,user}=await admin();if(!user)return NextResponse.json({error:"Administrator access required."},{status:403});
+ const {supabase:s,user}=await admin();if(!user)return NextResponse.json({error:"Administrator access required."},{status:403});
  const {searchParams}=new URL(req.url);const ticketId=searchParams.get("ticket");const status=searchParams.get("status");
  let q=s.from("zynth_support_tickets").select("*,user:users!zynth_support_tickets_user_id_fkey(id,full_name,email,role,account_status,kyc_verified,main_wallet_balance,created_at)").order("updated_at",{ascending:false}).limit(100);
  if(status&&status!=="all")q=q.eq("status",status);
