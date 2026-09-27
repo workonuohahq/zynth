@@ -5,25 +5,16 @@ export async function GET(){
  const s=await createSupabaseServerClient();
  const {data:{user}}=await s.auth.getUser();
  if(!user)return NextResponse.json({error:"Authentication required."},{status:401});
- const {data:p}=await s.from("users").select("role,full_name,email,account_status").eq("id",user.id).single();
- if(p?.role!=="trader"||p.account_status!=="active")return NextResponse.json({error:"Trader access required."},{status:403});
-
+ const {data:p}=await s.from("users").select("full_name,email,account_status").eq("id",user.id).single();
+ if(!p || p.account_status!=="active")return NextResponse.json({error:"Trader access required."},{status:403});
+ const {data:hasTrader,error:roleError}=await s.rpc("zynth_has_role",{p_user_id:user.id,p_role_key:"trader"});
+ if(roleError || !hasTrader)return NextResponse.json({error:"Trader access required."},{status:403});
  const {data:profile}=await s.from("zynth_trader_profiles").select("*").eq("user_id",user.id).maybeSingle();
  const {data:mt5}=await s.from("zynth_trader_mt5_credentials").select("id,mt5_login,mt5_server,status,submitted_at,verified_at,rejection_reason,updated_at").eq("user_id",user.id).maybeSingle();
- const {data:strategies,error:strategyError}=await s.from("zynth_strategies")
-   .select("id,name,description,status,starting_balance,current_reported_balance,starting_nav,nav,total_units,high_water_mark,performance_fee_pct,currency,timezone,cutoff_time,require_flat_day,minimum_investment,maximum_investment,created_at,updated_at")
-   .eq("trader_id",user.id).order("created_at",{ascending:false});
+ const {data:strategies,error:strategyError}=await s.from("zynth_strategies").select("id,name,description,status,starting_balance,current_reported_balance,starting_nav,nav,total_units,high_water_mark,performance_fee_pct,currency,timezone,cutoff_time,require_flat_day,minimum_investment,maximum_investment,created_at,updated_at").eq("trader_id",user.id).order("created_at",{ascending:false});
  if(strategyError)return NextResponse.json({error:strategyError.message},{status:400});
-
  const {data:reportSettings}=await s.from("system_settings").select("trader_report_start_time,trader_report_end_time,settlement_timezone").limit(1).maybeSingle();
- const ids=(strategies||[]).map(x=>x.id);
- let reports:any[]=[];
- if(ids.length){
-   const {data,error}=await s.from("zynth_daily_reports")
-     .select("id,strategy_id,report_date,report_cycle_date,opening_balance,closing_balance,external_deposit,external_withdrawal,trading_pnl,realized_pnl,unrealized_pnl,prior_unrealized_pnl,return_pct,status,rejection_reason,note,positions_flat,submitted_at,confirmed_at")
-     .in("strategy_id",ids).order("report_date",{ascending:false}).limit(120);
-   if(error)return NextResponse.json({error:error.message},{status:400});
-   reports=data||[];
- }
- return NextResponse.json({user:p,profile,mt5:mt5||null,strategies:strategies||[],reports,reporting_settings:reportSettings||{trader_report_start_time:"06:00:00",trader_report_end_time:"23:00:00",settlement_timezone:"Africa/Lagos"}});
+ const ids=(strategies||[]).map(x=>x.id); let reports:any[]=[];
+ if(ids.length){const {data,error}=await s.from("zynth_daily_reports").select("id,strategy_id,report_date,report_cycle_date,opening_balance,closing_balance,external_deposit,external_withdrawal,trading_pnl,realized_pnl,unrealized_pnl,prior_unrealized_pnl,return_pct,status,rejection_reason,note,positions_flat,submitted_at,confirmed_at").in("strategy_id",ids).order("report_date",{ascending:false}).limit(120);if(error)return NextResponse.json({error:error.message},{status:400});reports=data||[];}
+ return NextResponse.json({user:{...p,roles:["trader"]},profile,mt5:mt5||null,strategies:strategies||[],reports,reporting_settings:reportSettings||{trader_report_start_time:"06:00:00",trader_report_end_time:"23:00:00",settlement_timezone:"Africa/Lagos"}});
 }
