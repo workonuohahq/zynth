@@ -1704,6 +1704,39 @@ html[data-theme="light"] .admin-list-item.active{background:#f2eadb;color:#3d352
 }
 
 
+/* ADMIN SHELL LAYERING — dropdowns and controls must sit above dashboard content */
+.admin-top-actions .theme-switch{
+  position:relative!important;
+  top:auto!important;
+  right:auto!important;
+  z-index:2!important;
+  flex:0 0 auto;
+}
+.admin-top-actions .admin-signout-top{
+  position:relative;
+  z-index:3;
+  flex:0 0 auto;
+}
+.admin-top-actions{
+  position:relative;
+  z-index:10;
+  isolation:isolate;
+}
+@media(max-width:800px){
+  /* The mobile admin shell is its own stacking context; raise the shell itself,
+     not only the dropdown, so the dropdown cannot be buried by .admin-main. */
+  .admin-sidebar{
+    z-index:11000!important;
+  }
+  .admin-money-subnav{
+    z-index:11001!important;
+  }
+  .admin-main{
+    position:relative;
+    z-index:0;
+  }
+}
+
 /* ADMIN NAV SCROLL RECOVERY — keep the compact desk nav touch-scrollable */
 @media(max-width:800px){
   .admin-sidebar{
