@@ -43,7 +43,6 @@ export default function Investments(){
      <div className="health-grid strategy-market-metrics">
       <div><span>Current NAV</span><b>₦{Number(s.nav).toFixed(4)}</b></div>
       <div><span>Minimum</span><b>{money(s.minimum_investment)}</b></div>
-      <div><span>Trader</span><b>{s.trader_name||"Assigned"}</b></div>
      </div>
      <div className="strategy-details">
       <button type="button" className={"strategy-details-trigger"+(strategyDetailsOpen[s.id]?" is-open":"")} aria-expanded={!!strategyDetailsOpen[s.id]} aria-controls={"strategy-details-"+s.id} onClick={()=>setStrategyDetailsOpen({...strategyDetailsOpen,[s.id]:!strategyDetailsOpen[s.id]})}>
