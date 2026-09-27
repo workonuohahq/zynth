@@ -18,6 +18,26 @@ export default function AdminUserDetail({initial}:{initial:any}){
  const copy=async(v:string)=>{try{await navigator.clipboard.writeText(v);setNotice("User ID copied.")}catch{}};
  const catalog=data.role_catalog||[];
  const toggleRole=(key:string)=>setRoles(x=>x.includes(key)?x.filter(v=>v!==key):[...x,key]);
+"use client";
+
+import Link from "next/link";
+import { useState } from "react";
+import { ArrowLeft, CheckCircle2, Clock3, Copy, CreditCard, FileText, LockKeyhole, Mail, RefreshCw, ShieldAlert, ShieldCheck, UsersRound, Vault, WalletCards, XCircle } from "lucide-react";
+
+const naira=(n:number)=>`₦${Number(n||0).toLocaleString("en-NG",{maximumFractionDigits:2})}`;
+const date=(v:string|null)=>v?new Date(v).toLocaleString("en-NG",{dateStyle:"medium",timeStyle:"short"}):"—";
+
+export default function AdminUserDetail({initial}:{initial:any}){
+ const[data,setData]=useState(initial),[tab,setTab]=useState("overview"),[busy,setBusy]=useState(""),[notice,setNotice]=useState("");
+ const[name,setName]=useState(initial.profile.full_name||""),[kyc,setKyc]=useState(Boolean(initial.profile.kyc_verified));
+ const[roles,setRoles]=useState<string[]>((initial.roles||[]).map((r:any)=>r.key)),[note,setNote]=useState(""),[amount,setAmount]=useState(""),[reason,setReason]=useState("");
+ const p=data.profile;
+ const reload=async()=>{setBusy("reload");setNotice("");const r=await fetch(`/api/admin/users/${p.id}`,{cache:"no-store"});const j=await r.json();if(!r.ok){setNotice(j.error||"Refresh failed.");setBusy("");return}setData(j);setName(j.profile.full_name||"");setKyc(Boolean(j.profile.kyc_verified));setRoles((j.roles||[]).map((x:any)=>x.key));setBusy("")};
+ const act=async(action:string,payload:any)=>{setBusy(action);setNotice("");try{const r=await fetch(`/api/admin/users/${p.id}`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({action,...payload})});const j=await r.json();if(!r.ok)throw new Error(j.error||"Action failed.");setNotice(action==="wallet"?"Wallet adjustment posted to the ledger.":action==="note"?"Internal note added.":action==="roles"?"Role assignments updated and audited.":"User record updated.");if(action==="note")setNote("");if(action==="wallet"){setAmount("");setReason("")}await reload()}catch(e){setNotice(e instanceof Error?e.message:"Action failed.");setBusy("")}};
+ const statusAction=async(status:string)=>{const why=window.prompt(`Reason for changing account status to ${status}:`)||"Admin status change";if(!why.trim())return;await act("status",{status,reason:why})};
+ const copy=async(v:string)=>{try{await navigator.clipboard.writeText(v);setNotice("User ID copied.")}catch{}};
+ const catalog=data.role_catalog||[];
+ const toggleRole=(key:string)=>setRoles(x=>x.includes(key)?x.filter(v=>v!==key):[...x,key]);
 <style jsx global>{`
 .role-management{margin-top:24px;padding-top:22px;border-top:1px solid var(--border,#2a2f38)}
 .role-management-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:16px}
