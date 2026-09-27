@@ -4,6 +4,7 @@ import DashboardNav from "@/components/dashboard-nav";
 import NotificationBell from "@/components/notification-bell";
 import ThemeSwitcher from "@/components/theme-switcher";
 import SupportLauncher from "@/components/support-launcher";
+import PwaAccessGate from "@/components/pwa-access-gate";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createSupabaseServerClient();
@@ -15,5 +16,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   ]);
   if(profile?.account_status==="suspended" || profile?.account_status==="deactivated") redirect("/account-disabled");
   const roles=Array.isArray(roleKeys)?roleKeys:[];
-  return <div className="dashboard-frame"><DashboardNav roles={roles} /><NotificationBell /><ThemeSwitcher /><SupportLauncher /><main className="dashboard-main">{children}</main></div>;
+  const privileged=roles.some((r:any)=>r==="admin"||r==="trader"||r?.role_key==="admin"||r?.role_key==="trader");
+  const content=<div className="dashboard-frame"><DashboardNav roles={roles} /><NotificationBell /><ThemeSwitcher /><SupportLauncher /><main className="dashboard-main">{children}</main></div>;
+  return privileged ? content : <PwaAccessGate>{content}</PwaAccessGate>;
 }
