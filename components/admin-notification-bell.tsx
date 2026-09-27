@@ -13,9 +13,9 @@ export default function AdminNotificationBell(){
  const markAll=async()=>{setBusy(true);try{await fetch("/api/admin/notifications",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({all:true})});}finally{setBusy(false);await load();}};
  const openItem=async(n:AdminNotification)=>{if(!n.read_at)await markRead(n.id);const url=String(n.metadata?.action_url||"/admin");setOpen(false);if(url.startsWith("/"))window.location.assign(url);};
  return <div className="admin-notification-wrap" ref={ref}>
-  <button className={"admin-notification-trigger "+(open?"open":"")} type="button" onClick={()=>setOpen(v=>!v)} aria-label={unread?"Notifications, "+unread+" unread":"Notifications"} aria-expanded={open}><Bell size={16}/>{unread>0&&<span className="admin-notification-badge">{unread>99?"99+":unread}</span>}</button>
+  <button className={"admin-notification-trigger "+(open?"open":"")} type="button" onClick={()=>setOpen(v=>!v)} aria-label={unread?"Notifications, "+unread+" unread":"Notifications"} aria-expanded={open}><Bell size={16}/>{(attention>0||unread>0)&&<span className={"admin-notification-badge "+(attention>0?"attention":"")}>{attention>0?(attention>99?"99+":attention):(unread>99?"99+":unread)}</span>}</button>
   {open&&<div className="admin-notification-popover" role="dialog" aria-label="Admin notifications">
-   <header><div><span className="muted">ADMIN INBOX</span><h3>Notifications</h3><p>{attention>0?attention+" need attention":"No urgent items"}</p></div><button type="button" onClick={markAll} disabled={busy||unread===0}><CheckCheck size={14}/> Read all</button></header>
+   <header><div><span className="muted">ADMIN INBOX</span><h3>Notifications</h3><p>{attention>0?attention+" need attention":unread>0?unread+" unread":"No urgent items"}</p></div><button type="button" onClick={markAll} disabled={busy||unread===0}><CheckCheck size={14}/> Read all</button></header>
    <div className="admin-notification-list">
     {!items.length&&<div className="admin-notification-empty"><Bell size={20}/><b>You're all caught up</b><span>Important admin activity will appear here.</span></div>}
     {items.map(n=><button key={n.id} type="button" className={"admin-notification-item "+(!n.read_at?"unread":"")} onClick={()=>openItem(n)}>
