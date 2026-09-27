@@ -79,4 +79,5 @@ export default function Investments(){
   </div>
   {!strategies.length&&<div className="premium-empty"><TrendingUp size={21}/><h3>No strategies are open yet</h3><p>The operations team will publish strategies here when ready.</p></div>}
  </section>
+ </section>
 }
