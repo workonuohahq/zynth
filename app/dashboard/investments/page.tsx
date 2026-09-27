@@ -50,29 +50,23 @@ export default function Investments(){
       <button type="button" className={"strategy-details-trigger"+(strategyDetailsOpen[s.id]?" is-open":"")} aria-expanded={!!strategyDetailsOpen[s.id]} aria-controls={"strategy-details-"+s.id} onClick={()=>setStrategyDetailsOpen({...strategyDetailsOpen,[s.id]:!strategyDetailsOpen[s.id]})}>
        <span className="strategy-details-trigger-copy">
         <SlidersHorizontal size={15}/>
-        <span><b>View strategy details</b><small>Review terms and start a position</small></span>
+        <span><b>View strategy details</b><small>Review investment terms and start a position</small></span>
        </span>
        <ChevronDown size={17} className="strategy-details-chevron"/>
       </button>
       <div id={"strategy-details-"+s.id} className={"strategy-details-panel"+(strategyDetailsOpen[s.id]?" is-open":"")} aria-hidden={!strategyDetailsOpen[s.id]}>
        <div>
         <div className="strategy-details-body">
-         <div className="strategy-details-description">
-          <span>STRATEGY OVERVIEW</span>
-          <p>{s.description||"A ZYNTH-managed strategy with daily performance confirmed by operations."}</p>
-         </div>
-         <div className="health-grid strategy-details-metrics">
-          <div><span>Current NAV</span><b>₦{Number(s.nav).toFixed(4)}</b></div>
-          <div><span>Minimum</span><b>{money(s.minimum_investment)}</b></div>
-          <div><span>Maximum</span><b>{s.maximum_investment?money(s.maximum_investment):"No cap"}</b></div>
-          <div><span>Trader</span><b>{s.trader_name||"Assigned"}</b></div>
+         <div className="strategy-detail-term">
+          <span>MAXIMUM INVESTMENT</span>
+          <b>{s.maximum_investment?money(s.maximum_investment):"No cap"}</b>
          </div>
          <div className="investment-action-stack strategy-invest-action">
           <div className="investment-action-row">
-           <div className="investment-action-label"><span>START POSITION</span><small>Fund via the secure deposit flow</small></div>
+           <div className="investment-action-label"><span>START POSITION</span><small>Choose an amount within the strategy limits</small></div>
            <div className="investment-command">
             <div className="money-input investment-money-input"><span>₦</span><input inputMode="decimal" placeholder="0.00" value={amounts[s.id]||""} onChange={e=>setAmounts({...amounts,[s.id]:e.target.value})}/></div>
-            <button className="investment-action-button primary" disabled={!strategyDetailsOpen[s.id]||busy==="invest:"+s.id} onClick={()=>invest(s.id)}><TrendingUp size={16}/> Invest in <span className="investment-action-name">{s.name}</span></button>
+            <button className="investment-action-button primary" disabled={busy==="invest:"+s.id} onClick={()=>invest(s.id)}><TrendingUp size={16}/> Invest in <span className="investment-action-name">{s.name}</span></button>
            </div>
           </div>
          </div>
@@ -84,6 +78,5 @@ export default function Investments(){
    ))}
   </div>
   {!strategies.length&&<div className="premium-empty"><TrendingUp size={21}/><h3>No strategies are open yet</h3><p>The operations team will publish strategies here when ready.</p></div>}
- </section>
  </section>
 }
