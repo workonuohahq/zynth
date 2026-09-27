@@ -49,7 +49,7 @@ export default function AdminNotificationCenter({initialTemplates=[],refreshKey}
    {liveLoading?<div className="admin-live-loading">{[1,2,3].map(i=><div key={i} className="admin-live-skeleton"><i/><span/><b/></div>)}</div>:<div className="admin-live-list">
     {filteredLive.map(n=><button key={n.id} className={"admin-live-item "+(!n.read_at?"unread":"")} onClick={()=>openLive(n)}>
       <span className={"admin-live-icon "+String(n.type||"system")}>{noticeIcon(n)}</span>
-      <span className="admin-live-copy"><span><b>{n.title}</b>{!n.read_at&&<i/>}</span><small>{n.body}</small><em><Clock3 size={10}/>{timeAgo(n.created_at)}{["attention","critical"].includes(String(n.metadata?.priority||"normal"))&&<strong>{n.metadata?.priority==="critical"?"Critical":"Needs attention"}</strong>}{Number(n.metadata?.dedupe_count||1)>1&&<strong className="admin-batch-count">×{Number(n.metadata?.dedupe_count)}</strong>}</em></span>
+      <span className="admin-live-copy"><span><b>{n.title}</b>{!n.read_at&&<i/>}</span><small>{n.body}</small><em><Clock3 size={10}/>{timeAgo(n.updated_at||n.created_at)}{["attention","critical"].includes(String(n.metadata?.priority||"normal"))&&<strong>{n.metadata?.priority==="critical"?"Critical":"Needs attention"}</strong>}{Number(n.metadata?.dedupe_count||1)>1&&<strong className="admin-batch-count">×{Number(n.metadata?.dedupe_count)}</strong>}</em></span>
       <ChevronRight size={14}/>
     </button>)}
     {!filteredLive.length&&!liveError&&<div className="admin-empty"><CheckCircle2 size={22}/><p>{liveFilter==="attention"?"No items need attention.":liveFilter==="unread"?"No unread notifications.":"No admin activity yet."}</p></div>}
