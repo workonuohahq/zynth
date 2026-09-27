@@ -62,7 +62,7 @@ export async function POST(req:Request){
 
       const active=subscriptions||[];
       if(!active.length){
-        await admin.rpc("zynth_complete_push_job",{p_id:job.id,p_status:"sent"});
+        await admin.rpc("zynth_complete_push_job",{p_id:job.id,p_status:"sent",p_secret:secret});
         skipped++;
         continue;
       }
@@ -84,7 +84,7 @@ export async function POST(req:Request){
         }
       }
 
-      await admin.rpc("zynth_complete_push_job",{p_id:job.id,p_status:"sent"});
+      await admin.rpc("zynth_complete_push_job",{p_id:job.id,p_status:"sent",p_secret:secret});
       sent++;
     }catch(error:any){
       failed++;
@@ -94,7 +94,7 @@ export async function POST(req:Request){
         p_id:job.id,
         p_status:"failed",
         p_error:String(error?.message||error).slice(0,1000),
-        p_delay_seconds:delay
+        p_delay_seconds:delay,p_secret:secret
       });
     }
   }
