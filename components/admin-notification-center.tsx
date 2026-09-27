@@ -32,7 +32,7 @@ export default function AdminNotificationCenter({initialTemplates=[],refreshKey}
  const refresh=async()=>{const r=await fetch("/api/admin/notification-templates");const j=await r.json();if(r.ok)setItems(j.templates||[]);else setNotice(j.error||"Could not load notification templates.");};
   useEffect(()=>{setItems(initialTemplates);if(refreshKey!==undefined){refresh();}},[initialTemplates,refreshKey]);
  const markRead=async(id:string)=>{await fetch("/api/admin/notifications",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({id})});await loadLive();};
- const markAll=async()=>{setBusy(true);try{await fetch("/api/admin/notifications",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({all:true}));await loadLive()}finally{setBusy(false)}};
+ const markAll=async()=>{setBusy(true);const response=await fetch("/api/admin/notifications",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({all:true})});if(response.ok){await loadLive();}setBusy(false);};
  const openLive=async(n:Notice)=>{if(!n.read_at)await markRead(n.id);const url=String(n.metadata?.action_url||"/admin");if(url.startsWith("/"))window.location.assign(url);};
 
  const save=async()=>{if(!editing)return;setBusy(true);setNotice("");const r=await fetch("/api/admin/notification-templates",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(editing)});const j=await r.json();setNotice(r.ok?(editing.id?"Notification updated.":"Notification created."):j.error||"Save failed.");if(r.ok){await refresh();setEditing(null)}setBusy(false)};
