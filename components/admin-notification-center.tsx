@@ -1,20 +1,64 @@
 "use client";
-import {useEffect,useMemo,useState} from "react";
-import {Bell,CheckCircle2,Copy,Edit3,Eye,Plus,Power,Search,ShieldCheck,Trash2,X} from "lucide-react";
+import {useCallback,useEffect,useMemo,useState} from "react";
+import {Bell,CheckCircle2,CheckCheck,Copy,Edit3,Eye,Filter,Plus,Power,Search,ShieldAlert,ShieldCheck,Trash2,X,ChevronRight,Clock3,WalletCards,TrendingUp,Headphones} from "lucide-react";
+
 const cats=["all","money","investment","performance","trader","account","custom"];
 const blank={id:null,event_key:"",name:"",description:"",category:"custom",title:"",body:"",notification_type:"activity",enabled:true,system_event:false,variables:[]};
+type Notice={id:string;title:string;body:string;type:string;read_at:string|null;created_at:string;metadata?:Record<string,any>};
+
+function noticeIcon(n:Notice){
+ const t=String(n.type||"");
+ if(t==="money")return <WalletCards size={15}/>;
+ if(t==="investment"||t==="trader")return <TrendingUp size={15}/>;
+ if(t==="support")return <Headphones size={15}/>;
+ if(t==="security")return <ShieldAlert size={15}/>;
+ return <Bell size={15}/>;
+}
+function timeAgo(v:string){const m=Math.max(0,Math.floor((Date.now()-new Date(v).getTime())/60000));if(m<1)return"Just now";if(m<60)return m+"m ago";const h=Math.floor(m/60);if(h<24)return h+"h ago";return Math.floor(h/24)+"d ago";}
+
 export default function AdminNotificationCenter({initialTemplates=[],refreshKey}:{initialTemplates?:any[];refreshKey?:number}){
  const [items,setItems]=useState<any[]>(initialTemplates),[editing,setEditing]=useState<any>(null),[query,setQuery]=useState(""),[cat,setCat]=useState("all"),[busy,setBusy]=useState(false),[notice,setNotice]=useState("");
+ const [live,setLive]=useState<Notice[]>([]),[liveFilter,setLiveFilter]=useState<"attention"|"unread"|"all">("attention"),[liveLoading,setLiveLoading]=useState(true),[liveError,setLiveError]=useState("");
  const filtered=useMemo(()=>items.filter(x=>(cat==="all"||x.category===cat)&&(!query||[x.name,x.event_key,x.title,x.body].join(" ").toLowerCase().includes(query.toLowerCase()))),[items,cat,query]);
+ const filteredLive=useMemo(()=>live.filter(n=>liveFilter==="all"|| (liveFilter==="unread"? !n.read_at:["attention","critical"].includes(String(n.metadata?.priority||"normal")) && !n.read_at)),[live,liveFilter]);
+
+ const loadLive=useCallback(async()=>{
+  setLiveLoading(true);setLiveError("");
+  try{const r=await fetch("/api/admin/notifications?limit=50",{cache:"no-store"});const j=await r.json();if(!r.ok)throw new Error(j.error||"Could not load admin notifications.");setLive(j.notifications||[]);}
+  catch(e){setLiveError(e instanceof Error?e.message:"Could not load admin notifications.");}
+  finally{setLiveLoading(false);}
+ },[]);
+ useEffect(()=>{void loadLive();const t=window.setInterval(loadLive,15000);return()=>window.clearInterval(t)},[loadLive]);
  useEffect(()=>{setItems(initialTemplates)},[initialTemplates]);
- const refresh=async()=>{const r=await fetch("/api/admin/notification-templates");const j=await r.json();if(r.ok)setItems(j.templates||[]);else setNotice(j.error||"Could not load notification templates.");};
  useEffect(()=>{if(refreshKey===undefined)return;refresh()},[refreshKey]);
+
+ const refresh=async()=>{const r=await fetch("/api/admin/notification-templates");const j=await r.json();if(r.ok)setItems(j.templates||[]);else setNotice(j.error||"Could not load notification templates.");};
+ const markRead=async(id:string)=>{await fetch("/api/admin/notifications",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({id})});await loadLive();};
+ const markAll=async()=>{setBusy(true);try{await fetch("/api/admin/notifications",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({all:true}));await loadLive()}finally{setBusy(false)}};
+ const openLive=async(n:Notice)=>{if(!n.read_at)await markRead(n.id);const url=String(n.metadata?.action_url||"/admin");if(url.startsWith("/"))window.location.assign(url);};
+
  const save=async()=>{if(!editing)return;setBusy(true);setNotice("");const r=await fetch("/api/admin/notification-templates",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(editing)});const j=await r.json();setNotice(r.ok?(editing.id?"Notification updated.":"Notification created."):j.error||"Save failed.");if(r.ok){await refresh();setEditing(null)}setBusy(false)};
  const remove=async(id:string)=>{if(!window.confirm("Delete this custom notification template? This cannot be undone."))return;setBusy(true);const r=await fetch("/api/admin/notification-templates",{method:"DELETE",headers:{"content-type":"application/json"},body:JSON.stringify({id})});const j=await r.json();setNotice(r.ok?"Custom notification deleted.":j.error||"Delete failed.");if(r.ok)await refresh();setBusy(false)};
  const toggle=async(x:any)=>{setBusy(true);const r=await fetch("/api/admin/notification-templates",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({...x,enabled:!x.enabled})});const j=await r.json();setNotice(r.ok?(x.name+" "+(!x.enabled?"enabled":"disabled")+"."):(j.error||"Update failed."));if(r.ok)await refresh();setBusy(false)};
  const start=(x:any)=>setEditing({...x,variables:Array.isArray(x.variables)?x.variables:[]});
+
  return <section className="admin-section notification-center">
-  <section className="notification-hero"><div><span className="muted">NOTIFICATION CONTROL CENTER</span><h2>Every event. One message system.</h2><p>Control the exact in-app message users receive when money moves, investments change, settlements complete, or account events occur.</p></div><button className="notification-create" onClick={()=>setEditing({...blank})}><Plus size={15}/> New notification</button></section>
+  <section className="notification-hero"><div><span className="muted">ADMIN OPERATIONS</span><h2>Notification command center</h2><p>Separate live operational alerts from message templates. Attention items tell you where the platform needs an administrator.</p></div><button className="notification-create" onClick={()=>setEditing({...blank})}><Plus size={15}/> New notification template</button></section>
+  <section className="admin-card admin-live-notifications">
+   <div className="admin-card-head"><div><span className="muted">LIVE ADMIN INBOX</span><h2>What is happening</h2><p>Important events are recorded here and can also reach the administrator's registered device through ZYNTH push notifications.</p></div><div className="admin-live-actions"><button onClick={markAll} disabled={busy||!live.some(x=>!x.read_at)}><CheckCheck size={13}/> Read all</button><button onClick={loadLive} disabled={liveLoading}><Clock3 size={13}/> {liveLoading?"Refreshing…":"Refresh"}</button></div></div>
+   <div className="admin-live-filters"><Filter size={13}/>{(["attention","unread","all"] as const).map(f=><button key={f} className={liveFilter===f?"active":""} onClick={()=>setLiveFilter(f)}>{f==="attention"?"Needs attention":f==="unread"?"Unread":"All"}</button>)}</div>
+   {liveError&&<div className="admin-notification-error">{liveError}</div>}
+   {liveLoading?<div className="admin-live-loading">{[1,2,3].map(i=><div key={i} className="admin-live-skeleton"><i/><span/><b/></div>)}</div>:<div className="admin-live-list">
+    {filteredLive.map(n=><button key={n.id} className={"admin-live-item "+(!n.read_at?"unread":"")} onClick={()=>openLive(n)}>
+      <span className={"admin-live-icon "+String(n.type||"system")}>{noticeIcon(n)}</span>
+      <span className="admin-live-copy"><span><b>{n.title}</b>{!n.read_at&&<i/>}</span><small>{n.body}</small><em><Clock3 size={10}/>{timeAgo(n.created_at)}{["attention","critical"].includes(String(n.metadata?.priority||"normal"))&&<strong>{n.metadata?.priority==="critical"?"Critical":"Needs attention"}</strong>}</em></span>
+      <ChevronRight size={14}/>
+    </button>)}
+    {!filteredLive.length&&!liveError&&<div className="admin-empty"><CheckCircle2 size={22}/><p>{liveFilter==="attention"?"No items need attention.":liveFilter==="unread"?"No unread notifications.":"No admin activity yet."}</p></div>}
+   </div>}
+  </section>
+
+  <section className="notification-hero notification-template-hero"><div><span className="muted">MESSAGE TEMPLATES</span><h2>Notification control</h2><p>Control the exact in-app message users receive when money moves, investments change, settlements complete, or account events occur.</p></div></section>
   {notice&&<div className="admin-notice">{notice}</div>}
   <section className="admin-card notification-toolbar"><div className="notification-search"><Search size={14}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search events, titles or message copy…"/></div><div className="notification-cats">{cats.map(c=><button key={c} className={cat===c?"active":""} onClick={()=>setCat(c)}>{c}</button>)}</div></section>
   <section className="notification-grid">
