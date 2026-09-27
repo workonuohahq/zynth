@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getAdminContext } from "@/lib/admin/auth";
 
 export async function GET() {
   try {
-    const client = await createSupabaseServerClient();
-    const { data: { user } } = await client.auth.getUser();
-    if (!user) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+    const { supabase: client, user } = await getAdminContext();
+    if (!user) return NextResponse.json({ error: "Administrator access required." }, { status: 403 });
     const { data, error } = await client.rpc("admin_overview");
     if (error) return NextResponse.json({ error: "Unable to load settings." }, { status: 503 });
     return NextResponse.json({ settings: data?.settings });
@@ -14,9 +13,8 @@ export async function GET() {
 
 export async function PATCH(request: Request) {
   try {
-    const client = await createSupabaseServerClient();
-    const { data: { user } } = await client.auth.getUser();
-    if (!user) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+    const { supabase: client, user } = await getAdminContext();
+    if (!user) return NextResponse.json({ error: "Administrator access required." }, { status: 403 });
     const body = await request.json();
     const values = {
       min: Number(body?.minDeposit), yieldPct: Number(body?.yieldPct), feePct: Number(body?.exitFeePct), commissionPct: Number(body?.commissionPct), enabled: Boolean(body?.depositsEnabled),
