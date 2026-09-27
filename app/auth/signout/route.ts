@@ -1,25 +1,14 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-
-const PWA_COOKIE = "zynth_pwa_v2";
+import { hashPwaToken } from "@/lib/pwa/server";
 
 export async function POST(request: Request) {
   const supabase = await createSupabaseServerClient();
-
+  const { data: { user } } = await supabase.auth.getUser();
+  const token = request.headers.get("x-zynth-pwa-token");
+  if (user && token) {
+    await supabase.from("zynth_pwa_devices").update({ revoked_at: new Date().toISOString() }).eq("user_id", user.id).eq("token_hash", hashPwaToken(token)).is("revoked_at", null);
+  }
   await supabase.auth.signOut({ scope: "local" });
-
-  const response = NextResponse.redirect(new URL("/login", request.url));
-
-  // The PWA capability must die with the authenticated session. Without this,
-  // signing out of the installed app can leave the capability cookie behind,
-  // allowing a later browser login in the same browser profile to bypass /install.
-  response.cookies.set(PWA_COOKIE, "", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: 0,
-  });
-
-  return response;
+  return NextResponse.redirect(new URL("/login", request.url));
 }
