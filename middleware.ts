@@ -20,10 +20,9 @@ export async function middleware(request:NextRequest){
   let response=NextResponse.next({request});
   const path=request.nextUrl.pathname;
 
-  if(path==="/api/internal/push/process"&&(
-    request.headers.get("x-zynth-push-secret")===process.env.ZYNTH_PUSH_WORKER_SECRET||
-    request.headers.get("authorization")===`Bearer ${process.env.CRON_SECRET}`
-  ))return response;
+  // The push worker authenticates itself inside the route handler with dedicated
+  // server secrets. It must bypass both user-session and PWA workspace checks.
+  if(path==="/api/internal/push/process")return response;
 
   response.headers.set("Cache-Control","private, no-store, max-age=0, must-revalidate");
   response.headers.set("Pragma","no-cache");
