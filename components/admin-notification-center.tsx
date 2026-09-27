@@ -20,7 +20,7 @@ export default function AdminNotificationCenter({initialTemplates=[],refreshKey}
  const [items,setItems]=useState<any[]>(initialTemplates),[editing,setEditing]=useState<any>(null),[query,setQuery]=useState(""),[cat,setCat]=useState("all"),[busy,setBusy]=useState(false),[notice,setNotice]=useState("");
  const [live,setLive]=useState<Notice[]>([]),[liveFilter,setLiveFilter]=useState<"attention"|"unread"|"all">("attention"),[liveLoading,setLiveLoading]=useState(true),[liveError,setLiveError]=useState("");
  const filtered=useMemo(()=>items.filter(x=>(cat==="all"||x.category===cat)&&(!query||[x.name,x.event_key,x.title,x.body].join(" ").toLowerCase().includes(query.toLowerCase()))),[items,cat,query]);
- const filteredLive=useMemo(()=>live.filter(n=>liveFilter==="all"|| (liveFilter==="unread"? !n.read_at:["attention","critical"].includes(String(n.metadata?.priority||"normal")) && !n.read_at)),[live,liveFilter]);
+ const filteredLive=useMemo(()=>live.filter(n=>{if(liveFilter==="all")return true;if(liveFilter==="unread")return !n.read_at;return !n.read_at && ["attention","critical"].includes(String(n.metadata?.priority||"normal"));}),[live,liveFilter]);
 
  const loadLive=useCallback(async()=>{
   setLiveLoading(true);setLiveError("");
