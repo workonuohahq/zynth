@@ -17,7 +17,7 @@ export default function AdminUsers({initialUsers,refreshKey}:{initialUsers:Row[]
   </div>
   <div className="admin-table">
    {rows.map(r=><div className="admin-row" key={r.id}>
-    <div className="admin-person"><span className="avatar"><UserRound size={14}/></span><span><b>{r.full_name||"Unnamed account"}</b><small>{r.email||r.id}</small><span className="role-chip-row">{(r.roles||[]).map(x=><em className={`role-chip role-${x.key}`} key={x.key}>{x.name}</em>)}</span></span></div>
+    <div className="admin-person"><span className="avatar"><UserRound size={14}/></span><span><b>{r.full_name||"Unnamed account"}</b><small>{r.email||r.id}</small><span className="role-chip-row">{(r.roles||[]).map(x=><em className={"role-chip role-"+x.key} key={x.key}>{x.name}</em>)}</span></span></div>
     <span>{money(r.portfolio_value)}</span><span>{r.active_investments} active</span>
     <span className={r.kyc_verified?"status-text completed":"status-text pending"}>{r.kyc_verified?"KYC verified":"KYC pending"}</span>
     <Link className="details" href={"/admin/users/"+r.id}><ShieldCheck size={14}/> Manage</Link>
