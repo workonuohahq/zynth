@@ -92,7 +92,7 @@ export default function AdminPushPrompt(){
     <ChevronDown size={16}/>
    </span>
   </button>
-  <div id="admin-device-notification-details" className="push-notification-details" aria-hidden={!open}>
+  {open&&<div id="admin-device-notification-details" className="push-notification-details">
    <div className="push-notification-details-inner">
     <p>{status==="enabled"?"You’ll receive important money movement, support, trader, security and operational alerts on this device.":"Enable device alerts for deposits, withdrawals, redemptions, support requests, trader activity, security events and other admin attention items — even when the admin panel is not open."}</p>
     <div className="push-notification-action">
@@ -101,6 +101,6 @@ export default function AdminPushPrompt(){
     {status==="enabled"&&<small className="push-notification-message"><ShieldCheck size={12}/> Protected admin device subscription</small>}
     {message&&status!=="enabled"&&<small className="push-notification-message">{message}</small>}
    </div>
-  </div>
+  </div>}
  </section>;
 }
