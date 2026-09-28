@@ -28,7 +28,19 @@ export default function NotificationsClient(){
    try{
      const registration=await navigator.serviceWorker.register("/sw.js",{scope:"/"});
      const subscription=await registration.pushManager.getSubscription();
-     setPushStatus(subscription?"enabled":"available");
+     if(!subscription){setPushStatus("available");return}
+     const configResponse=await fetch("/api/push/config",{cache:"no-store"});
+     const config=await configResponse.json().catch(()=>({}));
+     if(!configResponse.ok||!config.publicKey){setPushStatus("error");return}
+     const fingerprint=`zynth-vapid:${String(config.publicKey).slice(0,16)}`;
+     const previousFingerprint=window.localStorage.getItem("zynth-vapid-fingerprint");
+     if(previousFingerprint&&previousFingerprint!==fingerprint){
+       await subscription.unsubscribe().catch(()=>false);
+       window.localStorage.removeItem("zynth-vapid-fingerprint");
+       setPushStatus("available");
+       return;
+     }
+     setPushStatus("enabled");
    }catch{setPushStatus("error")}
  }
  useEffect(()=>{load();inspectPush()},[]);
