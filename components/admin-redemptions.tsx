@@ -1,7 +1,7 @@
 "use client";
 
 import {useEffect,useMemo,useState} from "react";
-import {ArrowLeftRight,CheckCircle2,Clock3,RefreshCw,Search,ShieldCheck,X,XCircle,Zap,WalletCards,AlertCircle,CalendarClock,ChevronRight} from "lucide-react";
+import {ArrowLeft,ArrowLeftRight,CheckCircle2,Clock3,RefreshCw,Search,ShieldCheck,X,XCircle,Zap,WalletCards,AlertCircle,CalendarClock,ChevronRight} from "lucide-react";
 
 const money=(n:any)=>"₦"+Number(n||0).toLocaleString("en-NG",{minimumFractionDigits:2,maximumFractionDigits:2});
 const dt=(v:any)=>v?new Date(v).toLocaleString("en-NG",{dateStyle:"medium",timeStyle:"short"}):"—";
@@ -80,7 +80,7 @@ export default function AdminRedemptions(){
     <h1>Investment redemptions</h1>
     <p>Review investor exits, validate the release path, and keep every unit movement auditable.</p>
    </div>
-   <button className="ghost admin-refresh" onClick={load} disabled={loading}><RefreshCw size={15} className={loading?"spin":""}/>{loading?"Refreshing…":"Refresh queue"}</button>
+   <div className="admin-redemptions-header-actions"><Link className="ghost admin-back-dashboard" href="/admin" aria-label="Back to main admin dashboard"><ArrowLeft size={15}/> Back to dashboard</Link><button className="ghost admin-refresh" onClick={load} disabled={loading}><RefreshCw size={15} className={loading?"spin":""}/>{loading?"Refreshing…":"Refresh queue"}</button>
   </header>
 
   {notice&&<div className="admin-notice"><AlertCircle size={14}/>{notice}</div>}
