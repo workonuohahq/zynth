@@ -60,6 +60,7 @@ export default function AdminPushPrompt(){
    if(!subscription)subscription=await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:config.publicKey});
    window.localStorage.setItem("zynth-vapid-fingerprint",keyFingerprint);
    const payload=subscription.toJSON();
+   if(!payload.endpoint) throw new Error("Push subscription endpoint is unavailable. Please try again.");
    const response=await fetch("/api/push/subscribe",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({endpoint:payload.endpoint,keys:payload.keys,userAgent:navigator.userAgent})});
    if(!response.ok){const body=await response.json().catch(()=>({}));throw new Error(body.error||"Unable to activate notifications.");}
    const verifyResponse=await fetch("/api/push/status?endpoint="+encodeURIComponent(payload.endpoint),{cache:"no-store"});
