@@ -2307,7 +2307,7 @@ html[data-theme="light"] .admin-list-item .admin-support-badge{background:#c6282
 
 
 /* Compact collapsible device notification cards */
-.push-notification-panel{display:block;overflow:hidden;transition:padding .24s ease}
+.push-notification-panel{display:block;overflow:hidden;min-height:0;transition:padding .24s ease}
 .push-notification-summary{width:100%;min-height:28px;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:0;background:transparent;border:0;text-align:left;cursor:pointer}
 .push-notification-summary .push-notification-copy{flex:1;min-width:0;display:flex;align-items:center;gap:10px}
 .push-notification-summary .push-notification-copy>span:last-child{min-width:0}
