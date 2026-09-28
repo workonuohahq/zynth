@@ -76,6 +76,5 @@ export async function POST(req:Request){
   return NextResponse.json({ok:true,processed:(jobs||[]).length,delivered,skipped,failed,revoked});
 }
 export async function GET(req:Request){
-  if(!authorized(req))return NextResponse.json({error:"Unauthorized"},{status:401});
-  return POST(req);
+  return await POST(req);
 }
