@@ -16,7 +16,12 @@ const categoryFor=(type:string)=>{
 const authorized=(req:Request)=>{
   const worker=process.env.ZYNTH_PUSH_WORKER_SECRET?.trim();
   const cron=process.env.CRON_SECRET?.trim();
-  return Boolean((worker&&req.headers.get("x-zynth-push-secret")===worker)||(cron&&req.headers.get("authorization")===`Bearer ${cron}`));
+  const pushCron=process.env.ZYNTH_PUSH_CRON_SECRET?.trim();
+  return Boolean(
+    (worker&&req.headers.get("x-zynth-push-secret")===worker)||
+    (cron&&req.headers.get("authorization")===`Bearer ${cron}`)||
+    (pushCron&&req.headers.get("x-zynth-push-cron-secret")===pushCron)
+  );
 };
 
 export async function POST(req:Request){
