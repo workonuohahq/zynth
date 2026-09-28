@@ -54,10 +54,29 @@ export default function AdminPanel({initialData,adminEmail}:{initialData:any;adm
   try{await navigator.clipboard.writeText(value);}catch{const el=document.createElement("textarea");el.value=value;el.style.position="fixed";el.style.opacity="0";document.body.appendChild(el);el.select();document.execCommand("copy");el.remove();}
   setMt5CopyState(label+" copied");window.setTimeout(()=>setMt5CopyState(""),1800);
 }
+async function loadMt5Credentials(){
+  if(!preview?.report?.id)return null;
+  setMt5CopyState("Authorizing…");
+  const r=await fetch("/api/admin/settlements",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({action:"mt5_credentials",reportId:preview.report.id})});
+  const j=await r.json();
+  if(!r.ok){setMt5CopyState(j.error||"Unable to access MT5 credentials.");window.setTimeout(()=>setMt5CopyState(""),2500);return null;}
+  setPreview((current:any)=>current?{...current,mt5:{...current.mt5,...j}}:current);
+  return j;
+}
+async function revealMt5(){
+  const m=preview?.mt5;
+  if(!m)return;
+  if(m.investor_password){setMt5Revealed(true);return;}
+  const loaded=await loadMt5Credentials();
+  if(loaded){setMt5Revealed(true);setMt5CopyState("");}
+}
 async function copyAllMt5(){
-  const m=preview?.mt5;if(!m)return;
+  const m=preview?.mt5;
+  if(!m)return;
+  const loaded=m.investor_password?m:await loadMt5Credentials();
+  if(!loaded)return;
   setMt5Revealed(true);
-  await copyMt5Value(`MT5 Login: ${m.login}\nMT5 Server: ${m.server}\nInvestor Password: ${m.investor_password}`,"MT5 details");
+  await copyMt5Value(`MT5 Login: ${loaded.login}\nMT5 Server: ${loaded.server}\nInvestor Password: ${loaded.investor_password}`,"MT5 details");
 }
 const closePreview=()=>{setPreview(null);setMt5Revealed(false);setMt5CopyState("");};
  return <div className="admin-frame">
@@ -149,9 +168,9 @@ const closePreview=()=>{setPreview(null);setMt5Revealed(false);setMt5CopyState("
     <div className="settlement-mt5-grid">
       <div><span>MT5 LOGIN</span><b>{preview.mt5.login||"Not supplied"}</b><button className="settlement-copy" onClick={()=>copyMt5Value(preview.mt5.login,"Login")} disabled={!preview.mt5.login}><Copy size={12}/> Copy</button></div>
       <div><span>SERVER</span><b>{preview.mt5.server||"Not supplied"}</b><button className="settlement-copy" onClick={()=>copyMt5Value(preview.mt5.server,"Server")} disabled={!preview.mt5.server}><Copy size={12}/> Copy</button></div>
-      <div className="settlement-mt5-password"><span>INVESTOR PASSWORD</span><b>{mt5Revealed?(preview.mt5.investor_password||"Unavailable"):"••••••••••••"}</b><button className="settlement-copy" onClick={()=>{setMt5Revealed(v=>!v);setMt5CopyState("");}} disabled={!preview.mt5.investor_password}>{mt5Revealed?<><EyeOff size={12}/> Hide</>:<><Eye size={12}/> Reveal</>}</button></div>
+      <div className="settlement-mt5-password"><span>INVESTOR PASSWORD</span><b>{mt5Revealed?(preview.mt5.investor_password||"Unavailable"):"••••••••••••"}</b><button className="settlement-copy" onClick={()=>mt5Revealed?setMt5Revealed(false):revealMt5()} disabled={mt5CopyState==="Authorizing…"}>{mt5Revealed?<><EyeOff size={12}/> Hide</>:<><Eye size={12}/> Reveal</>}</button></div>
     </div>
-    <div className="settlement-mt5-actions"><button className="details" onClick={copyAllMt5} disabled={!preview.mt5.investor_password||!preview.mt5.login||!preview.mt5.server}><Copy size={13}/> Copy all MT5 details</button>{mt5CopyState&&<span>{mt5CopyState}</span>}<small>Credential access is restricted to this admin review and is audit logged.</small></div>
+    <div className="settlement-mt5-actions"><button className="details" onClick={copyAllMt5} disabled={mt5CopyState==="Authorizing…"||!preview.mt5.login||!preview.mt5.server}><Copy size={13}/> Copy all MT5 details</button>{mt5CopyState&&<span>{mt5CopyState}</span>}<small>Credential access is restricted to this admin review and is audit logged.</small></div>
    </section>}
    <div className="settlement-impact"><div><span>Investor value before</span><b>{money(preview.investor_value_before)}</b></div><div><span>Investor value after</span><b>{money(preview.investor_value_after)}</b></div><div><span>Total change</span><b>{money(preview.investor_value_change)}</b></div></div>
    <div className="settlement-investors"><div className="settlement-section-title"><span>INVESTOR IMPACT</span><b>{preview.investors?.length||0} active positions</b></div>{(preview.investors||[]).map((i:any)=><div className="settlement-investor-row" key={i.investment_id}><div><b>{i.investor_name}</b><small>{Number(i.units||0).toFixed(4)} units · Principal {money(i.principal)}</small></div><span><b>{money(i.current_value_after)}</b><small className={Number(i.change)>=0?"amount-positive":""}>{Number(i.change)>=0?"+":""}{money(i.change)}</small></span></div>)}{!preview.investors?.length&&<div className="admin-empty">No active investors on this strategy.</div>}</div>
