@@ -1,6 +1,6 @@
 import {NextResponse} from "next/server";
 import webpush from "web-push";
-import {createSupabaseAdminClient} from "@/lib/supabase/admin";
+import {createClient} from "@supabase/supabase-js";
 
 export const dynamic="force-dynamic";
 export const runtime="nodejs";
@@ -42,37 +42,23 @@ export async function POST(req:Request){
   try{webpush.setVapidDetails(subject,publicKey,privateKey);}
   catch{return NextResponse.json({error:"VAPID credentials are invalid."},{status:503});}
 
-  let admin;
-  try{admin=createSupabaseAdminClient();}
-  catch{return NextResponse.json({error:"Server database credentials are not configured."},{status:503});}
+  const supabaseUrl=process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  const publishableKey=process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim();
+  const workerSecret=process.env.ZYNTH_PUSH_WORKER_SECRET?.trim();
+  if(!supabaseUrl||!publishableKey||!workerSecret)return NextResponse.json({error:"Push data service is not configured."},{status:503});
 
-  const {data:notice,error:noticeError}=await admin
-    .from("notifications")
-    .select("id,user_id,title,body,type,metadata")
-    .eq("id",notificationId)
-    .maybeSingle();
+  const supabase=createClient(supabaseUrl,publishableKey,{auth:{autoRefreshToken:false,persistSession:false}});
+  const {data:context,error:contextError}=await supabase.rpc("zynth_get_push_delivery_context",{p_notification_id:notificationId,p_secret:workerSecret});
+  if(contextError)return NextResponse.json({error:"Unable to load push delivery context."},{status:500});
+  if(!context?.notification)return NextResponse.json({error:"Notification not found."},{status:404});
 
-  if(noticeError)return NextResponse.json({error:"Unable to load notification."},{status:500});
-  if(!notice)return NextResponse.json({error:"Notification not found."},{status:404});
-
-  const {data:preferences}=await admin
-    .from("zynth_notification_preferences")
-    .select("push_enabled,money,investments,security,system,trader")
-    .eq("user_id",notice.user_id)
-    .maybeSingle();
-
+  const notice=context.notification;
+  const preferences=context.preferences||{};
+  const subscriptions=Array.isArray(context.subscriptions)?context.subscriptions:[];
   if(preferences?.push_enabled===false || preferences?.[categoryFor(notice.type)]===false){
     return NextResponse.json({ok:true,status:"skipped",reason:"disabled"});
   }
-
-  const {data:subscriptions,error:subscriptionError}=await admin
-    .from("zynth_push_subscriptions")
-    .select("id,endpoint,p256dh,auth")
-    .eq("user_id",notice.user_id)
-    .is("revoked_at",null);
-
-  if(subscriptionError)return NextResponse.json({error:"Unable to load device subscriptions."},{status:500});
-  if(!subscriptions?.length)return NextResponse.json({ok:true,status:"skipped",reason:"no_active_device"});
+  if(!subscriptions.length)return NextResponse.json({ok:true,status:"skipped",reason:"no_active_device"});
 
   const metadata=notice.metadata&&typeof notice.metadata==="object"?notice.metadata:{};
   const url=typeof metadata.action_url==="string"&&metadata.action_url.startsWith("/")?metadata.action_url:"/dashboard/notifications";
@@ -97,7 +83,8 @@ export async function POST(req:Request){
     }catch(error:any){
       const detail=describePushError(error);
       if(detail.statusCode===404||detail.statusCode===410){
-        await admin.from("zynth_push_subscriptions").update({revoked_at:new Date().toISOString()}).eq("id",subscription.id);
+        const {error:revokeError}=await supabase.rpc("zynth_revoke_push_subscription",{p_subscription_id:subscription.id,p_secret:workerSecret});
+        if(revokeError) console.error("[ZYNTH_PUSH_REVOKE_FAILED]",{notificationId,subscriptionId:subscription.id,message:revokeError.message});
         revoked++;
         continue;
       }
