@@ -21,9 +21,34 @@ export default function DashboardPage(){
     try{
       const registration=await navigator.serviceWorker.register("/sw.js",{scope:"/"});
       const subscription=await registration.pushManager.getSubscription();
-      const fingerprint=window.localStorage.getItem("zynth-vapid-fingerprint");
-      setPushStatus(subscription&&fingerprint?"enabled":"available");
-    }catch{ setPushStatus("error"); }
+
+      // The database is the authority for whether THIS browser/device is enabled.
+      // Never infer an enabled state from localStorage or a browser subscription alone.
+      if(!subscription){
+        window.localStorage.removeItem("zynth-vapid-fingerprint");
+        setPushStatus("available");
+        return;
+      }
+
+      const endpoint=subscription.endpoint;
+      const healthResponse=await fetch("/api/push/status?endpoint="+encodeURIComponent(endpoint),{cache:"no-store"});
+      const health=await healthResponse.json().catch(()=>null);
+      const serverActive=healthResponse.ok && health?.active===true;
+
+      if(!serverActive){
+        // Browser has a subscription that the server does not recognize as active.
+        // Treat it as stale and force the user through the enable flow again.
+        await subscription.unsubscribe().catch(()=>false);
+        window.localStorage.removeItem("zynth-vapid-fingerprint");
+        setPushStatus("available");
+        return;
+      }
+
+      setPushStatus("enabled");
+    }catch{
+      // Fail closed: an uncertain server state must never render as Active.
+      setPushStatus("available");
+    }
   }
 
   useEffect(()=>{ fetch("/api/account/dashboard",{cache:"no-store"}).then(async r=>{if(!r.ok)throw new Error("Unable to load dashboard.");return r.json();}).then(setData).catch(()=>{}).finally(()=>setLoading(false)); },[]);
@@ -62,6 +87,12 @@ export default function DashboardPage(){
       const payload=subscription.toJSON();
       const response=await fetch("/api/push/subscribe",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({endpoint:payload.endpoint,keys:payload.keys,userAgent:navigator.userAgent})});
       if(!response.ok){const body=await response.json().catch(()=>({}));throw new Error(body.error||"Unable to activate notifications.");}
+
+      // Confirm the server actually persisted THIS device before showing Active.
+      const verifyResponse=await fetch("/api/push/status?endpoint="+encodeURIComponent(payload.endpoint),{cache:"no-store"});
+      const verify=await verifyResponse.json().catch(()=>null);
+      if(!verifyResponse.ok || verify?.active!==true) throw new Error("Notification subscription could not be verified. Please try again.");
+
       setPushStatus("enabled"); setPushMessage("This device is now registered for ZYNTH alerts.");
     }catch(error){
       setPushMessage(error instanceof Error?error.message:"Unable to enable notifications.");
