@@ -76,7 +76,10 @@ as $$
         select 1 from public.zynth_push_subscriptions ps
         where ps.user_id=u.id and ps.revoked_at is null
       ) as has_device,
-      coalesce(np.push_enabled,true) as push_enabled
+      coalesce(np.push_enabled,true) as push_enabled,
+      case when coalesce(np.push_enabled,true)=false then 'disabled'
+           when exists(select 1 from public.zynth_push_subscriptions ps where ps.user_id=u.id and ps.revoked_at is null) then 'enabled'
+           else 'no_device' end as push_state
     from public.users u
     left join public.zynth_notification_preferences np on np.user_id=u.id
     where u.role::text in ('user','trader','admin','zpa')
