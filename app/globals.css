@@ -1572,7 +1572,7 @@ html[data-theme="light"] .trader-strategy-pro{background:#fffdf8}.trader-strateg
 .admin-topbar h1{font-size:clamp(28px,3.4vw,42px);letter-spacing:-.055em}
 .admin-topbar p{font-size:10px;line-height:1.6}
 .admin-kpis{
-  grid-template-columns:repeat(6,minmax(0,1fr));
+  grid-template-columns:repeat(7,minmax(0,1fr));
   gap:10px;
 }
 .admin-kpi-clickable{cursor:pointer}
