@@ -118,7 +118,7 @@ export default function DashboardPage(){
           <ChevronDown size={16}/>
         </span>
       </button>
-      <div id="device-notification-details" className="push-notification-details" aria-hidden={!pushOpen}>
+      {pushOpen&&<div id="device-notification-details" className="push-notification-details">
         <div className="push-notification-details-inner">
           <p>{pushStatus==="enabled"?"You’ll receive important account, money movement, investment and security alerts here.":"Enable device alerts for deposits, withdrawals, investments and other important account activity — even when ZYNTH is not open."}</p>
           <div className="push-notification-action">
@@ -127,7 +127,7 @@ export default function DashboardPage(){
           {pushStatus==="enabled"&&<small className="push-notification-message"><ShieldCheck size={12}/> Protected device subscription</small>}
           {pushMessage&&pushStatus!=="enabled"&&<small className="push-notification-message">{pushMessage}</small>}
         </div>
-      </div>
+      </div>}
     </section>}
     <section className="wealth-hero"><div className="wealth-main"><div className="wealth-label"><span>Total portfolio value</span><span className="secure-chip"><ShieldCheck size={13}/> NAV based</span></div><strong>{money(Number(p.cash||0)+Number(p.invested||0))}</strong><div className="wealth-breakdown"><span><i className="dot available"/> Cash {money(p.cash)}</span><span><i className="dot locked"/> Invested {money(p.invested)}</span></div></div><div className="wealth-side"><div><span>Total P&L</span><b>{money(p.profit)}</b></div><div><span>Realised P&L</span><b>{money(p.realized_profit)}</b></div><div><span>Unrealised P&L</span><b className={Number(p.unrealized_profit||0)>=0?"amount-positive":"amount-negative"}>{money(p.unrealized_profit)}</b></div><div><span>Withdrawable profit</span><b>{money(p.withdrawable_profit)}</b></div><div><span>Locked profit</span><b>{money(p.locked_profit)}</b></div><Link href="/dashboard/vaults">Open Vault <ArrowUpRight size={14}/></Link></div></section>
     <section className="quick-actions dashboard-priority-actions dashboard-referral-only"><Link href="/dashboard/referrals" className="quick-action"><span className="qa-icon gold"><Gift size={17}/></span><span><b>Refer & Earn</b><small>Invite trusted people to ZYNTH</small></span><ChevronRight size={16}/></Link></section>
