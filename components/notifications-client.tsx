@@ -68,6 +68,7 @@ export default function NotificationsClient(){
      if(!config.publicKey) throw new Error("Push service is not configured yet.");
      const subscription=await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:config.publicKey});
      const payload=subscription.toJSON();
+   if(!payload.endpoint) throw new Error("Push subscription endpoint is unavailable. Please try again.");
      const response=await fetch("/api/push/subscribe",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({endpoint:payload.endpoint,keys:payload.keys,userAgent:navigator.userAgent})});
      if(!response.ok){const data=await response.json().catch(()=>({}));throw new Error(data.error||"Unable to activate notifications.")}
      const verifyResponse=await fetch("/api/push/status?endpoint="+encodeURIComponent(payload.endpoint),{cache:"no-store"});
