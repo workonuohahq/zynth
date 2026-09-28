@@ -1278,6 +1278,24 @@ html[data-theme="light"] .status-text.processing{color:#73531f!important}
 .settlement-meta{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:0 26px 10px}
 .settlement-meta a{display:flex;align-items:center;gap:5px;margin-top:7px;color:var(--gold-bright);font-size:11px;text-decoration:none}
 .settlement-impact{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:0 26px 18px}
+.settlement-mt5{margin:0 26px 18px;padding:16px;border:1px solid #4b3d27;background:#15120d;border-radius:14px}
+.settlement-mt5-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-top:10px}
+.settlement-mt5-head strong,.settlement-mt5-head small{display:block}.settlement-mt5-head strong{font-size:12px}.settlement-mt5-head small{margin-top:4px;color:#81796d;font-size:9px;line-height:1.55;max-width:650px}
+.settlement-mt5-status{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:#b99a61}.settlement-mt5-status i{width:6px;height:6px;border-radius:50%;background:currentColor}
+.settlement-mt5-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:12px}
+.settlement-mt5-grid>div{position:relative;min-width:0;padding:12px;border:1px solid #30291f;border-radius:10px;background:#0f0e0b}
+.settlement-mt5-grid span{display:block;color:#81796d;font-size:8px;letter-spacing:.1em}
+.settlement-mt5-grid b{display:block;margin-top:7px;padding-right:48px;font-size:12px;word-break:break-word;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.settlement-copy{position:absolute;right:8px;bottom:8px;display:inline-flex;align-items:center;gap:4px;border:1px solid #403522;border-radius:7px;background:transparent;color:#a58b60;padding:5px 7px;font-size:8px;font-weight:800;cursor:pointer}
+.settlement-copy:hover{background:#211b12;color:#d0b275}.settlement-copy:disabled{opacity:.35;cursor:not-allowed}
+.settlement-mt5-loading,.settlement-mt5-missing{margin-top:12px;padding:13px;border:1px dashed #403522;border-radius:10px;color:#81796d;font-size:9px}
+.settlement-mt5-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:11px}
+.settlement-mt5-actions>span{font-size:9px;color:#b99a61}.settlement-mt5-actions>small{margin-left:auto;color:#625b50;font-size:8px}
+html[data-theme="light"] .settlement-mt5{background:#faf6ed;border-color:#d9c9ad}
+html[data-theme="light"] .settlement-mt5-head small{color:#777168}
+html[data-theme="light"] .settlement-mt5-grid>div{background:#fffdf8;border-color:#e0d7c9}
+html[data-theme="light"] .settlement-copy{border-color:#d8cdbb;color:#80683f}
+@media(max-width:800px){.settlement-mt5{margin-left:16px;margin-right:16px}.settlement-mt5-head{flex-direction:column}.settlement-mt5-grid{grid-template-columns:1fr}.settlement-mt5-actions>small{width:100%;margin-left:0}}
 .settlement-investors{border-top:1px solid #30291f;margin-top:0;padding:18px 26px 0}
 .settlement-section-title{display:flex;justify-content:space-between;gap:15px;margin-bottom:8px}.settlement-section-title span{font-size:9px;letter-spacing:.12em;color:#81796d}.settlement-section-title b{font-size:10px;color:#a99f91}
 .settlement-investor-row{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:12px 0;border-bottom:1px solid #29231a}.settlement-investor-row:last-child{border-bottom:0}.settlement-investor-row>div:last-child{text-align:right}.settlement-investor-row b,.settlement-investor-row small{display:block}.settlement-investor-row b{font-size:11px}.settlement-investor-row small{color:#777168;font-size:9px;margin-top:3px}.settlement-note{margin:18px 26px;padding:14px;border:1px solid #3c3222;background:#17140f;border-radius:12px}.settlement-note span{font-size:9px;letter-spacing:.1em;color:#9b8a6b}.settlement-note p{margin:7px 0 0;color:#b4ada3;font-size:11px;line-height:1.6}.settlement-modal-actions{display:flex;justify-content:flex-end;gap:8px;padding:18px 26px;border-top:1px solid #30291f;position:sticky;bottom:0;background:#11110ff2;backdrop-filter:blur(12px)}
