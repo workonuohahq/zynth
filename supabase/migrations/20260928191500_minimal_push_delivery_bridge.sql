@@ -64,7 +64,7 @@ end;
 $$;
 
 revoke all on function public.zynth_get_push_delivery_context(uuid,text) from public;
-grant execute on function public.zynth_get_push_delivery_context(uuid,text) to anon,authenticated,service_role;
+grant execute on function public.zynth_get_push_delivery_context(uuid,text) to anon;
 
 create or replace function public.zynth_revoke_push_subscription(
   p_subscription_id uuid,
@@ -93,4 +93,4 @@ end;
 $$;
 
 revoke all on function public.zynth_revoke_push_subscription(uuid,text) from public;
-grant execute on function public.zynth_revoke_push_subscription(uuid,text) to anon,authenticated,service_role;
+grant execute on function public.zynth_revoke_push_subscription(uuid,text) to anon;
