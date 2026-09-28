@@ -61,6 +61,9 @@ export async function POST(req:Request){
   if(!subscriptions.length)return NextResponse.json({ok:true,status:"skipped",reason:"no_active_device"});
 
   const metadata=notice.metadata&&typeof notice.metadata==="object"?notice.metadata:{};
+  if(metadata.source==="admin_broadcast" && metadata.broadcast_push===false){
+    return NextResponse.json({ok:true,status:"skipped",reason:"broadcast_push_disabled"});
+  }
   const url=typeof metadata.action_url==="string"&&metadata.action_url.startsWith("/")?metadata.action_url:"/dashboard/notifications";
   const payload=JSON.stringify({
     title:notice.title,
@@ -99,6 +102,9 @@ export async function POST(req:Request){
   }
 
   const status=delivered>0?(failed>0||revoked>0?"partial":"sent"):"failed";
+  if(metadata.source==="admin_broadcast"){
+    try{await supabase.rpc("zynth_record_broadcast_push_result",{p_notification_id:notificationId,p_secret:workerSecret,p_delivered:delivered,p_failed:failed,p_revoked:revoked});}catch(error:any){console.error("[ZYNTH_BROADCAST_PUSH_RECORD_FAILED]",{notificationId,message:String(error?.message||error).slice(0,300)});}
+  }
   if(failed>0){
     console.error("[ZYNTH_PUSH_DELIVERY_SUMMARY]",{notificationId,delivered,failed,revoked,status});
   }
