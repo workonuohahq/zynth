@@ -49,18 +49,36 @@ export async function POST(req:Request){
       const url=typeof metadata.action_url==="string"&&metadata.action_url.startsWith("/")?metadata.action_url:"/dashboard/notifications";
       const payload=JSON.stringify({title:notice.title,body:notice.body,url,tag:"zynth-"+notice.id,icon:"/icons/zynth-icon.svg",badge:"/icons/zynth-icon.svg"});
       let jobDelivered=0;
+      const deliveryErrors:string[]=[];
       for(const sub of subscriptions){
-        try{await webpush.sendNotification({endpoint:sub.endpoint,keys:{p256dh:sub.p256dh,auth:sub.auth}},payload,{TTL:86400});jobDelivered++;}
-        catch(error:any){
+        try{
+          await webpush.sendNotification(
+            {endpoint:sub.endpoint,keys:{p256dh:sub.p256dh,auth:sub.auth}},
+            payload,
+            {TTL:86400}
+          );
+          jobDelivered++;
+        }catch(error:any){
           const status=Number(error?.statusCode||0);
           if(status===404||status===410){
             const {error:e}=await admin.rpc("zynth_revoke_push_subscription",{p_subscription_id:sub.id,p_secret:secret});
-            if(e)throw e;revoked++;
-          }else throw error;
+            if(e)deliveryErrors.push("subscription revoke failed: "+e.message);
+            else revoked++;
+          }else{
+            deliveryErrors.push(status?\`push \${status}: \${String(error?.message||error).slice(0,300)}\`:String(error?.message||error).slice(0,300));
+          }
         }
       }
-      await admin.rpc("zynth_complete_push_job",{p_id:job.id,p_status:"sent",p_secret:secret});
-      jobDelivered?delivered++:skipped++;
+      if(jobDelivered){
+        await admin.rpc("zynth_complete_push_job",{p_id:job.id,p_status:"sent",p_error:deliveryErrors.length?deliveryErrors.join(" | "):null,p_secret:secret});
+        delivered++;
+      }else if(!subscriptions.length){
+        await admin.rpc("zynth_complete_push_job",{p_id:job.id,p_status:"sent",p_secret:secret});
+        skipped++;
+      }else{
+        const summary=deliveryErrors.join(" | ")||"No push subscription accepted the notification.";
+        throw new Error(summary);
+      }
     }catch(error:any){
       failed++;
       const attempts=Number(job.attempts||1);
