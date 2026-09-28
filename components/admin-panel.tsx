@@ -1,7 +1,7 @@
 "use client";
 import {useEffect,useState} from "react";
 import Link from "next/link";
-import {ArrowDownToLine,ArrowDownLeft,ArrowUpRight,ArrowLeftRight,BarChart3,Bell,CheckCircle2,ChevronRight,Clock3,Copy,ExternalLink,Eye,EyeOff,RefreshCw,Settings2,ShieldCheck,TrendingUp,Users,X,XCircle,Pencil,Pause,Play,Archive,Trash2,Gift,Headphones,LogOut} from "lucide-react";
+import {ArrowDownToLine,ArrowDownLeft,ArrowUpRight,ArrowLeftRight,BarChart3,Bell,CheckCircle2,ChevronRight,Clock3,Copy,ExternalLink,Eye,RefreshCw,Settings2,ShieldCheck,TrendingUp,Users,X,XCircle,Pencil,Pause,Play,Archive,Trash2,Gift,Headphones,LogOut} from "lucide-react";
 import AdminUsers from "@/components/admin-users";
 import ThemeSwitcher from "@/components/theme-switcher";
 import AdminInvestmentSettings from "@/components/admin-investment-settings";
@@ -18,7 +18,7 @@ const money=(n:any)=>`₦${Number(n||0).toLocaleString("en-NG",{minimumFractionD
 const pct=(n:any)=>`${Number(n||0).toFixed(2)}%`;
 
 export default function AdminPanel({initialData,adminEmail}:{initialData:any;adminEmail:string}){
- const[data,setData]=useState(initialData||{}),[tab,setTab]=useState("overview"),[refreshing,setRefreshing]=useState(false),[refreshKey,setRefreshKey]=useState(0),[moneyOpen,setMoneyOpen]=useState(false),[reports,setReports]=useState<any[]>([]),[history,setHistory]=useState<any[]>([]),[strategies,setStrategies]=useState<any[]>([]),[traders,setTraders]=useState<any[]>([]),[editingStrategy,setEditingStrategy]=useState<any>(null),[notificationTemplates,setNotificationTemplates]=useState<any[]>([]),[busy,setBusy]=useState(""),[notice,setNotice]=useState(""),[preview,setPreview]=useState<any>(null),[previewBusy,setPreviewBusy]=useState(""),[mt5Loading,setMt5Loading]=useState(false),[mt5Revealed,setMt5Revealed]=useState(false),[mt5CopyState,setMt5CopyState]=useState("");
+ const[data,setData]=useState(initialData||{}),[tab,setTab]=useState("overview"),[refreshing,setRefreshing]=useState(false),[refreshKey,setRefreshKey]=useState(0),[moneyOpen,setMoneyOpen]=useState(false),[reports,setReports]=useState<any[]>([]),[history,setHistory]=useState<any[]>([]),[strategies,setStrategies]=useState<any[]>([]),[traders,setTraders]=useState<any[]>([]),[editingStrategy,setEditingStrategy]=useState<any>(null),[notificationTemplates,setNotificationTemplates]=useState<any[]>([]),[busy,setBusy]=useState(""),[notice,setNotice]=useState(""),[preview,setPreview]=useState<any>(null),[previewBusy,setPreviewBusy]=useState(""),[mt5Loading,setMt5Loading]=useState(false),[mt5CopyState,setMt5CopyState]=useState("");
  async function load(){
   const [q,s,t,n,support]=await Promise.all([
    fetch("/api/admin/settlements").then(r=>r.json()),
@@ -42,7 +42,7 @@ export default function AdminPanel({initialData,adminEmail}:{initialData:any;adm
   await load();setBusy("");
  }
  async function openPreview(id:string){
-  setPreviewBusy(id);setNotice("");setMt5Loading(false);setMt5Revealed(false);setMt5CopyState("");
+  setPreviewBusy(id);setNotice("");setMt5Loading(false);setMt5CopyState("");
   const r=await fetch("/api/admin/settlements",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({reportId:id,action:"preview"})});
   const j=await r.json();
   if(!r.ok)setNotice(j.error||"Could not load settlement preview.");
@@ -67,10 +67,9 @@ export default function AdminPanel({initialData,adminEmail}:{initialData:any;adm
 }
 async function copyAllMt5(){
   const m=preview?.mt5;if(!m)return;
-  setMt5Revealed(true);
   await copyMt5Value(`MT5 Login: ${m.mt5Login}\nMT5 Server: ${m.mt5Server}\nInvestor Password: ${m.investorPassword}`,"MT5 details");
 }
-const closePreview=()=>{setPreview(null);setMt5Revealed(false);setMt5CopyState("");};
+const closePreview=()=>{setPreview(null);setMt5CopyState("");};
  return <div className="admin-frame">
   <aside className="admin-sidebar">
    <Link href="/dashboard" className="admin-brand"><span className="brand-mark">Z</span><span>ZYNTH</span><small>ADMIN</small></Link>
@@ -160,7 +159,7 @@ const closePreview=()=>{setPreview(null);setMt5Revealed(false);setMt5CopyState("
     {mt5Loading?<div className="settlement-mt5-loading">Loading saved MT5 details…</div>:preview.mt5?<div className="settlement-mt5-grid">
       <div><span>MT5 LOGIN</span><b>{preview.mt5.mt5Login||"Not supplied"}</b><button className="settlement-copy" onClick={()=>copyMt5Value(preview.mt5.mt5Login,"Login")} disabled={!preview.mt5.mt5Login}><Copy size={12}/> Copy</button></div>
       <div><span>SERVER</span><b>{preview.mt5.mt5Server||"Not supplied"}</b><button className="settlement-copy" onClick={()=>copyMt5Value(preview.mt5.mt5Server,"Server")} disabled={!preview.mt5.mt5Server}><Copy size={12}/> Copy</button></div>
-      <div><span>INVESTOR PASSWORD</span><b>{mt5Revealed?(preview.mt5.investorPassword||"Unavailable"):"••••••••••••"}</b><button className="settlement-copy" onClick={()=>setMt5Revealed(v=>!v)} disabled={!preview.mt5.investorPassword}>{mt5Revealed?<><EyeOff size={12}/> Hide</>:<><Eye size={12}/> Reveal</>}</button></div>
+      <div><span>INVESTOR PASSWORD</span><b>{preview.mt5.investorPassword||"Unavailable"}</b><button className="settlement-copy" onClick={()=>copyMt5Value(preview.mt5.investorPassword,"Investor password")} disabled={!preview.mt5.investorPassword}><Copy size={12}/> Copy</button></div>
     </div>:<div className="settlement-mt5-missing">No saved MT5 credentials were found for this trader.</div>}
     {preview.mt5&&<div className="settlement-mt5-actions"><button className="details" onClick={copyAllMt5} disabled={!preview.mt5.investorPassword||!preview.mt5.mt5Login||!preview.mt5.mt5Server}><Copy size={13}/> Copy all MT5 details</button>{mt5CopyState&&<span>{mt5CopyState}</span>}<small>Use these credentials only for settlement verification.</small></div>}
    </section>}
