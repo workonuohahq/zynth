@@ -11,7 +11,7 @@ export async function GET(req:Request){try{const {supabase:s,user}=await admin()
   const {data:mt5Row,error:mt5Error}=await s.from("zynth_trader_mt5_credentials").select("mt5_login,mt5_server,investor_password_ciphertext,status,submitted_at,verified_at,rejection_reason,change_requested,change_requested_at").eq("user_id",requestedUserId).maybeSingle();
   if(mt5Error)return NextResponse.json({error:mt5Error.message},{status:400});
   if(!trader&&!userRow&&!mt5Row)return NextResponse.json({error:"User profile not found."},{status:404});
-  let investorPassword="";if(mt5Row?.investor_password_ciphertext){try{investorPassword=decryptMt5Secret(mt5Row.investor_password_ciphertext)}catch{investorPassword=""}}
+  let investorPassword="";let investorPasswordError="";if(mt5Row?.investor_password_ciphertext){try{investorPassword=decryptMt5Secret(mt5Row.investor_password_ciphertext)}catch(error){investorPasswordError=error instanceof Error?error.message:"Unable to decrypt MT5 investor password.";console.error("MT5_ADMIN_DECRYPT_FAILED",{userId:requestedUserId,hasEncryptionKey:Boolean(process.env.MT5_CREDENTIALS_ENCRYPTION_KEY),error:investorPasswordError});}}
   const accountType=trader?"trader":"investor";
   return NextResponse.json({
    profile:{
@@ -26,7 +26,7 @@ export async function GET(req:Request){try{const {supabase:s,user}=await admin()
     ...(trader?.profile||{})
    },
    trader:trader||null,
-   credentials:mt5Row?{mt5Login:mt5Row.mt5_login,mt5Server:mt5Row.mt5_server,investorPassword,status:mt5Row.status,submittedAt:mt5Row.submitted_at,verifiedAt:mt5Row.verified_at,rejectionReason:mt5Row.rejection_reason,changeRequested:mt5Row.change_requested,changeRequestedAt:mt5Row.change_requested_at}:null
+   credentials:mt5Row?{mt5Login:mt5Row.mt5_login,mt5Server:mt5Row.mt5_server,investorPassword:investorPassword||null,investorPasswordAvailable:Boolean(investorPassword),investorPasswordError:investorPasswordError||null,status:mt5Row.status,submittedAt:mt5Row.submitted_at,verifiedAt:mt5Row.verified_at,rejectionReason:mt5Row.rejection_reason,changeRequested:mt5Row.change_requested,changeRequestedAt:mt5Row.change_requested_at}:null
   });
  }
  const {data,error}=await s.rpc("zynth_admin_trader_command_center",{p_admin_id:user.id});
