@@ -10,7 +10,7 @@ export default function TraderMt5Gate(){
  async function submit(e:any){e.preventDefault();setBusy(true);setMsg("");const r=await fetch("/api/trader/mt5",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({mt5Login:login,mt5Server:server,investorPassword:password})});const j=await r.json();setBusy(false);if(!r.ok){setMsg(j.error||"Submission failed.");return}setData(j.credentials);setPassword("");setMsg("MT5 details submitted. Your Trader Desk will unlock after administrator verification.");}
  if(loading)return <div className="trader-access-gate"><RefreshCw className="spin" size={18}/><span>Checking trader access…</span></div>;
  const status=data?.status||"pending";
- if(status==="verified")return null;
+ if(status==="verified"&&!data?.credential_reset_required)return null;
  return <section className="trader-access-gate-shell"><div className="trader-access-gate">
   <div className="trader-access-icon"><LockKeyhole size={22}/></div>
   <span className="trader-access-kicker">ZYNTH / CONTROLLED ACCESS</span>
@@ -21,7 +21,7 @@ export default function TraderMt5Gate(){
    <label><span>MT5 login</span><input value={login} onChange={e=>setLogin(e.target.value)} inputMode="numeric" placeholder="e.g. 12345678" autoComplete="off"/></label>
    <label><span>MT5 server</span><input value={server} onChange={e=>setServer(e.target.value)} placeholder="e.g. Exness-MT5Real" autoComplete="off"/></label>
    <label><span>Investor password</span><div className="trader-secret-input"><input type={show?"text":"password"} value={password} onChange={e=>setPassword(e.target.value)} placeholder={data?.investor_password_set?"Enter again to replace stored password":"Investor password"} autoComplete="new-password"/><button type="button" onClick={()=>setShow(x=>!x)}>{show?<EyeOff size={15}/>:<Eye size={15}/>}</button></div></label>
-   <button className="primary trader-mt5-submit" disabled={busy}>{busy?"Submitting…":status==="rejected"?"Resubmit MT5 details":"Submit MT5 details"}<ServerCog size={15}/></button>
+   <button className="primary trader-mt5-submit" disabled={busy}>{busy?"Submitting…":status==="rejected"||data?.credential_reset_required?"Resubmit MT5 details":"Submit MT5 details"}<ServerCog size={15}/></button>
   </form>
   {msg&&<div className="trader-access-message"><CheckCircle2 size={15}/><span>{msg}</span></div>}
   <div className="trader-access-trust"><ShieldCheck size={15}/><div><b>Credential handling</b><small>Your investor password is encrypted at rest and is only exposed to authorized operations staff for verification.</small></div></div>
