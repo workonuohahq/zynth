@@ -16,14 +16,20 @@ export default function AdminPushPrompt(){
   try{
    const registration=await navigator.serviceWorker.register("/sw.js",{scope:"/"});
    const subscription=await registration.pushManager.getSubscription();
-   const health=await fetch("/api/push/status",{cache:"no-store"}).then(r=>r.ok?r.json():{active:false}).catch(()=>({active:false}));
-   if(!health.active){
-     if(subscription) await subscription.unsubscribe().catch(()=>false);
-     window.localStorage.removeItem("zynth-vapid-fingerprint");
-     setStatus("available");
-     return;
+   if(!subscription){
+    window.localStorage.removeItem("zynth-vapid-fingerprint");
+    setStatus("available");
+    return;
    }
-   setStatus(subscription?"enabled":"available");
+   const healthResponse=await fetch("/api/push/status?endpoint="+encodeURIComponent(subscription.endpoint),{cache:"no-store"});
+   const health=await healthResponse.json().catch(()=>null);
+   if(!healthResponse.ok || health?.active!==true){
+    await subscription.unsubscribe().catch(()=>false);
+    window.localStorage.removeItem("zynth-vapid-fingerprint");
+    setStatus("available");
+    return;
+   }
+   setStatus("enabled");
   }catch{setStatus("error");}
  }
 
@@ -56,6 +62,9 @@ export default function AdminPushPrompt(){
    const payload=subscription.toJSON();
    const response=await fetch("/api/push/subscribe",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({endpoint:payload.endpoint,keys:payload.keys,userAgent:navigator.userAgent})});
    if(!response.ok){const body=await response.json().catch(()=>({}));throw new Error(body.error||"Unable to activate notifications.");}
+   const verifyResponse=await fetch("/api/push/status?endpoint="+encodeURIComponent(payload.endpoint),{cache:"no-store"});
+   const verify=await verifyResponse.json().catch(()=>null);
+   if(!verifyResponse.ok || verify?.active!==true)throw new Error("Notification subscription could not be verified. Please try again.");
    setStatus("enabled");
    setMessage("This device is now registered for ZYNTH admin alerts.");
   }catch(error){
