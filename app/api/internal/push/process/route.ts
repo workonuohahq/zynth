@@ -10,7 +10,7 @@ export const maxDuration=300;
 function derivePublicKey(privateKey:string){
   const ecdh=createECDH("prime256v1");
   ecdh.setPrivateKey(Buffer.from(privateKey,"base64url"));
-  return ecdh.getPublicKey(undefined,"base64url");
+  return ecdh.getPublicKey("base64url","uncompressed");
 }
 const categoryFor=(type:string)=>{
   if(["deposit","withdrawal","redemption","vault","money_movement"].includes(type))return "money";
