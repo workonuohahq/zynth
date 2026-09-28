@@ -42,7 +42,7 @@ export default function AdminBroadcastCenter(){
  const selectedIds=useMemo(()=>new Set(selectedUsers.map(x=>x.user_id)),[selectedUsers]);
 
  return <section className="admin-section admin-broadcast-center">
-  <section className="broadcast-hero"><div><span className="muted">ZYNTH / COMMUNICATION</span><h2>Messaging broadcast</h2><p>Send targeted, auditable communications without mixing them with system-generated notifications.</p></div><div className="broadcast-hero-mark"><MessageSquare size={22}/><span>CONTROLLED DELIVERY</span></div></section>
+  <section className="broadcast-hero"><div><span className="muted">ZYNTH / COMMUNICATION</span><h2>Messaging broadcast</h2><p>Send targeted, auditable communications without mixing them with system-generated notifications. Audience rules are evaluated server-side before delivery.</p></div><div className="broadcast-hero-mark"><MessageSquare size={22}/><span>CONTROLLED DELIVERY</span></div></section>
   <div className="broadcast-tabs"><button className={tab==="compose"?"active":""} onClick={()=>setTab("compose")}><Send size={14}/> Broadcast</button><button className={tab==="history"?"active":""} onClick={()=>setTab("history")}><History size={14}/> History <b>{history.length}</b></button><button className={tab==="templates"?"active":""} onClick={()=>setTab("templates")}><Copy size={14}/> Templates <b>{templates.length}</b></button></div>
   {notice&&<div className="admin-notice">{notice}</div>}
 
