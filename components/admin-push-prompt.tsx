@@ -1,7 +1,7 @@
 "use client";
 
 import {useEffect,useState} from "react";
-import {Bell,Check,ShieldCheck,Smartphone} from "lucide-react";
+import {Bell,Check,ChevronDown,ShieldCheck,Smartphone} from "lucide-react";
 
 type PushStatus="loading"|"unsupported"|"denied"|"enabled"|"available"|"error";
 
@@ -9,6 +9,7 @@ export default function AdminPushPrompt(){
  const [status,setStatus]=useState<PushStatus>("loading");
  const [busy,setBusy]=useState(false);
  const [message,setMessage]=useState("");
+ const [open,setOpen]=useState(false);
 
  async function inspect(){
   if(typeof window==="undefined"||!("Notification" in window)||!("serviceWorker" in navigator)||!("PushManager" in window)){setStatus("unsupported");return;}
@@ -76,19 +77,30 @@ export default function AdminPushPrompt(){
 
  if(status==="unsupported"||status==="loading")return null;
 
- return <section className="panel push-notification-panel admin-push-prompt" aria-label="Admin device notifications">
-  <div className="push-notification-copy">
-   <span className="push-notification-icon">{status==="enabled"?<Check size={18}/>:<Bell size={18}/>}</span>
-   <div>
-    <span className="eyebrow">ADMIN DEVICE NOTIFICATIONS</span>
-    <h2>{status==="enabled"?"Admin notifications are active on this device.":"Never miss an admin action."}</h2>
+ return <section className={"panel push-notification-panel admin-push-prompt "+(open?"is-open":"is-collapsed")} aria-label="Admin device notifications">
+  <button className="push-notification-summary" type="button" onClick={()=>setOpen(v=>!v)} aria-expanded={open} aria-controls="admin-device-notification-details">
+   <span className="push-notification-copy">
+    <span className="push-notification-icon">{status==="enabled"?<Check size={18}/>:<Bell size={18}/>}</span>
+    <span>
+     <span className="eyebrow">ADMIN DEVICE NOTIFICATIONS</span>
+     <strong>{status==="enabled"?"Admin notifications are active on this device.":"Never miss an admin action."}</strong>
+     <small>{status==="enabled"?"Alerts are enabled for this device.":"Manage this device’s ZYNTH alert permission."}</small>
+    </span>
+   </span>
+   <span className="push-notification-summary-meta">
+    {status==="enabled"?<span className="push-status enabled"><i/> Active</span>:status==="denied"?<span className="push-status warning">Blocked</span>:<span className="push-status">Available</span>}
+    <ChevronDown size={16}/>
+   </span>
+  </button>
+  <div id="admin-device-notification-details" className="push-notification-details" aria-hidden={!open}>
+   <div className="push-notification-details-inner">
     <p>{status==="enabled"?"You’ll receive important money movement, support, trader, security and operational alerts on this device.":"Enable device alerts for deposits, withdrawals, redemptions, support requests, trader activity, security events and other admin attention items — even when the admin panel is not open."}</p>
+    <div className="push-notification-action">
+     {status==="enabled"?<span className="push-status enabled"><i/> Active on this device</span>:status==="denied"?<span className="push-status warning">Blocked in device settings</span>:<button className="fund-btn primary" disabled={busy} onClick={enable} type="button"><Smartphone size={16}/>{busy?"Enabling…":"Enable notifications"}</button>}
+    </div>
+    {status==="enabled"&&<small className="push-notification-message"><ShieldCheck size={12}/> Protected admin device subscription</small>}
+    {message&&status!=="enabled"&&<small className="push-notification-message">{message}</small>}
    </div>
   </div>
-  <div className="push-notification-action">
-   {status==="enabled"?<span className="push-status enabled"><i/> Active</span>:status==="denied"?<span className="push-status warning">Blocked in device settings</span>:<button className="fund-btn primary" disabled={busy} onClick={enable} type="button"><Smartphone size={16}/>{busy?"Enabling…":"Enable notifications"}</button>}
-  </div>
-  {status==="enabled"&&<small className="push-notification-message"><ShieldCheck size={12}/> Protected admin device subscription</small>}
-  {message&&status!=="enabled"&&<small className="push-notification-message">{message}</small>}
  </section>;
 }
