@@ -1,5 +1,4 @@
 import {NextResponse} from "next/server";
-import {createECDH} from "node:crypto";
 import webpush from "web-push";
 import {createClient} from "@supabase/supabase-js";
 
@@ -7,11 +6,6 @@ export const dynamic="force-dynamic";
 export const runtime="nodejs";
 export const maxDuration=300;
 
-function derivePublicKey(privateKey:string){
-  const ecdh=createECDH("prime256v1");
-  ecdh.setPrivateKey(Buffer.from(privateKey,"base64url"));
-  return ecdh.getPublicKey("base64url","uncompressed");
-}
 const categoryFor=(type:string)=>{
   if(["deposit","withdrawal","redemption","vault","money_movement"].includes(type))return "money";
   if(["investment","strategy","profit"].includes(type))return "investments";
@@ -28,18 +22,20 @@ const authorized=(req:Request)=>{
 export async function POST(req:Request){
   if(!authorized(req))return NextResponse.json({error:"Unauthorized"},{status:401});
   const secret=process.env.ZYNTH_PUSH_WORKER_SECRET?.trim();
+  const publicKey=process.env.NEXT_PUBLIC_ZYNTH_VAPID_PUBLIC_KEY?.trim();
   const privateKey=process.env.ZYNTH_VAPID_PRIVATE_KEY?.trim();
-  const publicKey=process.env.NEXT_PUBLIC_ZYNTH_VAPID_PUBLIC_KEY?.trim()||(privateKey?derivePublicKey(privateKey):"");
   const subject=process.env.ZYNTH_VAPID_SUBJECT?.trim()||"mailto:security@zynthhq.vercel.app";
   const supabaseUrl=process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
   const supabaseKey=process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim();
   if(!secret)return NextResponse.json({error:"Push worker secret is not configured."},{status:503});
-  if(!privateKey||!publicKey)return NextResponse.json({error:"VAPID credentials are not configured."},{status:503});
+  if(!publicKey||!privateKey)return NextResponse.json({error:"VAPID credentials are not configured."},{status:503});
   if(!supabaseUrl||!supabaseKey)return NextResponse.json({error:"Supabase runtime credentials are not configured."},{status:503});
   try{webpush.setVapidDetails(subject,publicKey,privateKey);}catch{return NextResponse.json({error:"VAPID credentials are invalid."},{status:503});}
+
   const admin=createClient(supabaseUrl,supabaseKey,{auth:{autoRefreshToken:false,persistSession:false}});
   const {data:jobs,error:claimError}=await admin.rpc("zynth_claim_push_jobs",{p_limit:10,p_secret:secret});
   if(claimError)return NextResponse.json({error:claimError.message},{status:500});
+
   let delivered=0,skipped=0,failed=0,revoked=0;
   for(const job of jobs||[]){
     try{
