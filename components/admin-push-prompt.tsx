@@ -16,6 +16,15 @@ export default function AdminPushPrompt(){
   try{
    const registration=await navigator.serviceWorker.register("/sw.js",{scope:"/"});
    const subscription=await registration.pushManager.getSubscription();
+   if(subscription){
+    const health=await fetch(`/api/push/status?endpoint=${encodeURIComponent(subscription.endpoint)}`,{cache:"no-store"}).then(r=>r.ok?r.json():{active:false}).catch(()=>({active:false}));
+    if(!health.active){
+     await subscription.unsubscribe().catch(()=>false);
+     window.localStorage.removeItem("zynth-vapid-fingerprint");
+     setPushStatus("available");
+     return;
+    }
+   }
    setStatus(subscription?"enabled":"available");
   }catch{setStatus("error");}
  }
