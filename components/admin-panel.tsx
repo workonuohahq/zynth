@@ -1,13 +1,14 @@
 "use client";
 import {useEffect,useState} from "react";
 import Link from "next/link";
-import {ArrowDownToLine,ArrowDownLeft,ArrowUpRight,ArrowLeftRight,BarChart3,Bell,CheckCircle2,ChevronRight,Clock3,Copy,ExternalLink,Eye,RefreshCw,Settings2,ShieldCheck,TrendingUp,Users,X,XCircle,Pencil,Pause,Play,Archive,Trash2,Gift,Headphones,LogOut} from "lucide-react";
+import {ArrowDownToLine,ArrowDownLeft,ArrowUpRight,ArrowLeftRight,BarChart3,Bell,CheckCircle2,ChevronRight,Clock3,Copy,ExternalLink,Eye,RefreshCw,Settings2,ShieldCheck,TrendingUp,Users,X,XCircle,Pencil,Pause,Play,Archive,Trash2,Gift,Headphones,LogOut,Send} from "lucide-react";
 import AdminUsers from "@/components/admin-users";
 import ThemeSwitcher from "@/components/theme-switcher";
 import AdminInvestmentSettings from "@/components/admin-investment-settings";
 import AdminStrategyForm from "@/components/admin-strategy-form";
 import AdminTraders from "@/components/admin-traders";
 import AdminNotificationCenter from "@/components/admin-notification-center";
+import AdminBroadcastCenter from "@/components/admin-broadcast-center";
 import AdminNotificationBell from "@/components/admin-notification-bell";
 import AdminPushPrompt from "@/components/admin-push-prompt";
 import AdminReferralCenter from "@/components/admin-referral-center";
@@ -83,6 +84,7 @@ const closePreview=()=>{setPreview(null);setMt5CopyState("");};
       {k:"traders",l:"Traders",i:ShieldCheck,b:data.mt5_pending_count||0},
       {k:"trader-governance",l:"Trader Governance",i:ShieldCheck,b:0},
       {k:"notifications",l:"Notifications",i:Bell,b:0},
+      {k:"broadcasts",l:"Messaging Broadcast",i:Send,b:0},
       {k:"support",l:"Customer Service",i:Headphones,b:Number(data.support_unread_count||0)},
       {k:"referrals",l:"Referrals",i:Gift,b:0}
     ].map(({k,l,i:Icon,b})=><button key={k} className={tab===k?"admin-list-item active":"admin-list-item"} onClick={()=>setTab(k)}><span className="admin-list-icon"><Icon size={16}/></span><span className="admin-list-label">{l}</span>{b>0&&<em className={k==="support"?"admin-support-badge":""}>{b}</em>}</button>)}
@@ -142,6 +144,7 @@ const closePreview=()=>{setPreview(null);setMt5CopyState("");};
 
    {tab==="settings"&&<section className="admin-section"><section className="admin-card settings-card"><div className="admin-card-head"><div><span className="muted">SYSTEM RULES</span><h2>Settlement & Vault controls</h2><p>Configure the investor engine, profit lock and operating thresholds. Changes are audited.</p></div></div><AdminInvestmentSettings refreshKey={refreshKey}/><div className="rule-list" style={{marginTop:20}}><div><span>Settlement model</span><b>Trader report → admin confirm → NAV</b></div><div><span>MT5 automation</span><b>Removed</b></div></div></section></section>}
    {tab==="notifications"&&<AdminNotificationCenter initialTemplates={notificationTemplates} refreshKey={refreshKey}/>}
+   {tab==="broadcasts"&&<AdminBroadcastCenter/>}
    {tab==="support"&&<AdminSupportCenter refreshKey={refreshKey}/>}
    {tab==="referrals"&&<AdminReferralCenter refreshKey={refreshKey}/>}
   </main>
