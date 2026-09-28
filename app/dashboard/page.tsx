@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowUpRight, BarChart3, Bell, Check, ChevronRight, Gift, LockKeyhole, ShieldCheck, Smartphone, TrendingUp, WalletCards, RefreshCw } from "lucide-react";
+import { ArrowUpRight, BarChart3, Bell, Check, ChevronDown, ChevronRight, Gift, LockKeyhole, ShieldCheck, Smartphone, TrendingUp, WalletCards, RefreshCw } from "lucide-react";
 
 const money=(n:any)=>"₦"+Number(n||0).toLocaleString("en-NG",{minimumFractionDigits:2,maximumFractionDigits:2});
 
@@ -12,6 +12,7 @@ export default function DashboardPage(){
   const [pushStatus,setPushStatus]=useState<"loading"|"unsupported"|"denied"|"enabled"|"available"|"error">("loading");
   const [pushBusy,setPushBusy]=useState(false);
   const [pushMessage,setPushMessage]=useState("");
+  const [pushOpen,setPushOpen]=useState(false);
 
   async function inspectPush(){
     if(typeof window==="undefined" || !("Notification" in window) || !("serviceWorker" in navigator) || !("PushManager" in window)){
@@ -102,22 +103,32 @@ export default function DashboardPage(){
   }
   return <section className="dashboard-content">
     <header className="dashboard-header premium-header"><div><div className="eyebrow-row"><span className="eyebrow">ZYNTH / PORTFOLIO</span><span className="live-dot"><i/> LIVE ACCOUNT</span></div><h1>Welcome back, {name}.</h1><p>Your portfolio follows confirmed strategy performance — not fixed promises.</p></div><div className="header-actions"><Link className="fund-btn" href="/dashboard/investments"><TrendingUp size={17}/> Explore strategies</Link><Link className="fund-btn secondary-dark" href="/dashboard/withdraw">Withdraw</Link></div></header>
-    {pushStatus!=="unsupported" && pushStatus!=="loading" && <section className="panel push-notification-panel dashboard-push-prompt" aria-label="Device notifications">
-      <div className="push-notification-copy">
-        <span className="push-notification-icon">{pushStatus==="enabled"?<Check size={18}/>:<Bell size={18}/>}</span>
-        <div>
-          <span className="eyebrow">DEVICE NOTIFICATIONS</span>
-          <h2>{pushStatus==="enabled"?"Notifications are active on this device.":"Never miss important ZYNTH activity."}</h2>
-          <p>{pushStatus==="enabled"?"You’ll receive important account, money movement, investment and security alerts here.":"Enable device alerts for deposits, withdrawals, investments, security events and other important account activity — even when ZYNTH is not open."}</p>
+    {pushStatus!=="unsupported" && pushStatus!=="loading" && <section className={"panel push-notification-panel dashboard-push-prompt "+(pushOpen?"is-open":"is-collapsed")} aria-label="Device notifications">
+      <button className="push-notification-summary" type="button" onClick={()=>setPushOpen(v=>!v)} aria-expanded={pushOpen} aria-controls="device-notification-details">
+        <span className="push-notification-copy">
+          <span className="push-notification-icon">{pushStatus==="enabled"?<Check size={18}/>:<Bell size={18}/>}</span>
+          <span>
+            <span className="eyebrow">DEVICE NOTIFICATIONS</span>
+            <strong>{pushStatus==="enabled"?"Notifications are active on this device.":"Never miss important ZYNTH activity."}</strong>
+            <small>{pushStatus==="enabled"?"Alerts are enabled for this device.":"Manage this device’s ZYNTH alert permission."}</small>
+          </span>
+        </span>
+        <span className="push-notification-summary-meta">
+          {pushStatus==="enabled"?<span className="push-status enabled"><i/> Active</span>:pushStatus==="denied"?<span className="push-status warning">Blocked</span>:<span className="push-status">Available</span>}
+          <ChevronDown size={16}/>
+        </span>
+      </button>
+      <div id="device-notification-details" className="push-notification-details" aria-hidden={!pushOpen}>
+        <div className="push-notification-details-inner">
+          <p>{pushStatus==="enabled"?"You’ll receive important account, money movement, investment and security alerts here.":"Enable device alerts for deposits, withdrawals, investments and other important account activity — even when ZYNTH is not open."}</p>
+          <div className="push-notification-action">
+            {pushStatus==="enabled"?<span className="push-status enabled"><i/> Active on this device</span>:pushStatus==="denied"?<span className="push-status warning">Blocked in device settings</span>:<button className="fund-btn primary" disabled={pushBusy} onClick={enablePush} type="button"><Smartphone size={16}/>{pushBusy?"Enabling…":"Enable notifications"}</button>}
+          </div>
+          {pushStatus==="enabled"&&<small className="push-notification-message"><ShieldCheck size={12}/> Protected device subscription</small>}
+          {pushMessage&&pushStatus!=="enabled"&&<small className="push-notification-message">{pushMessage}</small>}
         </div>
       </div>
-      <div className="push-notification-action">
-        {pushStatus==="enabled"?<span className="push-status enabled"><i/> Active</span>:pushStatus==="denied"?<span className="push-status warning">Blocked in device settings</span>:<button className="fund-btn primary" disabled={pushBusy} onClick={enablePush} type="button"><Smartphone size={16}/>{pushBusy?"Enabling…":"Enable notifications"}</button>}
-      </div>
-      {pushStatus==="enabled"&&<small className="push-notification-message"><ShieldCheck size={12}/> Protected device subscription</small>}
-      {pushMessage&&pushStatus!=="enabled"&&<small className="push-notification-message">{pushMessage}</small>}
     </section>}
-
     <section className="wealth-hero"><div className="wealth-main"><div className="wealth-label"><span>Total portfolio value</span><span className="secure-chip"><ShieldCheck size={13}/> NAV based</span></div><strong>{money(Number(p.cash||0)+Number(p.invested||0))}</strong><div className="wealth-breakdown"><span><i className="dot available"/> Cash {money(p.cash)}</span><span><i className="dot locked"/> Invested {money(p.invested)}</span></div></div><div className="wealth-side"><div><span>Total P&L</span><b>{money(p.profit)}</b></div><div><span>Realised P&L</span><b>{money(p.realized_profit)}</b></div><div><span>Unrealised P&L</span><b className={Number(p.unrealized_profit||0)>=0?"amount-positive":"amount-negative"}>{money(p.unrealized_profit)}</b></div><div><span>Withdrawable profit</span><b>{money(p.withdrawable_profit)}</b></div><div><span>Locked profit</span><b>{money(p.locked_profit)}</b></div><Link href="/dashboard/vaults">Open Vault <ArrowUpRight size={14}/></Link></div></section>
     <section className="quick-actions dashboard-priority-actions dashboard-referral-only"><Link href="/dashboard/referrals" className="quick-action"><span className="qa-icon gold"><Gift size={17}/></span><span><b>Refer & Earn</b><small>Invite trusted people to ZYNTH</small></span><ChevronRight size={16}/></Link></section>
     <div className="dashboard-grid"><section className="panel portfolio-panel"><div className="panel-head"><div><span className="muted">ACTIVE INVESTMENTS</span><h2>Your strategies</h2></div><Link className="text-action" href="/dashboard/investments">View strategies <ArrowUpRight size={14}/></Link></div>{data.investments?.length?<div className="vault-cards">{data.investments.map((i:any)=><div className="vault-card" key={i.id}><div className="vault-card-top"><span className="status-badge"><i/> ACTIVE</span><span>{i.zynth_strategies?.name||"Strategy"}</span></div><div className="vault-card-amount">{money(i.current_value)}</div><div className="vault-card-meta"><span>Units <b>{Number(i.units).toFixed(4)}</b></span><span>NAV <b>₦{Number(i.zynth_strategies?.nav||0).toFixed(2)}</b></span></div></div>)}</div>:<div className="premium-empty"><div className="empty-icon"><TrendingUp size={21}/></div><h3>Your portfolio starts here</h3><p>Fund your available cash and choose a strategy. Your position value will move with confirmed daily settlement.</p><Link className="primary" href="/dashboard/investments">Explore strategies <ArrowUpRight size={15}/></Link></div>}</section>
