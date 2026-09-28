@@ -343,7 +343,7 @@ grant execute on function public.zynth_record_broadcast_push_result(uuid,text,in
 create or replace function public.zynth_admin_broadcast_history(p_admin_id uuid)
 returns table(
  id uuid,title text,body text,audience jsonb,priority text,status text,recipient_count integer,
- push_eligible_count integer,push_sent_count integer,push_failed_count,push_skipped_count integer,
+ push_eligible_count integer,push_sent_count integer,push_failed_count integer,push_skipped_count integer,
  created_at timestamptz,sent_at timestamptz,created_by uuid
 )
 language plpgsql
