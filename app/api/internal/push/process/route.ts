@@ -89,6 +89,7 @@ export async function POST(req:Request){
   return NextResponse.json({ok:true,processed:(jobs||[]).length,delivered,skipped,failed,revoked});
 }
 export async function GET(req:Request){
-  if(!authorized(req))return NextResponse.json({error:"Unauthorized"},{status:401});
-  return NextResponse.json({ok:true,service:"zynth-push-worker"});
+  // Vercel Cron invokes cron routes with GET + Authorization: Bearer CRON_SECRET.
+  // The cron endpoint must execute the durable queue worker, not merely return a health check.
+  return POST(req);
 }
