@@ -80,7 +80,7 @@ export default function AdminRedemptions(){
     <h1>Investment redemptions</h1>
     <p>Review investor exits, validate the release path, and keep every unit movement auditable.</p>
    </div>
-   <div className="admin-redemptions-header-actions"><Link className="ghost admin-back-dashboard" href="/admin" aria-label="Back to main admin dashboard"><ArrowLeft size={15}/> Back to dashboard</Link><button className="ghost admin-refresh" onClick={load} disabled={loading}><RefreshCw size={15} className={loading?"spin":""}/>{loading?"Refreshing…":"Refresh queue"}</button>
+   <div className="admin-redemptions-header-actions"><Link className="ghost admin-back-dashboard" href="/admin" aria-label="Back to main admin dashboard"><ArrowLeft size={15}/> Back to dashboard</Link><button className="ghost admin-refresh" onClick={load} disabled={loading}><RefreshCw size={15} className={loading?"spin":""}/>{loading?"Refreshing…":"Refresh queue"}</button></div>
   </header>
 
   {notice&&<div className="admin-notice"><AlertCircle size={14}/>{notice}</div>}
