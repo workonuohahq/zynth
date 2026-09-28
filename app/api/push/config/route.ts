@@ -6,7 +6,7 @@ export const dynamic="force-dynamic";
 function derivePublicKey(privateKey:string){
   const ecdh=createECDH("prime256v1");
   ecdh.setPrivateKey(Buffer.from(privateKey,"base64url"));
-  return ecdh.getPublicKey(undefined,"base64url");
+  return ecdh.getPublicKey("base64url","uncompressed");
 }
 
 export async function GET(){
