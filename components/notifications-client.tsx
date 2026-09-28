@@ -28,6 +28,15 @@ export default function NotificationsClient(){
    try{
      const registration=await navigator.serviceWorker.register("/sw.js",{scope:"/"});
      const subscription=await registration.pushManager.getSubscription();
+   if(subscription){
+    const health=await fetch(`/api/push/status?endpoint=${encodeURIComponent(subscription.endpoint)}`,{cache:"no-store"}).then(r=>r.ok?r.json():{active:false}).catch(()=>({active:false}));
+    if(!health.active){
+     await subscription.unsubscribe().catch(()=>false);
+     window.localStorage.removeItem("zynth-vapid-fingerprint");
+     setPushStatus("available");
+     return;
+    }
+   }
      if(!subscription){setPushStatus("available");return}
      const configResponse=await fetch("/api/push/config",{cache:"no-store"});
      const config=await configResponse.json().catch(()=>({}));
