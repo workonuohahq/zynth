@@ -70,7 +70,7 @@ as $function$
     )
     and (
       coalesce(p_audience->>'account_status','active')='any'
-      or (p_audience->>'account_status')=c.account_status
+      or coalesce(p_audience->>'account_status','active')=c.account_status
       or (p_audience->>'account_status')='verified' and c.kyc_verified
       or (p_audience->>'account_status')='unverified' and not c.kyc_verified
     )
@@ -93,5 +93,21 @@ begin
  into total_count,investors_count,traders_count,funded_count,unfunded_count,push_enabled_count,push_disabled_count,push_no_device_count
  from public.zynth_broadcast_candidates(coalesce(p_audience,'{}'::jsonb)) c;
  return jsonb_build_object('recipient_count',total_count,'investors',investors_count,'traders',traders_count,'funded',funded_count,'unfunded',unfunded_count,'push_enabled',push_enabled_count,'push_disabled',push_disabled_count,'push_no_device',push_no_device_count);
+end
+$function$;
+
+-- The exact-user picker uses the same canonical active-account resolver as broadcasts.
+create or replace function public.zynth_admin_broadcast_user_directory(p_admin_id uuid,p_query text)
+returns table(user_id uuid, full_name text, email text, role text, funded boolean, push_state text)
+language plpgsql security definer set search_path to ''
+as $function$
+begin
+ if not public.zynth_has_role(auth.uid(),'admin') or not exists(select 1 from public.users where id=auth.uid() and account_status='active') then raise exception 'ADMIN_AUTHORIZATION_REQUIRED'; end if;
+ return query
+ select c.user_id,c.full_name,c.email,c.role,c.funded,c.push_state
+ from public.zynth_broadcast_candidates('{"role":"all","funding":"any","push_status":"any","account_status":"active"}'::jsonb) c
+ where coalesce(p_query,'')='' or coalesce(c.full_name,'') ilike '%'||p_query||'%' or coalesce(c.email,'') ilike '%'||p_query||'%'
+ order by c.full_name nulls last,c.email
+ limit 50;
 end
 $function$;
