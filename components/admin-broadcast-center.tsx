@@ -26,7 +26,8 @@ export default function AdminBroadcastCenter(){
   const hj=await h.json(),dj=await d.json(),tj=await t.json();if(h.ok)setHistory(hj.broadcasts||[]);if(d.ok)setDrafts(dj.drafts||[]);if(t.ok)setTemplates(tj.templates||[]);
  }
  useEffect(()=>{loadAll()},[]);
- const loadUsers=async(q:string)=>{setUsersLoading(true);setUsersError("");try{const r=await fetch("/api/admin/broadcast?mode=users&q="+encodeURIComponent(q),{cache:"no-store"});const j=await r.json();if(!r.ok)throw new Error(j.error||"Could not load users.");setUserResults(Array.isArray(j.users)?j.users:[])}catch(e){setUserResults([]);setUsersError(e instanceof Error?e.message:"Could not load users.")}finally{setUsersLoading(false)}};\n useEffect(()=>{if(audience.role!=="specific"){setUserResults([]);setUsersError("");return}const t=window.setTimeout(()=>loadUsers(userQuery),180);return()=>window.clearTimeout(t)},[userQuery,audience.role]);
+ const loadUsers=async(q:string)=>{setUsersLoading(true);setUsersError("");try{const r=await fetch("/api/admin/broadcast?mode=users&q="+encodeURIComponent(q),{cache:"no-store"});const j=await r.json();if(!r.ok)throw new Error(j.error||"Could not load users.");setUserResults(Array.isArray(j.users)?j.users:[])}catch(e){setUserResults([]);setUsersError(e instanceof Error?e.message:"Could not load users.")}finally{setUsersLoading(false)}};
+ useEffect(()=>{if(audience.role!=="specific"){setUserResults([]);setUsersError("");return}const t=window.setTimeout(()=>loadUsers(userQuery),180);return()=>window.clearTimeout(t)},[userQuery,audience.role]);
  useEffect(()=>{setAudience(a=>({...a,user_ids:selectedUsers.map(x=>x.user_id)}))},[selectedUsers]);
  useEffect(()=>{setPreview(null)},[audience.role,audience.funding,audience.push_status,audience.account_status,JSON.stringify(audience.user_ids)]);
 
