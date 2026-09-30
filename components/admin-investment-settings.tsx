@@ -208,7 +208,9 @@ export default function AdminInvestmentSettings({ refreshKey }: { refreshKey?: n
   const [cryptoBusy, setCryptoBusy] = useState(false);
   const [cryptoMessage, setCryptoMessage] = useState("");
   const [cryptoError, setCryptoError] = useState("");
-  const [cryptoAvailable, setCryptoAvailable] = useState<string[]>([]);
+  const [cryptoCurrencies, setCryptoCurrencies] = useState<any[]>([]);
+  const [cryptoSearch, setCryptoSearch] = useState("");
+  const [cryptoSyncing, setCryptoSyncing] = useState(false);
 
   useEffect(() => {
     fetch("/api/admin/payment-provider", { cache: "no-store" })
@@ -216,7 +218,7 @@ export default function AdminInvestmentSettings({ refreshKey }: { refreshKey?: n
         const data = await r.json();
         if (!r.ok) throw new Error(data.error || "Unable to load NOWPayments settings.");
         setCrypto(data.settings || null);
-        setCryptoAvailable(Array.isArray(data.settings?.supported_currencies) ? data.settings.supported_currencies : []);
+        setCryptoCurrencies(Array.isArray(data.currencies) ? data.currencies : []);
       })
       .catch((e) => setCryptoError(e.message));
   }, []);
@@ -264,20 +266,33 @@ export default function AdminInvestmentSettings({ refreshKey }: { refreshKey?: n
 
   async function testCrypto() {
     setCryptoBusy(true);
+    setCryptoSyncing(true);
     setCryptoMessage("");
     setCryptoError("");
     try {
       const r = await fetch("/api/admin/payment-provider", { method: "POST" });
       const data = await r.json();
       if (Array.isArray(data.available)) {
-        setCryptoAvailable(data.available.map((x: any) => String(x?.currency || x?.code || x).toLowerCase()));
+        setCryptoCurrencies(data.available.map((code: string) => ({
+          currency_code: String(code).toLowerCase(),
+          symbol: String(code).toUpperCase(),
+          provider_available: true,
+          zynth_enabled: Array.isArray(data.selected) && data.selected.includes(String(code).toLowerCase())
+        })));
       }
-      if (!r.ok) throw new Error(data.error || data.message || "NOWPayments connection test failed.");
-      setCryptoMessage(data.message || "Connection verified.");
+      if (!r.ok) throw new Error(data.error || data.message || "NOWPayments synchronization failed.");
+      setCryptoMessage(data.message || "NOWPayments catalog synchronized.");
+      const refresh = await fetch("/api/admin/payment-provider", { cache: "no-store" });
+      const refreshed = await refresh.json();
+      if (refresh.ok) {
+        setCrypto(refreshed.settings || crypto);
+        setCryptoCurrencies(Array.isArray(refreshed.currencies) ? refreshed.currencies : []);
+      }
     } catch (e: any) {
       setCryptoError(e.message);
     } finally {
       setCryptoBusy(false);
+      setCryptoSyncing(false);
     }
   }
 
@@ -286,14 +301,22 @@ export default function AdminInvestmentSettings({ refreshKey }: { refreshKey?: n
     setCryptoMessage("");
     setCryptoError("");
     try {
+      const selected = cryptoCurrencies.filter((x: any) => x.provider_available && x.zynth_enabled).map((x: any) => String(x.currency_code).toLowerCase());
+      if (crypto?.enabled && !selected.length) throw new Error("Select at least one currently available asset before enabling crypto deposits.");
       const r = await fetch("/api/admin/payment-provider", {
         method: "PATCH",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ ...crypto, api_key: cryptoKey, ipn_secret: cryptoSecret }),
+        body: JSON.stringify({
+          ...crypto,
+          zynth_enabled_currencies: selected,
+          api_key: cryptoKey,
+          ipn_secret: cryptoSecret
+        }),
       });
       const data = await r.json();
       if (!r.ok) throw new Error(data.error || "Unable to save crypto settings.");
       setCrypto(data.settings || crypto);
+      setCryptoCurrencies(Array.isArray(data.currencies) ? data.currencies : cryptoCurrencies);
       setCryptoKey("");
       setCryptoSecret("");
       setCryptoMessage("NOWPayments settings saved securely.");
@@ -469,36 +492,62 @@ export default function AdminInvestmentSettings({ refreshKey }: { refreshKey?: n
                 </label>
 
                 <div className="zsf">
-                  <span>Accepted crypto assets / networks</span>
-                  <small>Test connection to load merchant-enabled assets.</small>
-                  {cryptoAvailable.length ? (
-                    <div className="crypto-grid">
-                      {cryptoAvailable.map((asset) => (
-                        <label key={asset} className="crypto-option">
-                          <input
-                            type="checkbox"
-                            checked={Array.isArray(crypto.supported_currencies) && crypto.supported_currencies.includes(asset)}
-                            onChange={(e) =>
-                              setCrypto({
-                                ...crypto,
-                                supported_currencies: e.target.checked
-                                  ? Array.from(new Set([...(crypto.supported_currencies || []), asset]))
-                                  : (crypto.supported_currencies || []).filter((value: string) => value !== asset),
-                              })
-                            }
-                          />
-                          <span>{asset.toUpperCase()}</span>
-                        </label>
-                      ))}
+                  <span>NOWPayments merchant assets</span>
+                  <small>
+                    ZYNTH only shows assets currently enabled for this merchant by NOWPayments. New assets remain off until you enable them.
+                  </small>
+                  <div className="crypto-catalog-toolbar">
+                    <input
+                      value={cryptoSearch}
+                      onChange={(e) => setCryptoSearch(e.target.value)}
+                      placeholder="Search asset or network"
+                      aria-label="Search NOWPayments assets"
+                    />
+                    <span>{cryptoCurrencies.filter((x: any) => x.provider_available).length} available</span>
+                  </div>
+                  {cryptoCurrencies.length ? (
+                    <div className="crypto-catalog">
+                      {cryptoCurrencies
+                        .filter((asset: any) => {
+                          const q = cryptoSearch.trim().toLowerCase();
+                          return !q || [asset.currency_code, asset.symbol, asset.name, asset.network].some((v: any) => String(v || "").toLowerCase().includes(q));
+                        })
+                        .map((asset: any) => (
+                          <label key={asset.currency_code} className={"crypto-option"+(!asset.provider_available ? " unavailable" : "")}>
+                            <span className="crypto-option-copy">
+                              <b>{asset.name || asset.currency_code?.toUpperCase()}</b>
+                              <small>{asset.network || "Network"} · {String(asset.currency_code).toUpperCase()}</small>
+                            </span>
+                            <span className="crypto-option-state">
+                              {asset.provider_available ? "AVAILABLE" : "UNAVAILABLE"}
+                              <input
+                                type="checkbox"
+                                disabled={!asset.provider_available}
+                                checked={!!asset.zynth_enabled}
+                                onChange={(e) =>
+                                  setCryptoCurrencies((current: any[]) =>
+                                    current.map((item) =>
+                                      item.currency_code === asset.currency_code
+                                        ? { ...item, zynth_enabled: e.target.checked }
+                                        : item
+                                    )
+                                  )
+                                }
+                              />
+                            </span>
+                          </label>
+                        ))}
                     </div>
                   ) : (
-                    <div className="notice crypto-empty">No merchant-enabled assets loaded yet.</div>
+                    <div className="notice crypto-empty">
+                      No NOWPayments merchant assets have been synchronized yet. Click <b>Sync NOWPayments assets</b> below.
+                    </div>
                   )}
                 </div>
 
                 <div className="crypto-actions">
                   <button className="ghost" disabled={cryptoBusy} onClick={testCrypto}>
-                    {cryptoBusy ? "Testing…" : "Test connection"}
+                    <RefreshCw size={13} /> {cryptoSyncing ? "Syncing…" : "Sync NOWPayments assets"}
                   </button>
                   <button className="primary" disabled={cryptoBusy} onClick={saveCrypto}>
                     {cryptoBusy ? "Saving…" : "Save crypto settings"}
@@ -603,8 +652,16 @@ export default function AdminInvestmentSettings({ refreshKey }: { refreshKey?: n
         .zro{padding:13px;border:1px dashed #383229;border-radius:10px}
         .zro small{display:block;color:#777168;font-size:9px}
         .zro b{display:block;margin-top:5px;font-size:11px}
-        .crypto-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}
-        .crypto-option{display:flex;align-items:center;gap:8px;border:1px solid var(--border,#2b2b2b);border-radius:10px;padding:9px 10px;font-size:12px}
+.crypto-catalog-toolbar{display:flex;gap:10px;align-items:center;margin-top:10px}
+        .crypto-catalog-toolbar input{flex:1;background:#0b0b0a;color:#f4efe7;border:1px solid #332e26;border-radius:9px;padding:10px 12px}
+        .crypto-catalog-toolbar span{font-size:10px;color:#8f877b;white-space:nowrap}
+        .crypto-catalog{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px;max-height:430px;overflow:auto;padding-right:2px}
+        .crypto-option{display:flex;justify-content:space-between;align-items:center;gap:10px;border:1px solid var(--border,#2b2b2b);border-radius:10px;padding:11px 12px;font-size:12px;background:#0d0d0c}
+        .crypto-option.unavailable{opacity:.55}
+        .crypto-option-copy b{display:block;font-size:11px}
+        .crypto-option-copy small{display:block;margin-top:3px;color:#777168;font-size:9px}
+        .crypto-option-state{display:flex;align-items:center;gap:7px;font-size:8px;color:#9b8b6b;white-space:nowrap}
+        .crypto-option-state input{width:16px;height:16px;accent-color:#9a7836}
         .crypto-empty{margin-top:10px}
         .crypto-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
         .zfooter{position:sticky;bottom:10px;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 14px;background:#11110ff2;border:1px solid #393125;border-radius:12px;color:#9c9487;font-size:10px}
@@ -620,7 +677,7 @@ export default function AdminInvestmentSettings({ refreshKey }: { refreshKey?: n
         html[data-theme="light"] .zst input{background:#d6d0c5;border-color:#c5beb1}
         html[data-theme="light"] .zcall{background:#faf4e7;border-color:#dfc98f;color:#80652f}
         html[data-theme="light"] .zfooter{background:#fffdf8f2;border-color:#d8d1c5;color:#706a61}
-        @media(max-width:700px){.zg{grid-template-columns:1fr}.zsb{padding:16px}.crypto-grid{grid-template-columns:1fr}}
+        @media(max-width:700px){.zg{grid-template-columns:1fr}.zsb{padding:16px}.crypto-catalog{grid-template-columns:1fr}.crypto-catalog-toolbar{align-items:stretch;flex-direction:column}.crypto-catalog-toolbar span{align-self:flex-start}}
       `}
       </style>
     </div>
