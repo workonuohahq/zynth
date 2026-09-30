@@ -1,11 +1,11 @@
 "use client";
 import {useEffect,useState} from "react";
-import {ArrowUpRight,Copy,Gift,Link as LinkIcon,RefreshCw,ShieldCheck,Target,UsersRound,WalletCards} from "lucide-react";
+import {Copy,Gift,Link as LinkIcon,RefreshCw,ShieldCheck,Target,UsersRound,WalletCards} from "lucide-react";
 
 const money=(n:any)=>`₦${Number(n||0).toLocaleString("en-NG",{minimumFractionDigits:2,maximumFractionDigits:2})}`;
 
 export default function ZpaDesk(){
- const[data,setData]=useState<any>(null),[loading,setLoading]=useState(true),[claim,setClaim]=useState(""),[busy,setBusy]=useState(false),[message,setMessage]=useState("");
+ const[data,setData]=useState<any>(null),[loading,setLoading]=useState(true),[message,setMessage]=useState("");
  async function load(){
   setLoading(true);
   try{const r=await fetch("/api/zpa",{cache:"no-store"});const j=await r.json();if(!r.ok)throw new Error(j.error||"Unable to load ZPA desk.");setData(j);}
@@ -13,13 +13,6 @@ export default function ZpaDesk(){
   finally{setLoading(false);}
  }
  useEffect(()=>{load()},[]);
- async function claimCode(){
-  if(!claim.trim())return;
-  setBusy(true);setMessage("");
-  try{const r=await fetch("/api/zpa",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({code:claim.trim()})});const j=await r.json();if(!r.ok)throw new Error(j.error||"Could not claim attribution.");setMessage("Attribution claimed. The investor will appear here after their first investment.");setClaim("");await load();}
-  catch(e){setMessage(e instanceof Error?e.message:"Could not claim attribution.");}
-  finally{setBusy(false);}
- }
  async function copy(text:string,label:string){try{await navigator.clipboard.writeText(text);setMessage(label+" copied.");}catch{setMessage("Copy failed. Select the link manually.");}}
  if(loading)return <section className="dashboard-content"><div className="trader-loading"><RefreshCw className="spin" size={18}/><span>Loading your ZPA desk…</span></div></section>;
  const s=data?.settings||{}, q=Number(data?.qualified_investors||0), next=Number(data?.next_milestone||0);
@@ -34,6 +27,5 @@ export default function ZpaDesk(){
   <section className="panel"><div className="panel-head"><div><span className="muted">ZPA CODE</span><h2>Your acquisition code</h2></div><Target size={18}/></div><div className="money-input"><input readOnly value={data.code||""}/><button className="details" onClick={()=>copy(data.code||"","ZPA code")}><Copy size={14}/> Copy</button></div></section>
   <section className="panel"><div className="panel-head"><div><span className="muted">ACQUISITION HISTORY</span><h2>Your investors</h2></div><UsersRound size={18}/></div><div className="admin-table">{(data.acquisitions||[]).map((a:any)=><div className="admin-row" key={a.id}><div className="admin-person"><span className="avatar"><UsersRound size={14}/></span><span><b>{a.investor_name}</b><small>{a.status==="qualifying"?"Qualifying · due "+new Date(a.qualification_due_at).toLocaleDateString("en-NG"):a.status}</small></span></div><span>{a.first_investment_amount?money(a.first_investment_amount):"Awaiting investment"}</span><strong>{a.status}</strong></div>)}{!(data.acquisitions||[]).length&&<div className="admin-empty"><UsersRound size={22}/><p>No acquisitions yet.</p></div>}</div></section>
   <section className="panel"><div className="panel-head"><div><span className="muted">EARNINGS LEDGER</span><h2>Immutable incentive history</h2></div><WalletCards size={18}/></div><div className="admin-table">{(data.earnings||[]).map((e:any)=><div className="admin-row" key={e.id}><div className="admin-person"><span className="avatar">{e.earning_type==="milestone"?<Gift size={14}/>:<Target size={14}/>}</span><span><b>{e.earning_type==="milestone"?"Monthly milestone":"Capital incentive"}</b><small>{e.status.replaceAll("_"," ")}{e.milestone_threshold?" · "+e.milestone_threshold+" qualified":""}</small></span></div><span>{money(e.amount)}</span><strong>{e.status}</strong></div>)}{!(data.earnings||[]).length&&<div className="admin-empty"><WalletCards size={22}/><p>No incentive records yet.</p></div>}</div></section>
-  <section className="panel"><div className="panel-head"><div><span className="muted">ATTRIBUTION</span><h2>Claim an investor</h2></div><ArrowUpRight size={18}/></div><div className="money-input"><input value={claim} onChange={e=>setClaim(e.target.value)} placeholder="Enter a ZPA code"/><button className="primary" disabled={busy} onClick={claimCode}>{busy?"Claiming…":"Claim"}</button></div><small className="muted">Only an investor who has not made an investment can be attributed. Once attributed, ownership is permanent unless handled by controlled admin action.</small></section>
  </section>
 }
