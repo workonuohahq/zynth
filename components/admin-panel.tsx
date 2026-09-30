@@ -1,7 +1,7 @@
 "use client";
 import {useEffect,useState} from "react";
 import Link from "next/link";
-import {ArrowDownToLine,ArrowDownLeft,ArrowUpRight,ArrowLeftRight,BarChart3,Bell,CheckCircle2,ChevronRight,Clock3,Copy,ExternalLink,Eye,RefreshCw,Settings2,ShieldCheck,TrendingUp,Users,X,XCircle,Pencil,Pause,Play,Archive,Trash2,Gift,Headphones,LogOut,Send} from "lucide-react";
+import {ArrowDownToLine,ArrowDownLeft,ArrowUpRight,ArrowLeftRight,BarChart3,Bell,CheckCircle2,ChevronRight,Clock3,Copy,ExternalLink,Eye,RefreshCw,Settings2,ShieldCheck,TrendingUp,Users,Target,X,XCircle,Pencil,Pause,Play,Archive,Trash2,Gift,Headphones,LogOut,Send} from "lucide-react";
 import AdminUsers from "@/components/admin-users";
 import ThemeSwitcher from "@/components/theme-switcher";
 import AdminInvestmentSettings from "@/components/admin-investment-settings";
@@ -14,6 +14,7 @@ import AdminPushPrompt from "@/components/admin-push-prompt";
 import AdminReferralCenter from "@/components/admin-referral-center";
 import AdminSupportCenter from "@/components/admin-support-center";
 import AdminTraderGovernance from "@/components/admin-trader-governance";
+import AdminZpa from "@/components/admin-zpa";
 
 const money=(n:any)=>`₦${Number(n||0).toLocaleString("en-NG",{minimumFractionDigits:2,maximumFractionDigits:2})}`;
 const pct=(n:any)=>`${Number(n||0).toFixed(2)}%`;
@@ -86,7 +87,8 @@ const closePreview=()=>{setPreview(null);setMt5CopyState("");};
       {k:"notifications",l:"Notifications",i:Bell,b:0},
       {k:"broadcasts",l:"Messaging Broadcast",i:Send,b:0},
       {k:"support",l:"Customer Service",i:Headphones,b:Number(data.support_unread_count||0)},
-      {k:"referrals",l:"Referrals",i:Gift,b:0}
+      {k:"referrals",l:"Referrals",i:Gift,b:0},
+      {k:"zpa",l:"ZPA",i:Target,b:0}
     ].map(({k,l,i:Icon,b})=><button key={k} className={tab===k?"admin-list-item active":"admin-list-item"} onClick={()=>setTab(k)}><span className="admin-list-icon"><Icon size={16}/></span><span className="admin-list-label">{l}</span>{b>0&&<em className={k==="support"?"admin-support-badge":""}>{b}</em>}</button>)}
     <div className={"admin-money-nav "+(moneyOpen||["deposits","withdrawals","redemptions"].includes(tab)?"open":"")}>
       <button className={["deposits","withdrawals","redemptions"].includes(tab)?"admin-list-item active":"admin-list-item"} onClick={()=>setMoneyOpen(v=>!v)} aria-expanded={moneyOpen} aria-controls="admin-money-subnav">
@@ -136,7 +138,8 @@ const closePreview=()=>{setPreview(null);setMt5CopyState("");};
    {tab==="investors"&&<section className="admin-section"><section className="admin-card admin-users-card"><div className="admin-card-head"><div><span className="muted">INVESTOR DIRECTORY</span><h2>Investors</h2><p>Account status and portfolio controls.</p></div></div><AdminUsers initialUsers={[]} refreshKey={refreshKey}/></section></section>}
 
    {tab==="traders"&&<AdminTraders onSaved={load} refreshKey={refreshKey}/>} 
-   {tab==="trader-governance"&&<AdminTraderGovernance/>} 
+   {tab==="trader-governance"&&<AdminTraderGovernance/>}
+   {tab==="zpa"&&<AdminZpa refreshKey={refreshKey}/>} 
 
    {tab==="deposits"&&<section className="admin-section"><section className="admin-card"><div className="admin-card-head"><div><span className="muted">MONEY MOVEMENT</span><h2>Deposit operations</h2><p>Review and confirm incoming payment requests. Strategy-linked deposits activate an investment directly and never become spendable cash.</p></div><Link className="text-action" href="/admin/deposits">Open deposit queue <ChevronRight size={13}/></Link></div></section></section>}
    {tab==="withdrawals"&&<section className="admin-section"><section className="admin-card"><div className="admin-card-head"><div><span className="muted">MONEY MOVEMENT</span><h2>Withdrawal operations</h2><p>Existing withdrawal controls remain available while profit eligibility is enforced by the Vault layer.</p></div><Link className="text-action" href="/admin/withdrawals">Open queue <ChevronRight size={13}/></Link></div></section></section>}
