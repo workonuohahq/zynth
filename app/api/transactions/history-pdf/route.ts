@@ -9,12 +9,10 @@ function makePdf(lines:string[]) {
   const chunks:string[][]=[];
   for(let i=0;i<lines.length;i+=45)chunks.push(lines.slice(i,i+45));
   if(!chunks.length)chunks.push(["No transaction history available."]);
-  const objects:string[]=[
-    "<< /Type /Catalog /Pages 2 0 R >>",
-    ""
-  ];
+  const fontId=3+chunks.length*2;
+  const objects:string[]=["<< /Type /Catalog /Pages 2 0 R >>",""];
   const pageIds:number[]=[];
-  chunks.forEach((chunk,pageIndex)=>{
+  chunks.forEach(chunk=>{
     const contentId=objects.length+1; const pageId=contentId+1; pageIds.push(pageId);
     let stream="BT\n/F1 10 Tf\n50 800 Td\n";
     chunk.forEach((line,i)=>{if(i>0)stream+="0 -16 Td\n";stream+="("+clean(line)+") Tj\n";});
@@ -22,10 +20,8 @@ function makePdf(lines:string[]) {
     objects.push("<< /Length "+Buffer.byteLength(stream,"utf8")+" >>\nstream\n"+stream+"\nendstream");
     objects.push("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 "+fontId+" 0 R >> >> /Contents "+contentId+" 0 R >>");
   });
-  const fontId=objects.length+1;
   objects.push("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
-  const kids=pageIds.map(id=>id+" 0 R").join(" ");
-  objects[1]="<< /Type /Pages /Kids ["+kids+"] /Count "+pageIds.length+" >>";
+  objects[1]="<< /Type /Pages /Kids ["+pageIds.map(id=>id+" 0 R").join(" ")+"] /Count "+pageIds.length+" >>";
   let pdf="%PDF-1.4\n"; const offsets:number[]=[];
   objects.forEach((obj,i)=>{offsets[i+1]=Buffer.byteLength(pdf,"utf8");pdf+=(i+1)+" 0 obj\n"+obj+"\nendobj\n";});
   const xref=Buffer.byteLength(pdf,"utf8");
