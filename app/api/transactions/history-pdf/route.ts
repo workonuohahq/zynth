@@ -20,7 +20,7 @@ function makePdf(lines:string[]) {
     chunk.forEach((line,i)=>{if(i>0)stream+="0 -16 Td\n";stream+="("+clean(line)+") Tj\n";});
     stream+="ET";
     objects.push("<< /Length "+Buffer.byteLength(stream,"utf8")+" >>\nstream\n"+stream+"\nendstream");
-    objects.push("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 "+(objects.length+2)+" 0 R >> >> /Contents "+contentId+" 0 R >>");
+    objects.push("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 "+fontId+" 0 R >> >> /Contents "+contentId+" 0 R >>");
   });
   const fontId=objects.length+1;
   objects.push("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
