@@ -6,27 +6,48 @@ const clean=(v:any)=>String(v??"").replace(/[\\()]/g," ").replace(/\r?\n/g," ").
 const money=(v:any)=>"NGN "+Number(v||0).toLocaleString("en-NG",{minimumFractionDigits:2,maximumFractionDigits:2});
 
 function makePdf(lines:string[]) {
+  const pageSize=45;
   const chunks:string[][]=[];
-  for(let i=0;i<lines.length;i+=45)chunks.push(lines.slice(i,i+45));
-  if(!chunks.length)chunks.push(["No transaction history available."]);
-  const fontId=3+chunks.length*2;
-  const objects:string[]=["<< /Type /Catalog /Pages 2 0 R >>",""];
+  for(let i=0;i<lines.length;i+=pageSize) chunks.push(lines.slice(i,i+pageSize));
+  if(!chunks.length) chunks.push(["No transaction history available."]);
+
+  const objects:string[]=[
+    "<< /Type /Catalog /Pages 2 0 R >>",
+    ""
+  ];
   const pageIds:number[]=[];
-  chunks.forEach(chunk=>{
-    const contentId=objects.length+1; const pageId=contentId+1; pageIds.push(pageId);
+  const contentIds:number[]=[];
+  chunks.forEach((chunk)=>{
+    const contentId=objects.length+1;
+    const pageId=contentId+1;
+    contentIds.push(contentId);
+    pageIds.push(pageId);
     let stream="BT\n/F1 10 Tf\n50 800 Td\n";
-    chunk.forEach((line,i)=>{if(i>0)stream+="0 -16 Td\n";stream+="("+clean(line)+") Tj\n";});
+    chunk.forEach((line,i)=>{
+      if(i>0) stream+="0 -16 Td\n";
+      stream+="("+clean(line)+") Tj\n";
+    });
     stream+="ET";
     objects.push("<< /Length "+Buffer.byteLength(stream,"utf8")+" >>\nstream\n"+stream+"\nendstream");
-    objects.push("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 "+fontId+" 0 R >> >> /Contents "+contentId+" 0 R >>");
+    objects.push("");
   });
+
+  const fontId=objects.length+1;
   objects.push("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
+  pageIds.forEach((pageId,i)=>{
+    objects[pageId-1]="<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 "+fontId+" 0 R >> >> /Contents "+contentIds[i]+" 0 R >>";
+  });
   objects[1]="<< /Type /Pages /Kids ["+pageIds.map(id=>id+" 0 R").join(" ")+"] /Count "+pageIds.length+" >>";
-  let pdf="%PDF-1.4\n"; const offsets:number[]=[];
-  objects.forEach((obj,i)=>{offsets[i+1]=Buffer.byteLength(pdf,"utf8");pdf+=(i+1)+" 0 obj\n"+obj+"\nendobj\n";});
+
+  let pdf="%PDF-1.4\n";
+  const offsets:number[]=[];
+  objects.forEach((obj,i)=>{
+    offsets[i+1]=Buffer.byteLength(pdf,"utf8");
+    pdf+=(i+1)+" 0 obj\n"+obj+"\nendobj\n";
+  });
   const xref=Buffer.byteLength(pdf,"utf8");
   pdf+="xref\n0 "+(objects.length+1)+"\n0000000000 65535 f \n";
-  for(let i=1;i<=objects.length;i++)pdf+=String(offsets[i]).padStart(10,"0")+" 00000 n \n";
+  for(let i=1;i<=objects.length;i++) pdf+=String(offsets[i]).padStart(10,"0")+" 00000 n \n";
   pdf+="trailer\n<< /Size "+(objects.length+1)+" /Root 1 0 R >>\nstartxref\n"+xref+"\n%%EOF";
   return Buffer.from(pdf,"utf8");
 }
