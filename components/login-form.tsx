@@ -4,7 +4,7 @@ import { FormEvent, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
-export default function LoginForm({ initialMode = "login", referralCode = "" }: { initialMode?: "login" | "signup"; referralCode?: string }) {
+export default function LoginForm({ initialMode = "login", referralCode = "", zpaCode = "" }: { initialMode?: "login" | "signup"; referralCode?: string; zpaCode?: string }) {
   const router = useRouter();
   const [mode, setMode] = useState<"login" | "signup">(initialMode);
   const [email, setEmail] = useState("");
@@ -13,6 +13,7 @@ export default function LoginForm({ initialMode = "login", referralCode = "" }: 
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [refCode] = useState(referralCode || "");
+  const [partnerCode] = useState(zpaCode || "");
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -21,10 +22,11 @@ export default function LoginForm({ initialMode = "login", referralCode = "" }: 
     try {
       const supabase = createSupabaseBrowserClient();
       if (refCode) localStorage.setItem("zynth_referral_code", refCode);
+      if (partnerCode) localStorage.setItem("zynth_zpa_code", partnerCode);
       if (mode === "login") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) setMessage(error.message);
-        else { const code=refCode||localStorage.getItem("zynth_referral_code"); if(code) { await fetch("/api/referral",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({code})}).catch(()=>{}); localStorage.removeItem("zynth_referral_code"); } router.push("/dashboard"); }
+        else { const code=refCode||localStorage.getItem("zynth_referral_code"); if(code) { await fetch("/api/referral",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({code})}).catch(()=>{}); localStorage.removeItem("zynth_referral_code"); } const zpa=partnerCode||localStorage.getItem("zynth_zpa_code"); if(zpa) { await fetch("/api/zpa",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({code:zpa})}).catch(()=>{}); localStorage.removeItem("zynth_zpa_code"); } router.push("/dashboard"); }
       } else {
         const { data, error } = await supabase.auth.signUp({
           email,
@@ -32,7 +34,7 @@ export default function LoginForm({ initialMode = "login", referralCode = "" }: 
           options: { data: { full_name: name }, emailRedirectTo: `${window.location.origin}/auth/confirmed` }
         });
         if (error) setMessage(error.message);
-        else if (data.session) { const code=refCode||localStorage.getItem("zynth_referral_code"); if(code) { await fetch("/api/referral",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({code})}).catch(()=>{}); localStorage.removeItem("zynth_referral_code"); } router.push("/dashboard"); }
+        else if (data.session) { const code=refCode||localStorage.getItem("zynth_referral_code"); if(code) { await fetch("/api/referral",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({code})}).catch(()=>{}); localStorage.removeItem("zynth_referral_code"); } const zpa=partnerCode||localStorage.getItem("zynth_zpa_code"); if(zpa) { await fetch("/api/zpa",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({code:zpa})}).catch(()=>{}); localStorage.removeItem("zynth_zpa_code"); } router.push("/dashboard"); }
         else router.push(`/auth/confirmed?email=${encodeURIComponent(email)}`);
       }
     } catch (error) {
