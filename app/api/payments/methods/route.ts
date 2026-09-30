@@ -28,7 +28,7 @@ export async function GET(){
       ok:true,
       manual:{
         flutterwave:manual.flutterwave_enabled,
-        paystack:manual.paystack_enabled
+        paystack:(manual as any).paystack_enabled
       },
       crypto:{
         enabled:cryptoReady,
