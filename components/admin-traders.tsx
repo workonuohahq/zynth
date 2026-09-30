@@ -40,7 +40,7 @@ export default function AdminTraders({ onSaved, refreshKey }: { onSaved: () => v
       const j = await r.json();
       if (!r.ok) throw new Error(j.error || "Unable to load this user's profile.");
       const p = j.profile || {};
-      const traderProfile = j.trader || p;
+      const traderProfile = j.trader?.profile || p || {};
       const trader = {
         id: p.id || userId,
         email: p.email,
@@ -206,7 +206,7 @@ export default function AdminTraders({ onSaved, refreshKey }: { onSaved: () => v
           <div className="trader-active-grid">
             {loading && <div className="admin-empty"><Users size={22}/><p>Loading the active trader register…</p></div>}
             {!loading && data.traders.map((t: Trader) => {
-              const p = t.zynth_trader_profiles?.[0] || t.zynth_trader_profiles || {};
+              const p = t.profile || t.zynth_trader_profiles?.[0] || t.zynth_trader_profiles || {};
               return <article className="trader-active-card" key={t.id}>
                 <div className="trader-card-top"><div className="trader-avatar-large">{String(t.display_name || "T").slice(0,1).toUpperCase()}</div><div className="trader-card-identity"><strong>{t.display_name || t.full_name || "Trader"}</strong><span>{t.email} · {p.country || "Country not supplied"}</span></div><span className="trader-status-pill approved">{p.status || "active"}</span></div>
                 <div className="trader-card-tags">{(p.markets || []).slice(0,4).map((m:string)=><span key={m}>{m}</span>)}<span>{p.trading_style || "Style not supplied"}</span><span className={"trader-status-pill "+(t.mt5?.status==="verified"?"approved":t.mt5?.status==="rejected"?"rejected":"pending")}>MT5 {t.mt5?.status||"pending"}</span></div>
