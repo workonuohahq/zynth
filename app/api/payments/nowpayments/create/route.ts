@@ -18,6 +18,12 @@ export async function POST(req:Request){
     if(!Number.isFinite(amount)||amount<=0) return NextResponse.json({error:"Enter a valid investment amount."},{status:400});
     if((!strategyId&&!investmentId)||(strategyId&&investmentId)) return NextResponse.json({error:"Choose exactly one investment funding target."},{status:400});
     if(!payCurrency) return NextResponse.json({error:"Choose a cryptocurrency and network."},{status:400});
+    // Never allow the settlement/price currency (fiat) to be used as the crypto target.
+    // This is a server-side invariant so stale PWA/Vercel clients cannot trigger NGN -> NGN.
+    const fiatPriceCurrency = String(settings?.price_currency || "ngn").toLowerCase().trim();
+    if(payCurrency === fiatPriceCurrency || payCurrency === "ngn"){
+      return NextResponse.json({error:"NGN is the pricing currency, not a crypto payment option. Please choose a supported cryptocurrency/network."},{status:400});
+    }
 
     const {data:settings,error:settingsError}=await client.rpc("get_nowpayments_runtime_config");
     if(settingsError||!settings){
