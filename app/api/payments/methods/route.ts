@@ -8,11 +8,12 @@ export async function GET(){
     const {data:{user}}=await client.auth.getUser();
     if(!user)return NextResponse.json({error:"Authentication required."},{status:401});
 
-    const [{data:manualRaw,error:manualError},{data:provider,error:providerError}]=await Promise.all([
+    const [{data:manualRaw,error:manualError},{data:providerRaw,error:providerError}]=await Promise.all([
       client.rpc("get_deposit_payment_config").single(),
       createSupabaseAdminClient().from("zynth_payment_provider_settings").select("enabled,price_currency,fixed_rate,fee_paid_by_user,supported_currencies,api_key_ciphertext,ipn_secret_ciphertext,last_test_status").eq("provider","nowpayments").maybeSingle()
     ]);
     const manual:any=manualRaw||{};
+    const provider:any=providerRaw||null;
     if(manualError||!manual) return NextResponse.json({error:"Payment configuration unavailable."},{status:503});
     if(providerError) return NextResponse.json({error:"Payment provider configuration unavailable."},{status:503});
 
