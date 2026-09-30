@@ -9,6 +9,8 @@ alter table public.deposit_requests
   add constraint deposit_requests_method_check
   check (method = any (array['flutterwave'::text,'paystack'::text,'manual'::text,'crypto'::text]));
 
+drop function if exists public.create_crypto_deposit_request(uuid,numeric,uuid);
+
 create or replace function public.create_crypto_deposit_request(
   p_user_id uuid,
   p_amount numeric,
@@ -124,6 +126,7 @@ declare
   inv_units_before numeric;
   inv_principal_before numeric;
   result jsonb;
+  new_units numeric;
 begin
   if current_user <> 'service_role' then raise exception 'SERVICE_ROLE_REQUIRED'; end if;
 
@@ -153,11 +156,12 @@ begin
     update public.transactions set status='completed',processed_at=now(),metadata=coalesce(metadata,'{}')||jsonb_build_object('verified_at',now(),'source','crypto_topup_confirmation') where id=tx.id;
     update public.transactions set status='completed',processed_at=now(),metadata=coalesce(metadata,'{}')||jsonb_build_object('verified_at',now(),'source','crypto_topup_fee_confirmation') where reference='FEE-DEP-'||d.id::text and status='pending';
 
+    new_units:=inv.units+units;
     update public.zynth_investments
       set principal=principal+d.amount,
           principal_remaining=principal_remaining+d.amount,
-          units=units+units,
-          entry_nav=(principal+d.amount)/nullif(units+units,0),
+          units=new_units,
+          entry_nav=(principal+d.amount)/nullif(new_units,0),
           current_value=current_value+d.amount,
           updated_at=now()
     where id=inv.id;
