@@ -37,7 +37,7 @@ export default function DepositPaymentPage({params}:{params:{id:string}}){
     key:"flutterwave",enabled:settings.flutterwave_enabled,title:settings.flutterwave_title,accountName:settings.flutterwave_account_name,accountNumber:settings.flutterwave_account_number,bankName:settings.flutterwave_bank_name,extra:settings.flutterwave_extra
   },{
     key:"paystack",enabled:settings.paystack_enabled,title:settings.paystack_title,accountName:settings.paystack_account_name,accountNumber:settings.paystack_account_number,bankName:settings.paystack_bank_name,extra:settings.paystack_extra
-  }].filter(x=>x.enabled):[],[settings]);
+  }].filter(x=>x.enabled&&(["flutterwave","paystack"].includes(request?.method)||request?.method==="manual"?true:x.key===request?.method)),[settings,request]);
 
   async function copy(value:string,label:string){
     await navigator.clipboard.writeText(value);setCopied(label);setTimeout(()=>setCopied(""),1500);
