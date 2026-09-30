@@ -33,12 +33,15 @@ export default function DepositPaymentPage({params}:{params:{id:string}}){
   }
   useEffect(()=>{load();const t=setInterval(load,10000);return()=>clearInterval(t)},[params.id]);
 
-  const methods=useMemo(()=>settings?[{
-    key:"flutterwave",enabled:settings.flutterwave_enabled,title:settings.flutterwave_title,accountName:settings.flutterwave_account_name,accountNumber:settings.flutterwave_account_number,bankName:settings.flutterwave_bank_name,extra:settings.flutterwave_extra
-  },{
-    key:"paystack",enabled:settings.paystack_enabled,title:settings.paystack_title,accountName:settings.paystack_account_name,accountNumber:settings.paystack_account_number,bankName:settings.paystack_bank_name,extra:settings.paystack_extra
-  }].filter(x=>x.enabled&&(["flutterwave","paystack"].includes(request?.method)||request?.method==="manual"?true:x.key===request?.method)),[settings,request]);
-
+  const methods=useMemo(()=>{
+    if(!settings)return [];
+    const available=[{
+      key:"flutterwave",enabled:settings.flutterwave_enabled,title:settings.flutterwave_title,accountName:settings.flutterwave_account_name,accountNumber:settings.flutterwave_account_number,bankName:settings.flutterwave_bank_name,extra:settings.flutterwave_extra
+    },{
+      key:"paystack",enabled:settings.paystack_enabled,title:settings.paystack_title,accountName:settings.paystack_account_name,accountNumber:settings.paystack_account_number,bankName:settings.paystack_bank_name,extra:settings.paystack_extra
+    }];
+    return available.filter(x=>x.enabled&&(request?.method==="manual"||x.key===request?.method));
+  },[settings,request]);
   async function copy(value:string,label:string){
     await navigator.clipboard.writeText(value);setCopied(label);setTimeout(()=>setCopied(""),1500);
   }
