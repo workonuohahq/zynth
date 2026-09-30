@@ -125,24 +125,28 @@ export async function PATCH(req:Request){
 }
 
 export async function POST(){
+  const {supabase,user}=await getAdminContext();
+  if(!user) return NextResponse.json({error:"Administrator access required."},{status:403});
   try{
-    const {user}=await getAdminContext();
-    if(!user) return NextResponse.json({error:"Administrator access required."},{status:403});
-    const result=await syncMerchantCatalog();
-    const admin=createSupabaseAdminClient();
-    const {data:settings}=await supabase.from("zynth_payment_provider_settings").select("supported_currencies").eq("provider","nowpayments").single();
+    const result=await syncMerchantCatalog(supabase);
+    const {data:settings,error:settingsError}=await supabase
+      .from("zynth_payment_provider_settings")
+      .select("supported_currencies")
+      .eq("provider","nowpayments")
+      .single();
+    if(settingsError) throw settingsError;
     const selected=normalizeCodes(settings?.supported_currencies);
     const message="NOWPayments API verified. Synced "+result.available.length+" merchant-enabled asset(s); "+selected.length+" currently selected for ZYNTH.";
-    await supabase.from("zynth_payment_provider_settings").update({
+    const {error:updateError}=await supabase.from("zynth_payment_provider_settings").update({
       last_test_at:new Date().toISOString(),
       last_test_status:"success",
       last_test_message:message,
       updated_at:new Date().toISOString()
     }).eq("provider","nowpayments");
+    if(updateError) throw updateError;
     return NextResponse.json({ok:true,available:result.available,selected:result.selected,synced_at:result.syncedAt,message});
   }catch(e:any){
     try{
-      const admin=createSupabaseAdminClient();
       await supabase.from("zynth_payment_provider_settings").update({
         last_test_at:new Date().toISOString(),
         last_test_status:"failed",
