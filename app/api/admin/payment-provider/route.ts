@@ -143,13 +143,15 @@ export async function POST(){
     }).eq("provider","nowpayments");
     return NextResponse.json({ok:true,available:result.available,selected:result.selected,synced_at:result.syncedAt,message});
   }catch(e:any){
-    const admin=createSupabaseAdminClient();
-    await admin.from("zynth_payment_provider_settings").update({
-      last_test_at:new Date().toISOString(),
-      last_test_status:"failed",
-      last_test_message:e?.message||"NOWPayments synchronization failed.",
-      updated_at:new Date().toISOString()
-    }).eq("provider","nowpayments").then(()=>null).catch(()=>null);
+    try{
+      const admin=createSupabaseAdminClient();
+      await admin.from("zynth_payment_provider_settings").update({
+        last_test_at:new Date().toISOString(),
+        last_test_status:"failed",
+        last_test_message:e?.message||"NOWPayments synchronization failed.",
+        updated_at:new Date().toISOString()
+      }).eq("provider","nowpayments");
+    }catch{}
     return NextResponse.json({error:e?.message||"NOWPayments synchronization failed."},{status:400});
   }
 }
