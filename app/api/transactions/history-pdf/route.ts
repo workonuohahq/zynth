@@ -121,14 +121,6 @@ export async function GET(request:Request){
   ]);
   if(error)return NextResponse.json({error:"Unable to generate transaction history."},{status:500});
   const rows=(transactions||[]) as Tx[];
-  const lines=["ZYNTH TRANSACTION HISTORY","Account: "+(profile?.full_name||"ZYNTH User"),"Generated: "+new Date().toLocaleString("en-NG",{dateStyle:"medium",timeStyle:"short"}),"","Total records: "+rows.length,""];
-  rows.forEach((r,i)=>{
-    const meta=r.metadata||{};
-    const detail=meta.method||meta.payment_method||meta.pay_currency||meta.source;
-    const date=new Date(r.created_at).toLocaleString("en-NG",{dateStyle:"medium",timeStyle:"short"});
-    const second="   "+date+(r.reference?" | Ref: "+r.reference:"")+(detail?" | "+String(detail):"")+(meta.pay_currency?" | "+String(meta.pay_currency).toUpperCase():"");
-    lines.push((i+1)+". "+r.type.replaceAll("_"," ").toUpperCase()+" | "+money(r.amount)+" | "+r.status.toUpperCase());
-    lines.push(second);
-  });
-  return new Response(new Uint8Array(makePdf(lines)),{status:200,headers:{"Content-Type":"application/pdf","Content-Disposition":"attachment; filename=\"zynth-transaction-history-"+new Date().toISOString().slice(0,10)+".pdf\"","Cache-Control":"private, no-store"}});
+  const pages=makePages(rows,profile?.full_name||"ZYNTH User");
+  return new Response(new Uint8Array(buildPdf(pages)),{status:200,headers:{"Content-Type":"application/pdf","Content-Disposition":"attachment; filename=\"zynth-transaction-statement-"+new Date().toISOString().slice(0,10)+".pdf\"","Cache-Control":"private, no-store"}});
 }
