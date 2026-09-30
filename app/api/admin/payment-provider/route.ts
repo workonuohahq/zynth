@@ -27,7 +27,7 @@ async function syncMerchantCatalog(supabase:any){
     metadata:{source:"NOWPayments /merchant/coins"}
   }));
 
-  const {data:existing,error:existingError}=await admin
+  const {data:existing,error:existingError}=await supabase
     .from("zynth_payment_currencies")
     .select("currency_code,zynth_enabled")
     .eq("provider","nowpayments");
