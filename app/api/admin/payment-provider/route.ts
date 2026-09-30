@@ -1,6 +1,5 @@
 import {NextResponse} from "next/server";
 import {getAdminContext} from "@/lib/admin/auth";
-import {createSupabaseAdminClient} from "@/lib/supabase/admin";
 import {encryptProviderSecret,maskSecret} from "@/lib/secure-provider-secrets";
 import {extractMerchantCurrencies,getNowPaymentsSettings,inferCurrencyName,inferCurrencyNetwork,nowRequest,requireApiKey} from "@/lib/nowpayments";
 
@@ -8,9 +7,8 @@ function normalizeCodes(values:any){
   return Array.from(new Set((Array.isArray(values)?values:[]).map((x:any)=>String(x).trim().toLowerCase()).filter(Boolean)));
 }
 
-async function syncMerchantCatalog(){
-  const admin=createSupabaseAdminClient();
-  const settings=await getNowPaymentsSettings(admin);
+async function syncMerchantCatalog(supabase:any){
+  const settings=await getNowPaymentsSettings(supabase);
   const apiKey=requireApiKey(settings);
   const merchantPayload=await nowRequest("/merchant/coins",apiKey);
   const codes=extractMerchantCurrencies(merchantPayload);
@@ -38,16 +36,16 @@ async function syncMerchantCatalog(){
   const selected=new Set((existing||[]).filter((x:any)=>x.zynth_enabled).map((x:any)=>String(x.currency_code).toLowerCase()));
   const selectedCodes=codes.filter((code)=>selected.has(code));
 
-  const {error:upsertError}=await admin.from("zynth_payment_currencies").upsert(rows,{onConflict:"provider,currency_code"});
+  const {error:upsertError}=await supabase.from("zynth_payment_currencies").upsert(rows,{onConflict:"provider,currency_code"});
   if(upsertError) throw upsertError;
 
-  const {error:staleError}=await admin.from("zynth_payment_currencies")
+  const {error:staleError}=await supabase.from("zynth_payment_currencies")
     .update({provider_available:false,last_synced_at:now,updated_at:now})
     .eq("provider","nowpayments")
     .not("currency_code","in","("+codes.map((c)=>"\""+c.replace(/"/g,'""')+"\"").join(",")+")");
   if(staleError) throw staleError;
 
-  const {error:settingsError}=await admin.from("zynth_payment_provider_settings")
+  const {error:settingsError}=await supabase.from("zynth_payment_provider_settings")
     .update({currency_catalog_synced_at:now,supported_currencies:selectedCodes,updated_at:now})
     .eq("provider","nowpayments");
   if(settingsError) throw settingsError;
@@ -132,10 +130,10 @@ export async function POST(){
     if(!user) return NextResponse.json({error:"Administrator access required."},{status:403});
     const result=await syncMerchantCatalog();
     const admin=createSupabaseAdminClient();
-    const {data:settings}=await admin.from("zynth_payment_provider_settings").select("supported_currencies").eq("provider","nowpayments").single();
+    const {data:settings}=await supabase.from("zynth_payment_provider_settings").select("supported_currencies").eq("provider","nowpayments").single();
     const selected=normalizeCodes(settings?.supported_currencies);
     const message="NOWPayments API verified. Synced "+result.available.length+" merchant-enabled asset(s); "+selected.length+" currently selected for ZYNTH.";
-    await admin.from("zynth_payment_provider_settings").update({
+    await supabase.from("zynth_payment_provider_settings").update({
       last_test_at:new Date().toISOString(),
       last_test_status:"success",
       last_test_message:message,
@@ -145,7 +143,7 @@ export async function POST(){
   }catch(e:any){
     try{
       const admin=createSupabaseAdminClient();
-      await admin.from("zynth_payment_provider_settings").update({
+      await supabase.from("zynth_payment_provider_settings").update({
         last_test_at:new Date().toISOString(),
         last_test_status:"failed",
         last_test_message:e?.message||"NOWPayments synchronization failed.",
