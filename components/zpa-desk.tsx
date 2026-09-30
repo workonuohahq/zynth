@@ -9,7 +9,7 @@ export default function ZpaDesk(){
  async function load(){
   setLoading(true);
   try{const r=await fetch("/api/zpa",{cache:"no-store"});const j=await r.json();if(!r.ok)throw new Error(j.error||"Unable to load ZPA desk.");setData(j);}
-  catch(e){setMessage(e instanceof Error?e.message:"Unable to load ZPA desk.");}
+  catch(e){setData({settings:{},code:"",link:"",qualified_investors:0,next_milestone:0,next_reward:0,available:0,qualifying:0,pending:0,month_end_withheld:0,capital_incentives_earned:0,milestone_incentives_earned:0,qualified_capital:0,acquisitions:[],earnings:[]});setMessage(e instanceof Error?e.message:"Unable to load ZPA desk.");}
   finally{setLoading(false);}
  }
  useEffect(()=>{load()},[]);
