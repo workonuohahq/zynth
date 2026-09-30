@@ -6,8 +6,8 @@ const clean=(v:any)=>String(v??"").replace(/[\\()]/g," ").replace(/\r?\n/g," ").
 const money=(v:any)=>"NGN "+Number(v||0).toLocaleString("en-NG",{minimumFractionDigits:2,maximumFractionDigits:2});
 
 function makePdf(lines:string[]){
-  let stream="BT\n/F1 10 Tf\n50 800 Td\n";
-  lines.forEach((line,i)=>{if(i>0)stream+="0 -16 Td\n";stream+="("+clean(line)+") Tj\n";});
+  let stream="BT\n/F1 5.5 Tf\n50 805 Td\n";
+  lines.forEach((line,i)=>{if(i>0)stream+="0 -6.7 Td\n";stream+="("+clean(line)+") Tj\n";});
   stream+="ET";
   const objects=["<< /Type /Catalog /Pages 2 0 R >>","<< /Type /Pages /Kids [3 0 R] /Count 1 >>","<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>","<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>","<< /Length "+Buffer.byteLength(stream,"utf8")+" >>\nstream\n"+stream+"\nendstream"];
   let pdf="%PDF-1.4\n"; const offsets:number[]=[];
@@ -31,11 +31,12 @@ export async function GET(){
   const rows=(transactions||[]) as Tx[];
   const lines=["ZYNTH TRANSACTION HISTORY","Account: "+(profile?.full_name||"ZYNTH User"),"Generated: "+new Date().toLocaleString("en-NG",{dateStyle:"medium",timeStyle:"short"}),"","Total records: "+rows.length,""];
   rows.forEach((r,i)=>{
+    const meta=r.metadata||{};
+    const detail=meta.method||meta.payment_method||meta.pay_currency||meta.source;
+    const date=new Date(r.created_at).toLocaleString("en-NG",{dateStyle:"medium",timeStyle:"short"});
+    const second="   "+date+(r.reference?" | Ref: "+r.reference:"")+(detail?" | "+String(detail):"")+(meta.pay_currency?" | "+String(meta.pay_currency).toUpperCase():"");
     lines.push((i+1)+". "+r.type.replaceAll("_"," ").toUpperCase()+" | "+money(r.amount)+" | "+r.status.toUpperCase());
-    lines.push("   "+new Date(r.created_at).toLocaleString("en-NG",{dateStyle:"medium",timeStyle:"short"})+(r.reference?" | Ref: "+r.reference:""));
-    const meta=r.metadata||{}; const detail=meta.method||meta.payment_method||meta.pay_currency||meta.source;
-    if(detail)lines.push("   Details: "+String(detail)+(meta.pay_currency?" · "+String(meta.pay_currency).toUpperCase():""));
-    lines.push("");
+    lines.push(second);
   });
   return new NextResponse(makePdf(lines),{status:200,headers:{"Content-Type":"application/pdf","Content-Disposition":"attachment; filename=\"zynth-transaction-history-"+new Date().toISOString().slice(0,10)+".pdf\"","Cache-Control":"private, no-store"}});
 }
