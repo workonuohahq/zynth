@@ -14,7 +14,7 @@ export default function TransactionsPage(){
    const supabase=createSupabaseBrowserClient();
    const {data:{user}}=await supabase.auth.getUser();
    if(!user){setLoading(false);return;}
-   const {data}=await supabase.from("transactions").select("id,type,amount,status,created_at,reference,metadata").eq("user_id",user.id).order("created_at",{ascending:false}).limit(50);
+   const {data}=await supabase.from("transactions").select("id,type,amount,status,created_at,reference,metadata").eq("user_id",user.id).order("created_at",{ascending:false}).limit(6);
    setRows((data||[]) as Row[]);setLoading(false);
  }
  useEffect(()=>{load()},[]);
