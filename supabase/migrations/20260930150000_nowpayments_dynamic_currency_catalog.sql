@@ -29,8 +29,8 @@ drop policy if exists "admins_manage_payment_currencies" on public.zynth_payment
 create policy "admins_manage_payment_currencies"
 on public.zynth_payment_currencies
 for all to authenticated
-using ((select zynth_has_role(auth.uid(), 'admin')))
-with check ((select zynth_has_role(auth.uid(), 'admin')));
+using ((select zynth_has_role((select auth.uid()), 'admin')))
+with check ((select zynth_has_role((select auth.uid()), 'admin')));
 
 create index if not exists zynth_payment_currencies_provider_available_idx
   on public.zynth_payment_currencies(provider, provider_available);
