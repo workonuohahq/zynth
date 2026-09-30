@@ -46,7 +46,7 @@ export default function TransactionsPage(){
        <span className={`ledger-icon ${positive?"positive":"neutral"}`}>{positive?<ArrowDownLeft size={16}/>:<ArrowUpRight size={16}/>}</span>
        <div className="ledger-main"><b>{activityLabel}</b><small>{new Date(r.created_at).toLocaleString("en-NG",{dateStyle:"medium",timeStyle:"short"})}</small>{r.reference&&<small className="ledger-ref">Ref: {r.reference}</small>}
          {pending&&<div className="ledger-actions">
-           {isDeposit&&depositId&&<Link className="ledger-action primary" href={`/dashboard/deposit/${depositId}`}>Payment details <ChevronRight size={12}/></Link>}
+           {isDeposit&&depositId&&(r.metadata?.method==="crypto"||String(r.metadata?.source||"").includes("crypto"))?<Link className="ledger-action primary" href={`/dashboard/crypto-payment/${depositId}`}>Continue crypto payment <ChevronRight size={12}/></Link>:isDeposit&&depositId&&<Link className="ledger-action primary" href={`/dashboard/deposit/${depositId}`}>Payment details <ChevronRight size={12}/></Link>}
            {isDeposit&&depositId&&<button className="ledger-action danger" onClick={()=>cancelDeposit(depositId)} disabled={busy===r.id}>{busy===r.id?"Cancelling…":<><X size={13}/> Cancel</>}</button>}
            {isWithdrawal&&withdrawalRequestId&&<Link className="ledger-action secondary" href={`/dashboard/withdrawal/${withdrawalRequestId}`}>Track <ChevronRight size={12}/></Link>}{isWithdrawal&&pending&&withdrawalRequestId&&<button className="ledger-action danger" onClick={()=>cancelWithdrawal(withdrawalRequestId)} disabled={busy===withdrawalRequestId}>{busy===withdrawalRequestId?"Cancelling…":<><X size={13}/> Cancel request</>}</button>}
          </div>}
