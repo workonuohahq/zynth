@@ -21,7 +21,7 @@ create table if not exists public.zynth_payment_currencies (
 );
 
 alter table public.zynth_payment_currencies enable row level security;
-revoke all on table public.zynth_payment_currencies from anon;
+revoke all on table public.zynth_payment_currencies from anon, authenticated;
 grant select, update on table public.zynth_payment_currencies to authenticated;
 grant all on table public.zynth_payment_currencies to service_role;
 
