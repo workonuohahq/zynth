@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowDownLeft, ArrowUpRight, ChevronRight, Clock3, FileText, Search, X } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, ChevronRight, Clock3, Download, FileText, Search, X } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type Row={id:string;type:string;amount:number;status:string;created_at:string;reference:string|null;metadata?:Record<string,any>|null};
@@ -34,7 +34,7 @@ export default function TransactionsPage(){
    <header className="dashboard-header"><div><span className="eyebrow">ZYNTH / ACTIVITY</span><h1>Your activity.</h1><p>Track requests, payment details and every wallet movement.</p></div><Link className="fund-btn" href="/dashboard/vaults">Open vault <ArrowUpRight size={15}/></Link></header>
    {message&&<div className="form-feedback success">{message}</div>}
    <section className="activity-summary"><div><span>Records shown</span><b>{rows.length}</b></div><div><span>Pending requests</span><b>{rows.filter(r=>r.status==="pending").length}</b></div><div><span>Account</span><b>Protected</b></div></section>
-   <section className="panel ledger-panel"><div className="panel-head"><div><span className="muted">TRANSACTION LEDGER</span><h2>Recent movements</h2></div><FileText size={18}/></div>
+   <section className="panel ledger-panel"><div className="panel-head"><div><span className="muted">TRANSACTION LEDGER</span><h2>Recent movements</h2></div><div style={{display:"flex",alignItems:"center",gap:8}}><a className="ledger-action secondary" href="/api/transactions/history-pdf" download="zynth-transaction-history.pdf"><Download size={14}/>Download PDF</a><FileText size={18}/></div></div>
    {loading?<div className="activity-empty"><Clock3 size={18}/><span>Loading activity…</span></div>:rows.length?<div className="ledger-list">{rows.map(r=>{
      const positive=["deposit","cycle_payout","zpa_commission"].includes(r.type), pending=r.status==="pending";
      const isDeposit=r.type==="deposit",isWithdrawal=r.type==="withdrawal";
