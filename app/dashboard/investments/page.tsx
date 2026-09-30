@@ -5,11 +5,47 @@ import {ArrowDownRight,ArrowUpRight,ChevronDown,Clock3,LockKeyhole,Plus,ShieldCh
 const money=(n:any)=>"₦"+Number(n||0).toLocaleString("en-NG",{minimumFractionDigits:2,maximumFractionDigits:2});
 const dt=(v:any)=>v?new Date(v).toLocaleString("en-NG",{dateStyle:"medium",timeStyle:"short"}):"—";
 export default function Investments(){
- const[strategies,setStrategies]=useState<any[]>([]),[positions,setPositions]=useState<any[]>([]),[redemptions,setRedemptions]=useState<any[]>([]),[cash,setCash]=useState(0),[amounts,setAmounts]=useState<Record<string,string>>({}),[topups,setTopups]=useState<Record<string,string>>({}),[exits,setExits]=useState<Record<string,string>>({}),[manageOpen,setManageOpen]=useState<Record<string,boolean>>({}),[strategyDetailsOpen,setStrategyDetailsOpen]=useState<Record<string,boolean>>({}),[busy,setBusy]=useState(""),[msg,setMsg]=useState("");
+ const[strategies,setStrategies]=useState<any[]>([]),[positions,setPositions]=useState<any[]>([]),[redemptions,setRedemptions]=useState<any[]>([]),[cash,setCash]=useState(0),[amounts,setAmounts]=useState<Record<string,string>>({}),[topups,setTopups]=useState<Record<string,string>>({}),[exits,setExits]=useState<Record<string,string>>({}),[manageOpen,setManageOpen]=useState<Record<string,boolean>>({}),[strategyDetailsOpen,setStrategyDetailsOpen]=useState<Record<string,boolean>>({}),[busy,setBusy]=useState(""),[msg,setMsg]=useState(""),[funding,setFunding]=useState<any>(null),[paymentMethods,setPaymentMethods]=useState<any>(null),[paymentMethod,setPaymentMethod]=useState(""),[payCurrency,setPayCurrency]=useState("");
  async function load(){try{const[a,p,m]=await Promise.all([fetch("/api/account/summary").then(r=>r.json()),fetch("/api/strategies").then(r=>r.json()),fetch("/api/investments/mine").then(r=>r.json())]);setCash(Number(a.summary?.cash||0));setStrategies(p.strategies||[]);setPositions(m.investments||[]);setRedemptions(m.redemptions||[])}catch{}}
  useEffect(()=>{load()},[]);
- async function invest(id:string){const amount=Number(amounts[id]||0),s=strategies.find(x=>x.id===id);if(!Number.isFinite(amount)||amount<=0){setMsg("Enter a valid investment amount.");return}if(s?.minimum_investment&&amount<Number(s.minimum_investment)){setMsg("Minimum investment is "+money(s.minimum_investment)+".");return}if(s?.maximum_investment&&amount>Number(s.maximum_investment)){setMsg("Maximum investment is "+money(s.maximum_investment)+".");return}setBusy("invest:"+id);setMsg("");const dep=await fetch("/api/deposits/create",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({amount,method:"manual",strategyId:id})});const dd=await dep.json();if(!dep.ok){setMsg(dd.error||"Unable to start funding.");setBusy("");return}window.location.href="/dashboard/deposit/"+dd.request.id+"?returnTo="+encodeURIComponent("/dashboard/investments");}
- async function topup(id:string){const amount=Number(topups[id]||0);if(!Number.isFinite(amount)||amount<=0){setMsg("Enter a valid top-up amount.");return}setBusy("topup:"+id);setMsg("");const r=await fetch("/api/investments/topup",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({investmentId:id,amount})});const d=await r.json();if(r.ok){setMsg("Top-up completed at the current NAV.");await load();setBusy("");return}if(d.code==="INSUFFICIENT_AVAILABLE_BALANCE"){const dep=await fetch("/api/investments/topup/deposit",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({investmentId:id,amount})});const dd=await dep.json();if(!dep.ok){setMsg(dd.error||"Unable to start top-up funding.");setBusy("");return}window.location.href="/dashboard/deposit/"+dd.request.id+"?returnTo="+encodeURIComponent("/dashboard/investments");return}setMsg(d.error||"Unable to top up.");setBusy("")}
+ async function openFunding(kind:"new"|"topup",id:string){
+  const amount=Number(kind==="new"?amounts[id]||0:topups[id]||0);
+  const s=kind==="new"?strategies.find(x=>x.id===id):positions.find(x=>x.id===id)?.zynth_strategies;
+  if(!Number.isFinite(amount)||amount<=0){setMsg(kind==="new"?"Enter a valid investment amount.":"Enter a valid top-up amount.");return}
+  if(kind==="new"&&s?.minimum_investment&&amount<Number(s.minimum_investment)){setMsg("Minimum investment is "+money(s.minimum_investment)+".");return}
+  if(kind==="new"&&s?.maximum_investment&&amount>Number(s.maximum_investment)){setMsg("Maximum investment is "+money(s.maximum_investment)+".");return}
+  setBusy(kind+":"+id);setMsg("");
+  try{
+    const r=await fetch("/api/payments/methods",{cache:"no-store"});const d=await r.json();
+    if(!r.ok)throw new Error(d.error||"Unable to load payment methods.");
+    const manual=d.manual||{}, crypto=d.crypto||{};
+    const firstManual=manual.flutterwave?"flutterwave":manual.paystack?"paystack":"";
+    const firstCrypto=crypto.enabled?(crypto.currencies?.[0]||""):"";
+    if(!firstManual&&!firstCrypto)throw new Error("No funding payment method is currently available.");
+    setPaymentMethods(d);setPaymentMethod(firstManual||"crypto");setPayCurrency(firstCrypto);setFunding({kind,id,amount});setBusy("");
+  }catch(e:any){setMsg(e?.message||"Unable to load payment methods.");setBusy("");}
+}
+async function confirmFunding(){
+  if(!funding)return;
+  const {kind,id,amount}=funding;setBusy("funding");setMsg("");
+  try{
+    if(paymentMethod==="crypto"){
+      const body=kind==="new"?{amount,strategyId:id,payCurrency}:{amount,investmentId:id,payCurrency};
+      const r=await fetch("/api/payments/nowpayments/create",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)});
+      const d=await r.json();if(!r.ok)throw new Error(d.error||"Unable to create crypto payment.");
+      window.location.href="/dashboard/crypto-payment/"+d.payment.id;
+      return;
+    }
+    const endpoint=kind==="new"?"/api/deposits/create":"/api/investments/topup/deposit";
+    const body=kind==="new"?{amount,method:paymentMethod,strategyId:id}:{amount,method:paymentMethod,investmentId:id};
+    const r=await fetch(endpoint,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)});
+    const d=await r.json();if(!r.ok)throw new Error(d.error||"Unable to start funding.");
+    window.location.href="/dashboard/deposit/"+d.request.id+"?returnTo="+encodeURIComponent("/dashboard/investments");
+  }catch(e:any){setMsg(e?.message||"Unable to start funding.");setBusy("");}
+}
+async function topup(id:string){await openFunding("topup",id)}
+async function invest(id:string){await openFunding("new",id)}
+
  async function exit(id:string){const amount=Number(exits[id]||0);if(!Number.isFinite(amount)||amount<=0){setMsg("Enter the amount you want to redeem.");return}setBusy("exit:"+id);setMsg("");const r=await fetch("/api/investments/redemptions",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({investmentId:id,amount})});const d=await r.json();if(r.ok){setMsg("Redemption submitted. Your units are reserved at the confirmed NAV.");await load();setBusy("");return}setMsg(d.error||"Unable to request redemption.");setBusy("")}
  async function cancel(id:string){setBusy("cancel:"+id);const r=await fetch("/api/investments/redemptions/cancel",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({redemptionId:id})});const d=await r.json();setMsg(r.ok?"Redemption cancelled and the position restored.":(d.error||"Unable to cancel redemption."));await load();setBusy("")}
  return <section className="dashboard-content dashboard-spacing-page"><header className="dashboard-header premium-header"><div><div className="eyebrow-row"><span className="eyebrow">ZYNTH / INVESTMENTS</span><span className="live-dot"><i/> NAV ACCOUNTING</span></div><h1>Investments, with control.</h1><p>Top up existing positions, request exits, and see exactly when proceeds become available.</p></div><Link className="fund-btn secondary-dark" href="/dashboard"><ArrowUpRight size={15}/> Overview</Link></header>
@@ -78,5 +114,6 @@ export default function Investments(){
   </div>
   {!strategies.length&&<div className="premium-empty"><TrendingUp size={21}/><h3>No strategies are open yet</h3><p>The operations team will publish strategies here when ready.</p></div>}
  </section>
+ {funding&&<div className="funding-modal-backdrop" onMouseDown={()=>{if(busy!=="funding")setFunding(null)}}><section className="funding-modal" onMouseDown={e=>e.stopPropagation()}><div className="funding-modal-head"><div><span className="muted">SECURE FUNDING</span><h2>{funding.kind==="new"?"Start your investment":"Add capital to your investment"}</h2><p>{money(funding.amount)} will be applied to the selected position after payment confirmation.</p></div><button className="icon-button" onClick={()=>{if(busy!=="funding")setFunding(null)}}>×</button></div><div className="funding-method-list">{paymentMethods?.manual?.flutterwave&&<button className={"funding-method"+(paymentMethod==="flutterwave"?" selected":"")} onClick={()=>setPaymentMethod("flutterwave")}><b>Flutterwave / Bank transfer</b><span>Pay using the configured bank-transfer instructions.</span></button>}{paymentMethods?.manual?.paystack&&<button className={"funding-method"+(paymentMethod==="paystack"?" selected":"")} onClick={()=>setPaymentMethod("paystack")}><b>Paystack / Bank transfer</b><span>Pay using the configured Paystack instructions.</span></button>}{paymentMethods?.crypto?.enabled&&<button className={"funding-method"+(paymentMethod==="crypto"?" selected":"")} onClick={()=>{setPaymentMethod("crypto");setPayCurrency(paymentMethods.crypto.currencies?.[0]||"")}}><b>Crypto</b><span>Pay with an available cryptocurrency through NOWPayments.</span></button>}</div>{paymentMethod==="crypto"&&<label className="funding-select"><span>Crypto network</span><select value={payCurrency} onChange={e=>setPayCurrency(e.target.value)}>{(paymentMethods?.crypto?.currencies||[]).map((c:string)=><option key={c} value={c}>{c.toUpperCase()}</option>)}</select></label>}<div className="funding-modal-actions"><button className="ghost" disabled={busy==="funding"} onClick={()=>setFunding(null)}>Cancel</button><button className="primary" disabled={busy==="funding"||!paymentMethod||(paymentMethod==="crypto"&&!payCurrency)} onClick={confirmFunding}>{busy==="funding"?"Starting…":"Continue securely"}</button></div></section></div>}
  </section>
 }
