@@ -94,14 +94,11 @@ export async function POST(req:Request){
     const callbackUrl=new URL("/api/payments/nowpayments/ipn",req.url).toString();
 
     try{
-      const min=await nowRequest(
-        `/min-amount?currency_from=${encodeURIComponent(settings.price_currency)}&currency_to=${encodeURIComponent(payCurrency)}&fiat_equivalent=${encodeURIComponent(settings.price_currency)}&is_fixed_rate=${settings.fixed_rate}&is_fee_paid_by_user=${settings.fee_paid_by_user}`,
-        apiKey
-      );
-
-      if(Number.isFinite(Number(min?.fiat_equivalent))&&Number(deposit.total_amount)<Number(min.fiat_equivalent)){
-        throw new Error(`This crypto option requires a minimum payment of ₦${Number(min.fiat_equivalent).toLocaleString("en-NG")}.`);
-      }
+      // Do not call /min-amount here. NOWPayments' estimate/minimum preflight
+      // requires a supported fiat pair, while ZYNTH prices investments in NGN.
+      // The payment endpoint itself performs the provider-side conversion and
+      // validation for the selected crypto target. Calling /min-amount with
+      // NGN was the source of the "estimate from ngn to ngn" failure.
 
       const payment=await nowRequest("/payment",apiKey,{
         method:"POST",
