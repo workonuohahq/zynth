@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from "@/lib/supabase/config";
 
 type Tx = {id:string;type:string;amount:number;status:string;created_at:string;reference:string|null;metadata:Record<string,any>|null};
 const clean=(v:any)=>String(v??"").replace(/[\\()]/g," ").replace(/\r?\n/g," ").trim();
@@ -19,9 +21,19 @@ function makePdf(lines:string[]){
   return Buffer.from(pdf,"utf8");
 }
 
-export async function GET(){
-  const s=await createSupabaseServerClient();
-  const {data:{user}}=await s.auth.getUser();
+export async function GET(request:Request){
+  const cookieClient=await createSupabaseServerClient();
+  let s=cookieClient;
+  let {data:{user}}=await s.auth.getUser();
+  if(!user){
+    const bearer=request.headers.get("authorization");
+    const token=bearer?.match(/^Bearer\\s+(.+)$/i)?.[1];
+    if(token){
+      s=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{global:{headers:{Authorization:"Bearer "+token}}});
+      const result=await s.auth.getUser(token);
+      user=result.data.user;
+    }
+  }
   if(!user)return NextResponse.json({error:"Authentication required."},{status:401});
   const [{data:profile},{data:transactions,error}]=await Promise.all([
     s.from("users").select("full_name").eq("id",user.id).single(),
