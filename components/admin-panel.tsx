@@ -23,7 +23,7 @@ const pct=(n:any)=>`${Number(n||0).toFixed(2)}%`;
 export default function AdminPanel({initialData,adminEmail}:{initialData:any;adminEmail:string}){
  const[data,setData]=useState(initialData||{}),[tab,setTab]=useState("overview"),[refreshing,setRefreshing]=useState(false),[refreshKey,setRefreshKey]=useState(0),[moneyOpen,setMoneyOpen]=useState(false),[reports,setReports]=useState<any[]>([]),[history,setHistory]=useState<any[]>([]),[strategies,setStrategies]=useState<any[]>([]),[traders,setTraders]=useState<any[]>([]),[editingStrategy,setEditingStrategy]=useState<any>(null),[notificationTemplates,setNotificationTemplates]=useState<any[]>([]),[busy,setBusy]=useState(""),[notice,setNotice]=useState(""),[preview,setPreview]=useState<any>(null),[previewBusy,setPreviewBusy]=useState(""),[mt5Loading,setMt5Loading]=useState(false),[mt5CopyState,setMt5CopyState]=useState("");
  async function load(){
-  const [q,s,t,n,support,crypto]=await Promise.all([
+  const [q,s,t,n,support]=await Promise.all([
    fetch("/api/admin/settlements").then(r=>r.json()),
    fetch("/api/admin/strategies").then(r=>r.json()),
    fetch("/api/admin/traders").then(r=>r.json()),
