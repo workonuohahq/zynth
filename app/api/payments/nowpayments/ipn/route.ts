@@ -6,7 +6,7 @@ import {normalizeNowStatus,verifyNowPaymentsSignature} from "@/lib/nowpayments";
 const supabase=createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL||"https://pcmzoxtvkhzogxvumvzs.supabase.co",
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY||"sb_publishable_Cgn1GCZxNxCQBGbdXYQc5A_olJfPkcF",
-  {auth:{autoRefreshToken:false,persistSession:false}}
+  {auth:{autoRefreshToken:false,persistSession:false},global:{headers:{"x-zynth-runtime-secret":process.env.ZYNTH_RUNTIME_RPC_SECRET||""}}}
 );
 
 export async function POST(req:Request){
