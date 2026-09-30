@@ -224,6 +224,14 @@ export default function AdminInvestmentSettings({ refreshKey }: { refreshKey?: n
   }, []);
 
   useEffect(() => {
+    if (!crypto?.api_key_configured) return;
+    const syncedAt = crypto.currency_catalog_synced_at ? Date.parse(crypto.currency_catalog_synced_at) : 0;
+    if (!syncedAt || Date.now() - syncedAt > 6 * 60 * 60 * 1000) {
+      testCrypto();
+    }
+  }, [crypto?.api_key_configured, crypto?.currency_catalog_synced_at]);
+
+  useEffect(() => {
     fetch("/api/admin/investment-settings", { cache: "no-store" })
       .then(async (r) => {
         const data = await r.json();
