@@ -15,7 +15,6 @@ import AdminReferralCenter from "@/components/admin-referral-center";
 import AdminSupportCenter from "@/components/admin-support-center";
 import AdminTraderGovernance from "@/components/admin-trader-governance";
 import AdminZpa from "@/components/admin-zpa";
-import AdminNowPaymentsSettings from "@/components/admin-nowpayments-settings";
 
 const money=(n:any)=>`₦${Number(n||0).toLocaleString("en-NG",{minimumFractionDigits:2,maximumFractionDigits:2})}`;
 const pct=(n:any)=>`${Number(n||0).toFixed(2)}%`;
