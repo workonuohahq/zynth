@@ -16,8 +16,10 @@ function pdfLine(x:number,y:number,w:number,r:number,g:number,b:number){return "
 
 function makePages(rows:Tx[],name:string){
   const pages:string[]=[];
-  const credits=rows.filter(r=>["deposit","cycle_payout","zpa_commission"].includes(r.type)).reduce((a,r)=>a+Number(r.amount||0),0);
-  const debits=rows.filter(r=>!["deposit","cycle_payout","zpa_commission"].includes(r.type)).reduce((a,r)=>a+Number(r.amount||0),0);
+  // Statement totals are accounting totals, not raw transaction totals. Only completed movements affect them; failed/pending entries remain visible in the ledger but never inflate the credit/debit cards.
+  const settled=rows.filter(r=>String(r.status).toLowerCase()==="completed");
+  const credits=settled.filter(r=>["deposit","cycle_payout","zpa_commission"].includes(r.type)).reduce((a,r)=>a+Number(r.amount||0),0);
+  const debits=settled.filter(r=>!["deposit","cycle_payout","zpa_commission"].includes(r.type)).reduce((a,r)=>a+Number(r.amount||0),0);
   const generated=new Date().toLocaleString("en-NG",{dateStyle:"medium",timeStyle:"short"});
   const chunks=rows.length?Array.from({length:Math.ceil(rows.length/18)},(_,i)=>rows.slice(i*18,i*18+18)):[[]];
 
@@ -37,13 +39,16 @@ function makePages(rows:Tx[],name:string){
       s+=pdfText(54,679,7,"TOTAL TRANSACTIONS","F2",[.55,.56,.60]);
       s+=pdfText(54,660,13,String(rows.length),"F2",[.95,.95,.96]);
       s+=pdfRect(216,650,162,45,.075,.075,.09);
-      s+=pdfText(228,679,7,"TOTAL CREDITS","F2",[.55,.56,.60]);
+      s+=pdfText(228,679,7,"COMPLETED CREDITS","F2",[.55,.56,.60]);
       s+=pdfText(228,660,11,money(credits),"F2",[.86,.68,.20]);
       s+=pdfRect(390,650,162,45,.075,.075,.09);
-      s+=pdfText(402,679,7,"TOTAL DEBITS","F2",[.55,.56,.60]);
+      s+=pdfText(402,679,7,"COMPLETED DEBITS","F2",[.55,.56,.60]);
       s+=pdfText(402,660,11,money(debits),"F2",[.95,.95,.96]);
     }
 
+    if(pageIndex===0){
+      s+=pdfText(42,637,6.2,"Failed and pending transactions are excluded from the credit/debit totals below.","F1",[.48,.49,.52]);
+    }
     const top=pageIndex===0?625:690;
     s+=pdfRect(42,top-22,510,22,.11,.11,.13);
     s+=pdfText(52,top-15,6.5,"DATE / TIME","F2",[.65,.66,.70]);
