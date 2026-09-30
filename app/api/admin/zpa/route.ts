@@ -38,8 +38,6 @@ export async function POST(req:Request){
     }else if(b.action==="milestones"){
       if(!Array.isArray(b.milestones))return NextResponse.json({error:"Milestones must be an array."},{status:400});
       ({data,error}=await supabase.rpc("zynth_admin_zpa_milestones",{p_admin_id:user.id,p_milestones:b.milestones}));
-    }else if(b.action==="attribute"){
-      ({data,error}=await supabase.rpc("zynth_admin_zpa_attribute",{p_admin_id:user.id,p_zpa_id:String(b.zpa_id),p_investor_id:String(b.investor_id)}));
     }else if(b.action==="detail"){
       ({data,error}=await supabase.rpc("zynth_admin_zpa_detail",{p_admin_id:user.id,p_zpa_id:String(b.zpa_id)}));
     }else{
