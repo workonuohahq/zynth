@@ -53,7 +53,7 @@ export async function POST(req:Request){
       .maybeSingle();
 
     if(catalogError) return NextResponse.json({error:"Crypto asset configuration is temporarily unavailable."},{status:503});
-    if(!catalogEntry?.zynth_enabled) return NextResponse.json({error:"That cryptocurrency/network is not enabled for ZYNTH."},{status:400});
+    if(!catalogEntry?.provider_available || !catalogEntry?.zynth_enabled || payCurrency===fiatPriceCurrency || payCurrency==="ngn") return NextResponse.json({error:"That cryptocurrency/network is not currently available for ZYNTH crypto funding."},{status:400});
 
     let merchantCurrencies:string[]=[];
     try{
