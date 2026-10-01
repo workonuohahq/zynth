@@ -13,8 +13,8 @@ returns table(
 )
 language plpgsql
 security definer
-set search_path = public
-as $$
+set search_path = public, extensions
+as $
 declare
   headers_raw text := current_setting('request.headers', true);
   provided text;
