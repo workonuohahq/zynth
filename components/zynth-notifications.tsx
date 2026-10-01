@@ -100,6 +100,26 @@ export default function ZynthNotifications() {
       if (message) push({ type: "error", title: "Unexpected error", message });
     };
 
+    const originalFetch = window.fetch.bind(window);
+    const monitored = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+    window.fetch = (async (...args: Parameters<typeof fetch>) => {
+      const init = args[1];
+      const method = String(init?.method || (args[0] instanceof Request ? args[0].method : "GET")).toUpperCase();
+      try {
+        const response = await originalFetch(...args);
+        if (!response.ok && monitored.has(method)) {
+          const payload = await response.clone().json().catch(() => ({}));
+          const data = payload && typeof payload === "object" ? payload as Record<string, unknown> : {};
+          const message = cleanMessage(data.error) || cleanMessage(data.message) || `ZYNTH could not complete that request (HTTP ${response.status}).`;
+          push({ type: response.status >= 500 ? "error" : "warning", title: response.status >= 500 ? "Request failed" : "Action not completed", message });
+        }
+        return response;
+      } catch (error) {
+        if (monitored.has(method)) push({ type: "error", title: "Connection problem", message: cleanMessage(error instanceof Error ? error.message : "") || "ZYNTH could not reach the service. Please try again." });
+        throw error;
+      }
+    }) as typeof window.fetch;
+
     window.addEventListener("zynth:notification", onNotification);
     window.addEventListener("error", onWindowError);
     window.zynthNotify = notify;
@@ -107,6 +127,7 @@ export default function ZynthNotifications() {
     return () => {
       window.removeEventListener("zynth:notification", onNotification);
       window.removeEventListener("error", onWindowError);
+      window.fetch = originalFetch;
       window.zynthNotify = undefined;
       timers.forEach(timer => window.clearTimeout(timer));
     };
