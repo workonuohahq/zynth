@@ -139,3 +139,55 @@ select cron.schedule(
     );
   $job$
 );
+
+
+-- Allow server-to-server NOWPayments routes to read provider configuration without
+-- requiring a customer auth session. The dedicated worker secret remains in Vault.
+create or replace function public.get_nowpayments_runtime_config()
+returns jsonb
+language plpgsql
+security definer
+set search_path = public, extensions
+as $function$
+declare
+  s record;
+  headers_raw text := current_setting('request.headers', true);
+  provided text;
+  expected_server_secret text;
+begin
+  if auth.uid() is null then
+    provided := case when headers_raw is null or headers_raw='' then null
+                     else headers_raw::json->>'x-zynth-runtime-secret' end;
+    select decrypted_secret into expected_server_secret
+    from vault.decrypted_secrets
+    where name='zynth_nowpayments_reconcile_secret'
+    limit 1;
+    if provided is null or expected_server_secret is null or provided <> expected_server_secret then
+      raise exception 'AUTHENTICATION_REQUIRED';
+    end if;
+  end if;
+
+  select enabled, price_currency, fixed_rate, fee_paid_by_user,
+         api_key_ciphertext, ipn_secret_ciphertext, last_test_status
+    into s
+  from public.zynth_payment_provider_settings
+  where provider = 'nowpayments'
+  limit 1;
+
+  if not found then raise exception 'NOWPAYMENTS_NOT_CONFIGURED'; end if;
+
+  return jsonb_build_object(
+    'enabled', coalesce(s.enabled,false),
+    'price_currency', coalesce(s.price_currency,'ngn'),
+    'fixed_rate', coalesce(s.fixed_rate,false),
+    'fee_paid_by_user', coalesce(s.fee_paid_by_user,false),
+    'api_key_ciphertext', s.api_key_ciphertext,
+    'ipn_secret_ciphertext', s.ipn_secret_ciphertext,
+    'last_test_status', s.last_test_status
+  );
+end;
+$function$;
+
+revoke all on function public.get_nowpayments_runtime_config() from public;
+grant execute on function public.get_nowpayments_runtime_config() to authenticated;
+grant execute on function public.get_nowpayments_runtime_config() to anon;
