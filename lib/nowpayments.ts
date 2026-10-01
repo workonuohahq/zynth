@@ -2,6 +2,10 @@ import { createHmac } from "crypto";
 import { decryptProviderSecret } from "@/lib/secure-provider-secrets";
 
 export const NOWPAYMENTS_BASE="https://api.nowpayments.io/v1";
+export const ZYNTH_FX_SOURCES=[
+  "https://api.exchangerate.host/latest?base=USD&symbols=NGN",
+  "https://api.frankfurter.dev/v2/rates?base=USD&quotes=NGN"
+];
 
 export async function getNowPaymentsSettings(adminClient:any){
   const {data,error}=await adminClient.from("zynth_payment_provider_settings").select("*").eq("provider","nowpayments").maybeSingle();
@@ -81,4 +85,33 @@ export function normalizeNowStatus(status:string){
   const s=String(status||"").toLowerCase();
   if(["waiting","confirming","confirmed","finished","failed","expired","refunded","partially_paid","sending"].includes(s)) return s;
   return s||"unknown";
+}
+
+export async function getLiveUsdNgnRate(){
+  for(const url of ZYNTH_FX_SOURCES){
+    try{
+      const r=await fetch(url,{cache:"no-store",headers:{accept:"application/json"}});
+      if(!r.ok) continue;
+      const body=await r.json();
+      const rate=Number(body?.rates?.NGN);
+      if(Number.isFinite(rate)&&rate>0){
+        return {rate,source:new URL(url).hostname,capturedAt:new Date().toISOString()};
+      }
+    }catch{}
+  }
+  throw new Error("Live NGN/USD FX rate is temporarily unavailable.");
+}
+
+export async function getNowPaymentsMinAmount(apiKey:string,payCurrency:string,fixedRate=false,feePaidByUser=false){
+  const q=new URLSearchParams({
+    currency_from:"usd",
+    currency_to:payCurrency,
+    fiat_equivalent:"usd",
+    is_fixed_rate:String(Boolean(fixedRate)),
+    is_fee_paid_by_user:String(Boolean(feePaidByUser))
+  });
+  const result=await nowRequest("/min-amount?"+q.toString(),apiKey);
+  const minimum=Number(result?.fiat_equivalent??result?.min_amount);
+  if(!Number.isFinite(minimum)||minimum<0) throw new Error("Invalid NOWPayments minimum amount.");
+  return {minimum,raw:result};
 }
