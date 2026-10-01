@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from "@/lib/supabase/config";
 import { PWA_TOKEN_HEADER, validatePwaCredential } from "@/lib/pwa/server";
 
-const PUBLIC_API_PREFIXES=["/api/health","/api/pwa","/api/webhooks"];
+const PUBLIC_API_PREFIXES=["/api/health","/api/pwa","/api/webhooks","/api/payments/nowpayments/ipn","/api/payments/nowpayments/reconcile"];
 const PUSH_API_PREFIXES=["/api/push"];
 function isPath(path:string,prefix:string){return path===prefix||path.startsWith(`${prefix}/`);}
 function startsWithAny(path:string,prefixes:string[]){return prefixes.some(p=>isPath(path,p));}
