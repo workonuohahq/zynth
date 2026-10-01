@@ -102,7 +102,7 @@ begin
   elsif p_action in ('reverse','refund') then
     if t.status::text<>'completed' then raise exception 'ONLY_COMPLETED_TRANSACTIONS_CAN_BE_REVERSED'; end if;
     if t.reversal_of is not null or exists(select 1 from public.transactions x where x.reversal_of=t.id and x.status::text<>'failed') then raise exception 'TRANSACTION_ALREADY_REVERSED'; end if;
-    if coalesce(t.metadata->>'auto_invested','false')='true' or t.type::text in ('investment','investment_redemption','cycle_entry','cycle_payout','settlement_adjustment','withdrawal','profit_withdrawal') then
+    if coalesce(t.metadata->>'auto_invested','false')='true' or coalesce(t.metadata->>'investment_id','')<>'' or coalesce(t.metadata->>'strategy_id','')<>'' or t.type::text in ('investment','investment_redemption','cycle_entry','cycle_payout','settlement_adjustment','withdrawal','profit_withdrawal') then
       raise exception 'TRANSACTION_REQUIRES_SOURCE_WORKFLOW';
     end if;
     before_balance:=(select main_wallet_balance from public.users where id=t.user_id for update);
@@ -249,7 +249,7 @@ begin
       (status::text='pending' and type::text='deposit' and deposit_workflow_status='pending') as can_approve,
       (status::text='pending' and type::text='deposit' and deposit_workflow_status='pending') as can_reject,
       (status::text in ('failed','cancelled') and type::text='deposit' and deposit_workflow_status in ('rejected','cancelled')) as can_return_pending,
-      (status::text='completed' and direction in ('credit','debit') and type::text in ('deposit','manual_adjustment','refund','reversal','referral_reward','zpa_commission','profit_unlock','fee_deduction')) as can_reverse
+      (status::text='completed' and direction in ('credit','debit') and type::text in ('deposit','manual_adjustment','refund','reversal','referral_reward','zpa_commission','profit_unlock','fee_deduction') and coalesce(metadata->>'investment_id','')='' and coalesce(metadata->>'strategy_id','')='') as can_reverse
     from filtered
     order by created_at desc
     offset v_offset limit v_size
