@@ -3,8 +3,8 @@ import { decryptProviderSecret } from "@/lib/secure-provider-secrets";
 
 export const NOWPAYMENTS_BASE="https://api.nowpayments.io/v1";
 export const ZYNTH_FX_SOURCES=[
-  "https://api.exchangerate.host/latest?base=USD&symbols=NGN",
-  "https://api.frankfurter.dev/v2/rates?base=USD&quotes=NGN"
+  "https://api.frankfurter.dev/v2/rate/usd/ngn?providers=cbn",
+  "https://api.frankfurter.dev/v2/rates?base=usd&quotes=ngn&providers=cbn"
 ];
 
 export async function getNowPaymentsSettings(adminClient:any){
@@ -93,9 +93,13 @@ export async function getLiveUsdNgnRate(){
       const r=await fetch(url,{cache:"no-store",headers:{accept:"application/json"}});
       if(!r.ok) continue;
       const body=await r.json();
-      const rate=Number(body?.rates?.NGN);
+      const rate=Number(
+        body?.rate ??
+        body?.rates?.NGN ??
+        (Array.isArray(body) ? body.find((row:any)=>String(row?.quote||"").toUpperCase()==="NGN")?.rate : undefined)
+      );
       if(Number.isFinite(rate)&&rate>0){
-        return {rate,source:new URL(url).hostname,capturedAt:new Date().toISOString()};
+        return {rate,source:"frankfurter-cbn",capturedAt:new Date().toISOString()};
       }
     }catch{}
   }
