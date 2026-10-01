@@ -56,7 +56,7 @@ export async function GET(_req:Request,{params}:{params:{id:string}}){
             if(provider?.fee){
               providerFee=Number(provider.fee?.serviceFee||0)+Number(provider.fee?.depositFee||0)+Number(provider.fee?.withdrawalFee||0);
             }
-            await client.rpc("process_nowpayments_ipn",{
+            await createClient(\n              process.env.NEXT_PUBLIC_SUPABASE_URL||"https://pcmzoxtvkhzogxvumvzs.supabase.co",\n              process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY||"sb_publishable_Cgn1GCZxNxCQBGbdXYQc5A_olJfPkc5A",\n              {auth:{autoRefreshToken:false,persistSession:false},global:{headers:{"x-zynth-runtime-secret":process.env.ZYNTH_RUNTIME_RPC_SECRET||process.env.ZYNTH_NOWPAYMENTS_RECONCILE_SECRET||""}}}\n            ).rpc("process_nowpayments_ipn",{
               p_payment_id:String(data.nowpayments_payment_id),
               p_order_id:String(data.deposit_id),
               p_status:providerStatus,
