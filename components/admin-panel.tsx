@@ -1,7 +1,7 @@
 "use client";
 import {useEffect,useState} from "react";
 import Link from "next/link";
-import {ArrowDownToLine,ArrowDownLeft,ArrowUpRight,ArrowLeftRight,BarChart3,Bell,CheckCircle2,ChevronRight,Clock3,Copy,ExternalLink,Eye,RefreshCw,Settings2,ShieldCheck,TrendingUp,Users,Target,X,XCircle,Pencil,Pause,Play,Archive,Trash2,Gift,Headphones,LogOut,Send} from "lucide-react";
+import {Activity,ArrowDownToLine,ArrowDownLeft,ArrowUpRight,ArrowLeftRight,BarChart3,Bell,CheckCircle2,ChevronRight,Clock3,Copy,ExternalLink,Eye,RefreshCw,Settings2,ShieldCheck,TrendingUp,Users,Target,X,XCircle,Pencil,Pause,Play,Archive,Trash2,Gift,Headphones,LogOut,Send} from "lucide-react";
 import AdminUsers from "@/components/admin-users";
 import ThemeSwitcher from "@/components/theme-switcher";
 import AdminInvestmentSettings from "@/components/admin-investment-settings";
