@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AlertCircle, CheckCircle2, Info, TriangleAlert, X } from "lucide-react";
+import { AlertCircle, CheckCircle2, Info, AlertTriangle, X } from "lucide-react";
 
 export type ZynthNotificationType = "success" | "error" | "warning" | "info";
 export type ZynthNotificationInput = {
