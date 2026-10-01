@@ -6,7 +6,7 @@ import { ArrowLeft, RefreshCw, Save, ShieldCheck } from "lucide-react";
 export default function PaymentSettings({initialData}:{initialData:any}){
  const [form,setForm]=useState({...initialData});
  const [busy,setBusy]=useState(false); const [notice,setNotice]=useState("");
- const [crypto,setCrypto]=useState<any>(null);
+ const [crypto,setCrypto]=useState<any>(null); const [cryptoCurrencies,setCryptoCurrencies]=useState<any[]>([]);
  const [cryptoForm,setCryptoForm]=useState<any>({enabled:false,usd_ngn_rate:"",fx_source:"ZYNTH controlled FX rate",fixed_rate:true,fee_paid_by_user:true,zynth_enabled_currencies:[],api_key:"",ipn_secret:""});
  const [cryptoBusy,setCryptoBusy]=useState(false); const [cryptoNotice,setCryptoNotice]=useState("");
 
@@ -15,7 +15,7 @@ export default function PaymentSettings({initialData}:{initialData:any}){
 
  useEffect(()=>{
   fetch("/api/admin/payment-provider",{cache:"no-store"})
-   .then(async r=>{const d=await r.json();if(!r.ok)throw new Error(d.error||"Unable to load crypto settings.");setCrypto(d.settings);setCryptoForm({
+   .then(async r=>{const d=await r.json();if(!r.ok)throw new Error(d.error||"Unable to load crypto settings.");setCrypto(d.settings);setCryptoCurrencies(d.currencies||[]);setCryptoForm({
      enabled:Boolean(d.settings?.enabled),
      usd_ngn_rate:d.settings?.usd_ngn_rate??"",
      fx_source:d.settings?.fx_source||"ZYNTH controlled FX rate",
@@ -45,6 +45,7 @@ export default function PaymentSettings({initialData}:{initialData:any}){
    const d=await r.json();
    if(!r.ok) throw new Error(d.error||"Unable to save NOWPayments settings.");
    setCrypto(d.settings);
+   setCryptoCurrencies(d.currencies||[]);
    setCryptoForm((x:any)=>({...x,api_key:"",ipn_secret:""}));
    setCryptoNotice("NOWPayments settings saved. New crypto checkouts now use the saved USD/NGN rate.");
   }catch(e:any){setCryptoNotice(e.message||"Unable to save NOWPayments settings.");}
@@ -58,7 +59,7 @@ export default function PaymentSettings({initialData}:{initialData:any}){
    const d=await r.json();
    if(!r.ok) throw new Error(d.error||"NOWPayments sync failed.");
    const fresh=await fetch("/api/admin/payment-provider",{cache:"no-store"}).then(x=>x.json());
-   if(fresh.settings){setCrypto(fresh.settings);setCryptoForm((x:any)=>({...x,zynth_enabled_currencies:fresh.settings.supported_currencies||[]}));}
+   if(fresh.settings){setCrypto(fresh.settings);setCryptoCurrencies(fresh.currencies||[]);setCryptoForm((x:any)=>({...x,zynth_enabled_currencies:fresh.settings.supported_currencies||[]}));}
    setCryptoNotice(d.message||"NOWPayments merchant catalog synced.");
   }catch(e:any){setCryptoNotice(e.message||"NOWPayments sync failed.");}
   finally{setCryptoBusy(false);}
@@ -90,7 +91,7 @@ export default function PaymentSettings({initialData}:{initialData:any}){
    <div style={{marginTop:15}}>
     <span className="muted">ENABLED MERCHANT ASSETS</span>
     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:8,marginTop:9}}>
-     {(crypto?.currencies||[]).filter((x:any)=>x.provider_available).map((x:any)=><label key={x.currency_code} style={{display:"flex",gap:8,alignItems:"center",padding:"9px 10px",border:"1px solid #302b24",borderRadius:9}}>
+     {(cryptoCurrencies||[]).filter((x:any)=>x.provider_available).map((x:any)=><label key={x.currency_code} style={{display:"flex",gap:8,alignItems:"center",padding:"9px 10px",border:"1px solid #302b24",borderRadius:9}}>
       <input type="checkbox" checked={(cryptoForm.zynth_enabled_currencies||[]).includes(x.currency_code)} onChange={()=>toggleCurrency(x.currency_code)}/>
       <span><b style={{fontSize:11}}>{x.symbol||x.currency_code.toUpperCase()}</b><small style={{display:"block",color:"#777067",fontSize:8}}>{x.network||x.name||"Asset"}</small></span>
      </label>)}
