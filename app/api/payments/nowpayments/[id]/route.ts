@@ -17,7 +17,7 @@ export async function GET(_req:Request,{params}:{params:{id:string}}){
 
   let {data,error}=await client
     .from("zynth_crypto_payments")
-    .select("id,deposit_id,nowpayments_payment_id,price_amount,price_currency,pay_amount,pay_currency,pay_address,payment_status,actually_paid,actually_paid_currency,transaction_hash,expiration_at,credited_at,created_at,updated_at,last_ipn_at,deposit_requests!inner(id,amount,total_amount,fee_amount,status,reference)")
+    .select("id,deposit_id,nowpayments_payment_id,price_amount,price_currency,ngn_amount,usd_amount,usd_ngn_rate,fx_source,fx_rate_at,pay_amount,pay_currency,pay_address,payment_status,actually_paid,actually_paid_currency,transaction_hash,expiration_at,credited_at,created_at,updated_at,last_ipn_at,deposit_requests!inner(id,amount,total_amount,fee_amount,status,reference)")
     .eq("id",key)
     .eq("user_id",user.id)
     .maybeSingle();
@@ -25,7 +25,7 @@ export async function GET(_req:Request,{params}:{params:{id:string}}){
   if(!data&&!error){
     const result=await client
       .from("zynth_crypto_payments")
-      .select("id,deposit_id,nowpayments_payment_id,price_amount,price_currency,pay_amount,pay_currency,pay_address,payment_status,actually_paid,actually_paid_currency,transaction_hash,expiration_at,credited_at,created_at,updated_at,last_ipn_at,deposit_requests!inner(id,amount,total_amount,fee_amount,status,reference)")
+      .select("id,deposit_id,nowpayments_payment_id,price_amount,price_currency,ngn_amount,usd_amount,usd_ngn_rate,fx_source,fx_rate_at,pay_amount,pay_currency,pay_address,payment_status,actually_paid,actually_paid_currency,transaction_hash,expiration_at,credited_at,created_at,updated_at,last_ipn_at,deposit_requests!inner(id,amount,total_amount,fee_amount,status,reference)")
       .eq("deposit_id",key)
       .eq("user_id",user.id)
       .maybeSingle();
@@ -83,7 +83,7 @@ export async function GET(_req:Request,{params}:{params:{id:string}}){
   // the authoritative provider status.
   const refreshed=await client
     .from("zynth_crypto_payments")
-    .select("id,deposit_id,nowpayments_payment_id,price_amount,price_currency,pay_amount,pay_currency,pay_address,payment_status,actually_paid,actually_paid_currency,transaction_hash,expiration_at,credited_at,created_at,updated_at,last_ipn_at,deposit_requests!inner(id,amount,total_amount,fee_amount,status,reference)")
+    .select("id,deposit_id,nowpayments_payment_id,price_amount,price_currency,ngn_amount,usd_amount,usd_ngn_rate,fx_source,fx_rate_at,pay_amount,pay_currency,pay_address,payment_status,actually_paid,actually_paid_currency,transaction_hash,expiration_at,credited_at,created_at,updated_at,last_ipn_at,deposit_requests!inner(id,amount,total_amount,fee_amount,status,reference)")
     .eq("id",data.id)
     .eq("user_id",user.id)
     .maybeSingle();
