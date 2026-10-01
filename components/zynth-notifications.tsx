@@ -36,7 +36,7 @@ const TITLES: Record<ZynthNotificationType, string> = {
 function cleanMessage(value: unknown) {
   const text = String(value ?? "").replace(/\s+/g, " ").trim();
   if (!text) return "";
-  if (/stack|traceback|syntaxerror|referenceerror/i.test(text)) return "";
+  if (/stack|traceback|syntaxerror|referenceerror|postgres|pgrst|supabase|relation .* does not exist|column .* does not exist|database error|fetch failed|econn|errno/i.test(text)) return "";
   return text.length > 260 ? text.slice(0, 257).trimEnd() + "…" : text;
 }
 
