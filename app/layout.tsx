@@ -1,5 +1,6 @@
 import "./globals.css";
 import "./dashboard/dashboard-features.css";
+import ZynthNotifications from "@/components/zynth-notifications";
 import type { Metadata, Viewport } from "next";
 
 export const metadata: Metadata = {
@@ -26,5 +27,5 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return <html lang="en"><body>{children}</body></html>;
+  return <html lang="en"><body>{children}<ZynthNotifications /></body></html>;
 }
