@@ -346,8 +346,11 @@ end;
 $function$
 
 revoke all on function public.zynth_admin_transaction_center(text,text,text,text,text,text,text,uuid,timestamptz,timestamptz,numeric,numeric,integer,integer) from public;
+revoke all on function public.zynth_admin_transaction_center(text,text,text,text,text,text,text,uuid,timestamptz,timestamptz,numeric,numeric,integer,integer) from anon;
 grant execute on function public.zynth_admin_transaction_center(text,text,text,text,text,text,text,uuid,timestamptz,timestamptz,numeric,numeric,integer,integer) to authenticated;
 revoke all on function public.zynth_admin_transaction_detail(uuid) from public;
+revoke all on function public.zynth_admin_transaction_detail(uuid) from anon;
 grant execute on function public.zynth_admin_transaction_detail(uuid) to authenticated;
 revoke all on function public.zynth_admin_transaction_action(uuid,uuid,text,text) from public;
+revoke all on function public.zynth_admin_transaction_action(uuid,uuid,text,text) from anon;
 grant execute on function public.zynth_admin_transaction_action(uuid,uuid,text,text) to authenticated;
