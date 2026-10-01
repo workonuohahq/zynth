@@ -199,7 +199,7 @@ begin
         or coalesce(b.full_name,'') ilike '%'||v_q||'%'
         or coalesce(b.email,'') ilike '%'||v_q||'%'
         or coalesce(b.resolved_provider_tx,'') ilike '%'||v_q||'%'
-        or coalesce(b.metadata->>'payment_reference','') ilike '%'||v_q||'%'
+        or coalesce(b.metadata->>'payment_reference','') ilike '%'||v_q||'%' or coalesce(b.processed_by_name,'') ilike '%'||v_q||'%'
       )
   )
   select count(*) into v_total from filtered;
