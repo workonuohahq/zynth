@@ -66,7 +66,10 @@ export async function GET(){
     return NextResponse.json({
       settings:{
         enabled:data.enabled,
-        price_currency:data.price_currency,
+        price_currency:"usd",
+        usd_ngn_rate:data.usd_ngn_rate,
+        fx_source:data.fx_source,
+        fx_updated_at:data.fx_updated_at,
         fixed_rate:data.fixed_rate,
         fee_paid_by_user:data.fee_paid_by_user,
         supported_currencies:Array.isArray(data.supported_currencies)?data.supported_currencies:[],
@@ -97,10 +100,15 @@ export async function PATCH(req:Request){
     const requested=normalizeCodes(b.zynth_enabled_currencies);
     const enabled=requested.filter((code)=>available.has(code));
     if(Boolean(b.enabled)&&!enabled.length) return NextResponse.json({error:"Select at least one currently available NOWPayments asset before enabling crypto deposits."},{status:400});
+    const fxRate=Number(b.usd_ngn_rate);
+    if(!Number.isFinite(fxRate)||fxRate<=0) return NextResponse.json({error:"Enter a valid NGN per USD FX rate before enabling crypto deposits."},{status:400});
 
     const patch:any={
       enabled:Boolean(b.enabled),
-      price_currency:"ngn",
+      price_currency:"usd",
+      usd_ngn_rate:Number(b.usd_ngn_rate),
+      fx_source:String(b.fx_source||"ZYNTH controlled FX rate").trim().slice(0,120),
+      fx_updated_at:new Date().toISOString(),
       fixed_rate:Boolean(b.fixed_rate),
       fee_paid_by_user:Boolean(b.fee_paid_by_user),
       supported_currencies:enabled,
