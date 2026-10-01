@@ -29,13 +29,16 @@ export async function POST(req:Request){
       return NextResponse.json({error:"Crypto payment configuration is incomplete."},{status:503});
     }
 
-    // Server-side invariant: the fiat pricing currency can never be the crypto target.
-    // This blocks stale PWA/Vercel clients from ever sending NGN -> NGN to NOWPayments.
-    const fiatPriceCurrency = String(settings.price_currency || "ngn").toLowerCase().trim();
-    if(payCurrency === fiatPriceCurrency || payCurrency === "ngn"){
-      return NextResponse.json({error:"NGN is the pricing currency, not a crypto payment option. Please choose a supported cryptocurrency/network."},{status:400});
+    // ZYNTH accounting stays in NGN, but NOWPayments is deliberately priced in USD.
+    // This prevents the provider from performing the questionable NGN -> crypto conversion.
+    const pricingCurrency = "usd";
+    if(payCurrency === "ngn"){
+      return NextResponse.json({error:"NGN is the ZYNTH accounting currency, not a crypto payment option. Please choose a supported cryptocurrency/network."},{status:400});
     }
-
+    const usdNgnRate = Number(settings.usd_ngn_rate);
+    if(!Number.isFinite(usdNgnRate) || usdNgnRate <= 0){
+      return NextResponse.json({error:"Crypto FX pricing is not configured. Please contact support."},{status:503});
+    }
 
     let apiKey:string;
     try{
@@ -53,7 +56,7 @@ export async function POST(req:Request){
       .maybeSingle();
 
     if(catalogError) return NextResponse.json({error:"Crypto asset configuration is temporarily unavailable."},{status:503});
-    if(!catalogEntry?.provider_available || !catalogEntry?.zynth_enabled || payCurrency===fiatPriceCurrency || payCurrency==="ngn") return NextResponse.json({error:"That cryptocurrency/network is not currently available for ZYNTH crypto funding."},{status:400});
+    if(!catalogEntry?.provider_available || !catalogEntry?.zynth_enabled || payCurrency==="ngn") return NextResponse.json({error:"That cryptocurrency/network is not currently available for ZYNTH crypto funding."},{status:400});
 
     let merchantCurrencies:string[]=[];
     try{
@@ -94,17 +97,17 @@ export async function POST(req:Request){
     const callbackUrl=new URL("/api/payments/nowpayments/ipn",req.url).toString();
 
     try{
-      // Do not call /min-amount here. NOWPayments' estimate/minimum preflight
-      // requires a supported fiat pair, while ZYNTH prices investments in NGN.
-      // The payment endpoint itself performs the provider-side conversion and
-      // validation for the selected crypto target. Calling /min-amount with
-      // NGN was the source of the "estimate from ngn to ngn" failure.
+      const ngnAmount = Number(deposit.total_amount);
+      const usdAmount = Math.round((ngnAmount / usdNgnRate) * 1e8) / 1e8;
+      if(!Number.isFinite(usdAmount) || usdAmount <= 0){
+        throw new Error("Unable to calculate the USD settlement amount.");
+      }
 
       const payment=await nowRequest("/payment",apiKey,{
         method:"POST",
         body:JSON.stringify({
-          price_amount:Number(deposit.total_amount),
-          price_currency:settings.price_currency,
+          price_amount:usdAmount,
+          price_currency:pricingCurrency,
           pay_currency:payCurrency,
           ipn_callback_url:callbackUrl,
           order_id:deposit.id,
@@ -116,11 +119,13 @@ export async function POST(req:Request){
 
       if(!payment?.payment_id||!payment?.pay_address) throw new Error("NOWPayments returned an incomplete payment instruction.");
 
-      const {data:record,error:recordError}=await client.rpc("record_nowpayments_payment",{
+      const {data:record,error:recordError}=await client.rpc("record_nowpayments_payment_v2",{
         p_deposit_id:deposit.id,
         p_pay_currency:payCurrency,
-        p_price_amount:Number(deposit.total_amount),
-        p_price_currency:settings.price_currency,
+        p_ngn_amount:ngnAmount,
+        p_usd_amount:usdAmount,
+        p_usd_ngn_rate:usdNgnRate,
+        p_fx_source:String(settings.fx_source||"ZYNTH controlled FX rate"),
         p_payment:payment
       });
 
