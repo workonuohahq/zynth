@@ -2403,8 +2403,8 @@ html[data-theme="light"] .admin-list-item .admin-support-badge{background:#c6282
 .admin-tx-header p{margin:0;color:#777;font-size:12px;max-width:700px;line-height:1.6}
 .admin-tx-actions{display:flex;gap:8px;align-items:center;flex:none}
 .admin-tx-actions a{ text-decoration:none }
-.admin-tx-health{display:grid;grid-template-columns:repeat(6,1fr);gap:9px;margin-bottom:12px}
-.admin-tx-health>div{background:#0e1010;border:1px solid var(--line);border-radius:14px;padding:14px;min-width:0}
+.admin-tx-health{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+.admin-tx-health>div{background:linear-gradient(145deg,#111313,#0b0c0c);border:1px solid var(--line);border-radius:16px;padding:16px;min-width:0;box-shadow:0 12px 30px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.025)}
 .admin-tx-health>div.alert{border-color:#63472a;background:#17130d}
 .admin-tx-health span{display:flex;align-items:center;gap:5px;color:#666;font-size:8px;font-weight:900;letter-spacing:.1em}
 .admin-tx-health b{display:block;font-size:20px;margin-top:8px;letter-spacing:-.03em}
