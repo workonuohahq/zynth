@@ -68,7 +68,7 @@ export default function PaymentSettings({initialData}:{initialData:any}){
  const toggleCurrency=(code:string)=>{
   const current=new Set(cryptoForm.zynth_enabled_currencies||[]);
   current.has(code)?current.delete(code):current.add(code);
-  setCrypto("zynth_enabled_currencies",Array.from(current));
+  setCryptoForm((x:any)=>({...x,zynth_enabled_currencies:Array.from(current)}));
  };
  const Field=({k,label,area=false}:{k:string,label:string,area?:boolean})=><label style={{display:"grid",gap:7}}><span>{label}</span>{area?<textarea value={form[k]||""} onChange={e=>set(k,e.target.value)} rows={4}/>:<input value={form[k]||""} onChange={e=>set(k,e.target.value)}/>}</label>;
 
