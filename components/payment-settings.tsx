@@ -11,7 +11,7 @@ export default function PaymentSettings({initialData}:{initialData:any}){
  const [cryptoBusy,setCryptoBusy]=useState(false); const [cryptoNotice,setCryptoNotice]=useState("");
 
  const set=(k:string,v:any)=>setForm((x:any)=>({...x,[k]:v}));
- const setCrypto=(k:string,v:any)=>setCryptoForm((x:any)=>({...x,[k]:v}));
+ const setCryptoField=(k:string,v:any)=>setCryptoForm((x:any)=>({...x,[k]:v}));
 
  useEffect(()=>{
   fetch("/api/admin/payment-provider",{cache:"no-store"})
@@ -80,13 +80,13 @@ export default function PaymentSettings({initialData}:{initialData:any}){
    <div className="admin-card-head"><div><span className="muted">CRYPTO PAYMENTS</span><h2>NOWPayments · USD pricing bridge</h2><p>ZYNTH keeps investment accounting in NGN, converts once using this controlled FX rate, then sends USD to NOWPayments.</p></div><button className="ghost" onClick={syncCrypto} disabled={cryptoBusy}><RefreshCw size={14}/> Sync assets</button></div>
    {cryptoNotice&&<div className="admin-notice">{cryptoNotice}</div>}
    <div className="settings-grid">
-    <label><span>NGN per USD</span><input type="number" min="1" step="0.0001" value={cryptoForm.usd_ngn_rate} onChange={e=>setCrypto("usd_ngn_rate",e.target.value)}/></label>
-    <label><span>FX source / note</span><input value={cryptoForm.fx_source||""} onChange={e=>setCrypto("fx_source",e.target.value)}/></label>
+    <label><span>NGN per USD</span><input type="number" min="1" step="0.0001" value={cryptoForm.usd_ngn_rate} onChange={e=>setCryptoField("usd_ngn_rate",e.target.value)}/></label>
+    <label><span>FX source / note</span><input value={cryptoForm.fx_source||""} onChange={e=>setCryptoField("fx_source",e.target.value)}/></label>
    </div>
    <div style={{display:"grid",gap:9,marginTop:12}}>
-    <label className="toggle-row"><span><b>Enable crypto funding</b><small>Only enabled merchant assets can be selected.</small></span><input type="checkbox" checked={Boolean(cryptoForm.enabled)} onChange={e=>setCrypto("enabled",e.target.checked)}/></label>
-    <label className="toggle-row"><span><b>NOWPayments fixed rate</b><small>Locks the provider quote for the supported fixed-rate window.</small></span><input type="checkbox" checked={Boolean(cryptoForm.fixed_rate)} onChange={e=>setCrypto("fixed_rate",e.target.checked)}/></label>
-    <label className="toggle-row"><span><b>Fee paid by user</b><small>Passes applicable NOWPayments payment fees to the customer.</small></span><input type="checkbox" checked={Boolean(cryptoForm.fee_paid_by_user)} onChange={e=>setCrypto("fee_paid_by_user",e.target.checked)}/></label>
+    <label className="toggle-row"><span><b>Enable crypto funding</b><small>Only enabled merchant assets can be selected.</small></span><input type="checkbox" checked={Boolean(cryptoForm.enabled)} onChange={e=>setCryptoField("enabled",e.target.checked)}/></label>
+    <label className="toggle-row"><span><b>NOWPayments fixed rate</b><small>Locks the provider quote for the supported fixed-rate window.</small></span><input type="checkbox" checked={Boolean(cryptoForm.fixed_rate)} onChange={e=>setCryptoField("fixed_rate",e.target.checked)}/></label>
+    <label className="toggle-row"><span><b>Fee paid by user</b><small>Passes applicable NOWPayments payment fees to the customer.</small></span><input type="checkbox" checked={Boolean(cryptoForm.fee_paid_by_user)} onChange={e=>setCryptoField("fee_paid_by_user",e.target.checked)}/></label>
    </div>
    <div style={{marginTop:15}}>
     <span className="muted">ENABLED MERCHANT ASSETS</span>
@@ -98,8 +98,8 @@ export default function PaymentSettings({initialData}:{initialData:any}){
     </div>
    </div>
    <div className="settings-grid" style={{marginTop:15}}>
-    <label><span>NOWPayments API key</span><input type="password" placeholder={crypto?.api_key_configured?"Configured · leave blank to keep":"Enter API key"} value={cryptoForm.api_key||""} onChange={e=>setCrypto("api_key",e.target.value)}/></label>
-    <label><span>IPN secret</span><input type="password" placeholder={crypto?.ipn_secret_configured?"Configured · leave blank to keep":"Enter IPN secret"} value={cryptoForm.ipn_secret||""} onChange={e=>setCrypto("ipn_secret",e.target.value)}/></label>
+    <label><span>NOWPayments API key</span><input type="password" placeholder={crypto?.api_key_configured?"Configured · leave blank to keep":"Enter API key"} value={cryptoForm.api_key||""} onChange={e=>setCryptoField("api_key",e.target.value)}/></label>
+    <label><span>IPN secret</span><input type="password" placeholder={crypto?.ipn_secret_configured?"Configured · leave blank to keep":"Enter IPN secret"} value={cryptoForm.ipn_secret||""} onChange={e=>setCryptoField("ipn_secret",e.target.value)}/></label>
    </div>
    <div style={{display:"flex",justifyContent:"flex-end",marginTop:15}}><button className="primary save-settings" onClick={saveCrypto} disabled={cryptoBusy}>{cryptoBusy?"Saving…":<><Save size={15}/> Save crypto configuration</>}</button></div>
    {crypto?.fx_updated_at&&<div style={{marginTop:10,color:"#706960",fontSize:9}}>FX snapshot last changed: {new Date(crypto.fx_updated_at).toLocaleString()} · provider pricing currency: USD</div>}
