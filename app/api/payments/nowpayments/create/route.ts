@@ -1,7 +1,7 @@
 import {NextResponse} from "next/server";
 import {createSupabaseServerClient} from "@/lib/supabase/server";
 import {decryptProviderSecret} from "@/lib/secure-provider-secrets";
-import {extractMerchantCurrencies,nowRequest} from "@/lib/nowpayments";
+import {extractMerchantCurrencies,getLiveUsdNgnRate,getNowPaymentsMinAmount,nowRequest} from "@/lib/nowpayments";
 
 export async function POST(req:Request){
   try{
@@ -35,10 +35,10 @@ export async function POST(req:Request){
     if(payCurrency === "ngn"){
       return NextResponse.json({error:"NGN is the ZYNTH accounting currency, not a crypto payment option. Please choose a supported cryptocurrency/network."},{status:400});
     }
-    const usdNgnRate = Number(settings.usd_ngn_rate);
-    if(!Number.isFinite(usdNgnRate) || usdNgnRate <= 0){
-      return NextResponse.json({error:"Crypto FX pricing is not configured. Please contact support."},{status:503});
-    }
+    let fx:{rate:number,source:string,capturedAt:string};
+    try{ fx=await getLiveUsdNgnRate(); }
+    catch{ return NextResponse.json({error:"Live FX pricing is temporarily unavailable. Please try again shortly."},{status:503}); }
+    const usdNgnRate=fx.rate;
 
     let apiKey:string;
     try{
@@ -67,6 +67,28 @@ export async function POST(req:Request){
 
     if(!merchantCurrencies.includes(payCurrency)){
       return NextResponse.json({error:"That cryptocurrency/network is no longer available for this NOWPayments merchant. Please choose another option."},{status:409});
+    }
+
+    // NOWPayments minimums are dynamic. Check the selected pair before creating
+    // the ZYNTH deposit so a small USD payment can never be silently raised.
+    const fixedRate=false;
+    const feePaidByUser=false;
+    let providerMinimumUsd=0;
+    try{
+      const minInfo=await getNowPaymentsMinAmount(apiKey,payCurrency,fixedRate,feePaidByUser);
+      providerMinimumUsd=minInfo.minimum;
+      const requestedUsd=amount/usdNgnRate;
+      if(requestedUsd < providerMinimumUsd){
+        const minimumNgn=Math.ceil(providerMinimumUsd*usdNgnRate);
+        return NextResponse.json({
+          error:`This crypto network currently requires at least ₦${minimumNgn.toLocaleString("en-NG")} (about ${providerMinimumUsd.toFixed(2)}). Choose another network or increase the amount.`,
+          code:"PROVIDER_MINIMUM",
+          minimum_ngn:minimumNgn,
+          minimum_usd:providerMinimumUsd
+        },{status:400});
+      }
+    }catch{
+      return NextResponse.json({error:"NOWPayments minimum-payment check is temporarily unavailable. Please try again shortly."},{status:503});
     }
 
     const {data:deposit,error:depositError}=await client.rpc("create_crypto_deposit_request",{
@@ -112,8 +134,8 @@ export async function POST(req:Request){
           ipn_callback_url:callbackUrl,
           order_id:deposit.id,
           order_description:`ZYNTH ${investmentId?"investment top-up":"investment deposit"} ${deposit.reference}`,
-          is_fixed_rate:settings.fixed_rate,
-          is_fee_paid_by_user:settings.fee_paid_by_user
+          is_fixed_rate:false,
+          is_fee_paid_by_user:false
         })
       });
 
@@ -125,7 +147,7 @@ export async function POST(req:Request){
         p_ngn_amount:ngnAmount,
         p_usd_amount:usdAmount,
         p_usd_ngn_rate:usdNgnRate,
-        p_fx_source:String(settings.fx_source||"ZYNTH controlled FX rate"),
+        p_fx_source:fx.source,
         p_payment:payment
       });
 
