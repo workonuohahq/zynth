@@ -100,9 +100,7 @@ export async function PATCH(req:Request){
     const requested=normalizeCodes(b.zynth_enabled_currencies);
     const enabled=requested.filter((code)=>available.has(code));
     if(Boolean(b.enabled)&&!enabled.length) return NextResponse.json({error:"Select at least one currently available NOWPayments asset before enabling crypto deposits."},{status:400});
-    const fxRate=Number(b.usd_ngn_rate);
-    if(!Number.isFinite(fxRate)||fxRate<=0) return NextResponse.json({error:"Enter a valid NGN per USD FX rate before enabling crypto deposits."},{status:400});
-
+    // FX is now resolved automatically at checkout; the admin no longer sets a rate.
     const patch:any={
       enabled:Boolean(b.enabled),
       price_currency:"usd",
