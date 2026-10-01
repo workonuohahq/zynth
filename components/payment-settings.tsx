@@ -7,7 +7,7 @@ export default function PaymentSettings({initialData}:{initialData:any}){
  const [form,setForm]=useState({...initialData});
  const [busy,setBusy]=useState(false); const [notice,setNotice]=useState("");
  const [crypto,setCrypto]=useState<any>(null); const [cryptoCurrencies,setCryptoCurrencies]=useState<any[]>([]);
- const [cryptoForm,setCryptoForm]=useState<any>({enabled:false,usd_ngn_rate:"",fx_source:"ZYNTH controlled FX rate",fixed_rate:true,fee_paid_by_user:true,zynth_enabled_currencies:[],api_key:"",ipn_secret:""});
+ const [cryptoForm,setCryptoForm]=useState<any>({enabled:false,zynth_enabled_currencies:[],api_key:"",ipn_secret:""});
  const [cryptoBusy,setCryptoBusy]=useState(false); const [cryptoNotice,setCryptoNotice]=useState("");
 
  const set=(k:string,v:any)=>setForm((x:any)=>({...x,[k]:v}));
@@ -17,11 +17,7 @@ export default function PaymentSettings({initialData}:{initialData:any}){
   fetch("/api/admin/payment-provider",{cache:"no-store"})
    .then(async r=>{const d=await r.json();if(!r.ok)throw new Error(d.error||"Unable to load crypto settings.");setCrypto(d.settings);setCryptoCurrencies(d.currencies||[]);setCryptoForm({
      enabled:Boolean(d.settings?.enabled),
-     usd_ngn_rate:d.settings?.usd_ngn_rate??"",
-     fx_source:d.settings?.fx_source||"ZYNTH controlled FX rate",
-     fixed_rate:Boolean(d.settings?.fixed_rate),
-     fee_paid_by_user:Boolean(d.settings?.fee_paid_by_user),
-     zynth_enabled_currencies:Array.isArray(d.settings?.supported_currencies)?d.settings.supported_currencies:[],
+      zynth_enabled_currencies:Array.isArray(d.settings?.supported_currencies)?d.settings.supported_currencies:[],
      api_key:"",ipn_secret:""
    });})
    .catch(e=>setCryptoNotice(e.message||"Unable to load crypto settings."));
@@ -47,7 +43,7 @@ export default function PaymentSettings({initialData}:{initialData:any}){
    setCrypto(d.settings);
    setCryptoCurrencies(d.currencies||[]);
    setCryptoForm((x:any)=>({...x,api_key:"",ipn_secret:""}));
-   setCryptoNotice("NOWPayments settings saved. New crypto checkouts now use the saved USD/NGN rate.");
+   setCryptoNotice("NOWPayments settings saved. FX and crypto quotes are now retrieved automatically at checkout.");
   }catch(e:any){setCryptoNotice(e.message||"Unable to save NOWPayments settings.");}
   finally{setCryptoBusy(false);}
  }
@@ -77,16 +73,10 @@ export default function PaymentSettings({initialData}:{initialData:any}){
 
  <section className="admin-section">
   <section className="admin-card">
-   <div className="admin-card-head"><div><span className="muted">CRYPTO PAYMENTS</span><h2>NOWPayments · USD pricing bridge</h2><p>ZYNTH keeps investment accounting in NGN, converts once using this controlled FX rate, then sends USD to NOWPayments.</p></div><button className="ghost" onClick={syncCrypto} disabled={cryptoBusy}><RefreshCw size={14}/> Sync assets</button></div>
+   <div className="admin-card-head"><div><span className="muted">CRYPTO PAYMENTS</span><h2>NOWPayments · automatic pricing</h2><p>ZYNTH keeps accounting in NGN and automatically retrieves FX and provider pricing at checkout.</p></div><button className="ghost" onClick={syncCrypto} disabled={cryptoBusy}><RefreshCw size={14}/> Sync assets</button></div>
    {cryptoNotice&&<div className="admin-notice">{cryptoNotice}</div>}
-   <div className="settings-grid">
-    <label><span>NGN per USD</span><input type="number" min="1" step="0.0001" value={cryptoForm.usd_ngn_rate} onChange={e=>setCryptoField("usd_ngn_rate",e.target.value)}/></label>
-    <label><span>FX source / note</span><input value={cryptoForm.fx_source||""} onChange={e=>setCryptoField("fx_source",e.target.value)}/></label>
-   </div>
    <div style={{display:"grid",gap:9,marginTop:12}}>
     <label className="toggle-row"><span><b>Enable crypto funding</b><small>Only enabled merchant assets can be selected.</small></span><input type="checkbox" checked={Boolean(cryptoForm.enabled)} onChange={e=>setCryptoField("enabled",e.target.checked)}/></label>
-    <label className="toggle-row"><span><b>NOWPayments fixed rate</b><small>Locks the provider quote for the supported fixed-rate window.</small></span><input type="checkbox" checked={Boolean(cryptoForm.fixed_rate)} onChange={e=>setCryptoField("fixed_rate",e.target.checked)}/></label>
-    <label className="toggle-row"><span><b>Fee paid by user</b><small>Passes applicable NOWPayments payment fees to the customer.</small></span><input type="checkbox" checked={Boolean(cryptoForm.fee_paid_by_user)} onChange={e=>setCryptoField("fee_paid_by_user",e.target.checked)}/></label>
    </div>
    <div style={{marginTop:15}}>
     <span className="muted">ENABLED MERCHANT ASSETS</span>
@@ -102,7 +92,7 @@ export default function PaymentSettings({initialData}:{initialData:any}){
     <label><span>IPN secret</span><input type="password" placeholder={crypto?.ipn_secret_configured?"Configured · leave blank to keep":"Enter IPN secret"} value={cryptoForm.ipn_secret||""} onChange={e=>setCryptoField("ipn_secret",e.target.value)}/></label>
    </div>
    <div style={{display:"flex",justifyContent:"flex-end",marginTop:15}}><button className="primary save-settings" onClick={saveCrypto} disabled={cryptoBusy}>{cryptoBusy?"Saving…":<><Save size={15}/> Save crypto configuration</>}</button></div>
-   {crypto?.fx_updated_at&&<div style={{marginTop:10,color:"#706960",fontSize:9}}>FX snapshot last changed: {new Date(crypto.fx_updated_at).toLocaleString()} · provider pricing currency: USD</div>}
+   <div style={{marginTop:10,color:"#706960",fontSize:9}}>FX is automatic. ZYNTH snapshots the live USD/NGN rate and checks NOWPayments minimums before creating each payment.</div>
   </section>
 
   <section className="admin-card"><div className="admin-card-head"><div><span className="muted">CUSTOMER EXPERIENCE</span><h2>Payment page copy</h2><p>These fields are displayed directly on the in-built payment page.</p></div></div>
