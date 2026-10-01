@@ -104,11 +104,8 @@ export async function PATCH(req:Request){
     const patch:any={
       enabled:Boolean(b.enabled),
       price_currency:"usd",
-      usd_ngn_rate:Number(b.usd_ngn_rate),
-      fx_source:String(b.fx_source||"ZYNTH controlled FX rate").trim().slice(0,120),
-      fx_updated_at:new Date().toISOString(),
-      fixed_rate:Boolean(b.fixed_rate),
-      fee_paid_by_user:Boolean(b.fee_paid_by_user),
+      fixed_rate:false,
+      fee_paid_by_user:false,
       supported_currencies:enabled,
       updated_at:new Date().toISOString()
     };
