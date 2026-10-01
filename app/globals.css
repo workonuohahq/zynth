@@ -1560,7 +1560,7 @@ html[data-theme="light"] .trader-strategy-pro{background:#fffdf8}.trader-strateg
 
 /* Shared platform shell for Trader Desk */
 .trader-hero-meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}.trader-hero-meta span{display:inline-flex;align-items:center;gap:6px;padding:7px 9px;border:1px solid var(--border);border-radius:999px;background:var(--panel2);color:var(--muted);font-size:7px;font-weight:800}.trader-hero-meta svg{color:var(--gold-bright)}
-@media(max-width:800px){.trader-mobile-nav{grid-template-columns:repeat(7,minmax(0,1fr))}.trader-mobile-nav a span{font-size:6px}.trader-mobile-nav a{padding:7px 2px}}
+
 
 
 /* ADMIN DESK — premium card system aligned with Trader Desk */
