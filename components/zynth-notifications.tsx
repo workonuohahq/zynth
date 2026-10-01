@@ -105,10 +105,10 @@ export default function ZynthNotifications() {
     window.addEventListener("zynth:notification", onNotification);
     window.zynthNotify = notify;
 
-    const originalFetch = window.fetch.bind(window);
+    const w = window as any;\n    const originalFetch = w.fetch.bind(w);
     const monitoredMethods = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
-    window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+    w.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
       const method = String(init?.method || (input instanceof Request ? input.method : "GET")).toUpperCase();
       const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
       try {
@@ -152,7 +152,7 @@ export default function ZynthNotifications() {
     return () => {
       window.removeEventListener("zynth:notification", onNotification);
       window.removeEventListener("unhandledrejection", onUnhandledRejection);
-      if (window.fetch === originalFetch || window.fetch) window.fetch = originalFetch;
+      w.fetch = originalFetch;
       window.zynthNotify = undefined;
       timers.forEach(timer => window.clearTimeout(timer));
     };
