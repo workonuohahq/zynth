@@ -43,13 +43,31 @@ export async function POST(req:Request){
   catch{return NextResponse.json({error:"VAPID credentials are invalid."},{status:503});}
 
   const supabaseUrl=process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
-  const publishableKey=process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim();
+  // Internal push delivery is a server-only path. Never use a publishable/anon key here.
+  const serverKey=(process.env.SUPABASE_SERVICE_ROLE_KEY||process.env.SUPABASE_SECRET_KEY||"").trim();
   const workerSecret=process.env.ZYNTH_PUSH_WORKER_SECRET?.trim();
-  if(!supabaseUrl||!publishableKey||!workerSecret)return NextResponse.json({error:"Push data service is not configured."},{status:503});
+  if(!supabaseUrl||!serverKey||!workerSecret){
+    console.error("[ZYNTH_PUSH_CONFIG_MISSING]",{
+      supabaseUrl:Boolean(supabaseUrl),
+      serverKey:Boolean(serverKey),
+      workerSecret:Boolean(workerSecret)
+    });
+    return NextResponse.json({error:"Push data service is not configured."},{status:503});
+  }
 
-  const supabase=createClient(supabaseUrl,publishableKey,{auth:{autoRefreshToken:false,persistSession:false}});
-  const {data:context,error:contextError}=await supabase.rpc("zynth_get_push_delivery_context",{p_notification_id:notificationId,p_secret:workerSecret});
-  if(contextError)return NextResponse.json({error:"Unable to load push delivery context."},{status:500});
+  const supabase=createClient(supabaseUrl,serverKey,{auth:{autoRefreshToken:false,persistSession:false}});
+  const {data:context,error:contextError}=await supabase.rpc("zynth_get_push_delivery_context",{
+    p_notification_id:notificationId,
+    p_secret:workerSecret
+  });
+  if(contextError){
+    console.error("[ZYNTH_PUSH_CONTEXT_FAILED]",{
+      notificationId,
+      code:contextError.code||null,
+      message:String(contextError.message||"").slice(0,500)
+    });
+    return NextResponse.json({error:"Unable to load push delivery context."},{status:500});
+  }
   if(!context?.notification)return NextResponse.json({error:"Notification not found."},{status:404});
 
   const notice=context.notification;
@@ -64,6 +82,7 @@ export async function POST(req:Request){
   if(metadata.source==="admin_broadcast" && metadata.broadcast_push===false){
     return NextResponse.json({ok:true,status:"skipped",reason:"broadcast_push_disabled"});
   }
+
   const url=typeof metadata.action_url==="string"&&metadata.action_url.startsWith("/")?metadata.action_url:"/dashboard/notifications";
   const payload=JSON.stringify({
     title:notice.title,
@@ -86,8 +105,18 @@ export async function POST(req:Request){
     }catch(error:any){
       const detail=describePushError(error);
       if(detail.statusCode===404||detail.statusCode===410){
-        const {error:revokeError}=await supabase.rpc("zynth_revoke_push_subscription",{p_subscription_id:subscription.id,p_secret:workerSecret});
-        if(revokeError) console.error("[ZYNTH_PUSH_REVOKE_FAILED]",{notificationId,subscriptionId:subscription.id,message:revokeError.message});
+        const {error:revokeError}=await supabase.rpc("zynth_revoke_push_subscription",{
+          p_subscription_id:subscription.id,
+          p_secret:workerSecret
+        });
+        if(revokeError){
+          console.error("[ZYNTH_PUSH_REVOKE_FAILED]",{
+            notificationId,
+            subscriptionId:subscription.id,
+            code:revokeError.code||null,
+            message:String(revokeError.message||"").slice(0,300)
+          });
+        }
         revoked++;
         continue;
       }
@@ -95,19 +124,32 @@ export async function POST(req:Request){
       console.error("[ZYNTH_PUSH_DELIVERY_FAILED]",{
         notificationId,
         subscriptionId:subscription.id,
-        endpointHost: (()=>{try{return new URL(subscription.endpoint).host}catch{return "invalid"}})(),
+        endpointHost:(()=>{try{return new URL(subscription.endpoint).host}catch{return "invalid"}})(),
         ...detail
       });
     }
   }
 
   const status=delivered>0?(failed>0||revoked>0?"partial":"sent"):"failed";
+
   if(metadata.source==="admin_broadcast"){
-    try{await supabase.rpc("zynth_record_broadcast_push_result",{p_notification_id:notificationId,p_secret:workerSecret,p_delivered:delivered,p_failed:failed,p_revoked:revoked});}catch(error:any){console.error("[ZYNTH_BROADCAST_PUSH_RECORD_FAILED]",{notificationId,message:String(error?.message||error).slice(0,300)});}
+    const {error:recordError}=await supabase.rpc("zynth_record_broadcast_push_result",{
+      p_notification_id:notificationId,
+      p_secret:workerSecret,
+      p_delivered:delivered,
+      p_failed:failed,
+      p_revoked:revoked
+    });
+    if(recordError){
+      console.error("[ZYNTH_BROADCAST_PUSH_RECORD_FAILED]",{
+        notificationId,
+        code:recordError.code||null,
+        message:String(recordError.message||"").slice(0,300)
+      });
+    }
   }
-  if(failed>0){
-    console.error("[ZYNTH_PUSH_DELIVERY_SUMMARY]",{notificationId,delivered,failed,revoked,status});
-  }
+
+  console.log("[ZYNTH_PUSH_DELIVERY_SUMMARY]",{notificationId,delivered,failed,revoked,status});
   return NextResponse.json({ok:delivered>0,status,delivered,failed,revoked});
 }
 
