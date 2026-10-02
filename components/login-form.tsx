@@ -4,6 +4,8 @@ import { FormEvent, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
+const ZYNTH_PUBLIC_ORIGIN = process.env.NEXT_PUBLIC_APP_URL || "https://zynthhq.vercel.app";
+
 export default function LoginForm({ initialMode = "login", referralCode = "", zpaCode = "" }: { initialMode?: "login" | "signup"; referralCode?: string; zpaCode?: string }) {
   const router = useRouter();
   const [mode, setMode] = useState<"login" | "signup">(initialMode);
@@ -44,7 +46,7 @@ export default function LoginForm({ initialMode = "login", referralCode = "", zp
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
-          options: { data: { full_name: name }, emailRedirectTo: `${window.location.origin}/auth/confirmed` }
+          options: { data: { full_name: name }, emailRedirectTo: `${ZYNTH_PUBLIC_ORIGIN}/auth/confirmed` }
         });
         if (error) setMessage(error.message);
         else if (data.session) { await applyAttribution(); router.push("/dashboard"); }
