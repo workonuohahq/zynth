@@ -24,8 +24,6 @@ export default function LoginForm({ initialMode = "login", referralCode = "", zp
       const r = await fetch("/api/referral", { method: "POST", headers: {"content-type":"application/json"}, body: JSON.stringify({code}) }).catch(() => null);
       if (r?.ok) localStorage.removeItem("zynth_referral_code");
     }
-    if (zpa) {
-    }
   }
 
   async function submit(e: FormEvent) {
