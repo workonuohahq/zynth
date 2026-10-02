@@ -34,14 +34,37 @@ export default function ConfirmedClient({ email }: { email: string }) {
       router.replace("/dashboard");
     }
 
-    supabase.auth.getSession().then(({ data }) => {
-      if (!mounted) return;
-      if (data.session) {
-        void finish(data.session);
-      } else {
-        setStatus("waiting");
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("code");
+    const errorCode = params.get("error_code");
+    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    const hashErrorCode = hash.get("error_code");
+
+    async function handleConfirmation() {
+      if (code) {
+        const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+        if (error) {
+          setStatus("waiting");
+          setMessage("This confirmation link is no longer valid. Please request a new confirmation email.");
+          return;
+        }
+        if (data.session) {
+          await finish(data.session);
+          return;
+        }
       }
-    });
+      if (errorCode || hashErrorCode) {
+        setStatus("waiting");
+        setMessage("This confirmation link has expired or is no longer valid. Please request a new confirmation email.");
+        return;
+      }
+      const { data } = await supabase.auth.getSession();
+      if (!mounted) return;
+      if (data.session) void finish(data.session);
+      else setStatus("waiting");
+    }
+
+    void handleConfirmation();
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session && mounted) void finish(session);
