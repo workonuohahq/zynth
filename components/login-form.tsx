@@ -26,7 +26,7 @@ export default function LoginForm({ initialMode = "login", referralCode = "", zp
       if (r?.ok) localStorage.removeItem("zynth_referral_code");
     }
     if (zpa) {
-      const r = await fetch("/api/zpa", { method: "POST", headers: {"content-type":"application/json"}, body: JSON.stringify({code:zpa}) }).catch(() => null);
+      const r = await fetch("/api/zpa/claim", { method: "POST", headers: {"content-type":"application/json"}, body: JSON.stringify({code:zpa}) }).catch(() => null);
       if (r?.ok) localStorage.removeItem("zynth_zpa_code");
     }
   }
@@ -40,7 +40,7 @@ export default function LoginForm({ initialMode = "login", referralCode = "", zp
       if (refCode) localStorage.setItem("zynth_referral_code", refCode);
       if (partnerCode) localStorage.setItem("zynth_zpa_code", partnerCode);
       if (mode === "login") {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) setMessage(error.message);
         else { await applyAttribution(data.user); router.push("/dashboard"); }
       } else {
