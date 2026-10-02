@@ -20,7 +20,7 @@ export default function ConfirmedClient({ email }: { email: string }) {
       if (r?.ok) localStorage.removeItem("zynth_referral_code");
     }
     if (zpa) {
-      const r = await fetch("/api/zpa", { method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify({code:zpa}) }).catch(() => null);
+      const r = await fetch("/api/zpa/claim", { method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify({code:zpa}) }).catch(() => null);
       if (r?.ok) localStorage.removeItem("zynth_zpa_code");
     }
   }
