@@ -2473,3 +2473,28 @@ html[data-theme="light"] .admin-list-item .admin-support-badge{background:#c6282
 @media(max-width:1000px){.admin-tx-health{grid-template-columns:repeat(3,1fr)}.admin-tx-head,.admin-tx-row{grid-template-columns:1.5fr 1.1fr 1fr .9fr .9fr 22px}.admin-tx-head span:nth-child(6),.admin-tx-row>div:nth-child(6){display:none}}
 @media(max-width:700px){.admin-tx-header{align-items:flex-start;flex-direction:column}.admin-tx-actions{width:100%}.admin-tx-actions>*{flex:1;justify-content:center}.admin-tx-health{grid-template-columns:1fr 1fr}.admin-tx-toolbar{flex-wrap:wrap}.admin-tx-search{flex-basis:100%}.admin-tx-filters{grid-template-columns:1fr 1fr}.admin-tx-head{display:none}.admin-tx-row{grid-template-columns:1fr auto;gap:8px;padding:14px 6px}.admin-tx-row>div:nth-child(2),.admin-tx-row>div:nth-child(3),.admin-tx-row>div:nth-child(6){display:none}.admin-tx-row>div:nth-child(4),.admin-tx-row>div:nth-child(5){grid-column:2}.admin-tx-row>svg{grid-column:2;grid-row:1}.admin-tx-row>div:nth-child(1){grid-row:1 / span 2}.admin-tx-hero{grid-template-columns:1fr}.admin-tx-drawer{padding:20px}.admin-tx-drawer-actions{bottom:0;margin:18px -20px -20px;padding:11px 20px;overflow:auto;justify-content:flex-start}.admin-tx-impact{grid-template-columns:1fr}.admin-tx-impact>i{display:none}}
 @media(max-width:430px){.admin-tx-health{grid-template-columns:1fr}.admin-tx-filters{grid-template-columns:1fr}.admin-tx-grid{grid-template-columns:1fr}.admin-tx-header h1{font-size:34px}}
+
+/* ADMIN COMMAND NAVIGATION — unified desktop + mobile navigation */
+.admin-command-nav{position:sticky;top:0;z-index:80;display:flex;align-items:center;gap:18px;min-height:64px;margin:-6px 0 22px;padding:9px 12px;border:1px solid var(--line);border-radius:16px;background:rgba(10,11,11,.94);box-shadow:0 12px 34px rgba(0,0,0,.16),inset 0 1px 0 rgba(255,255,255,.025);backdrop-filter:blur(16px)}
+.admin-command-brand{display:flex;align-items:center;gap:8px;flex:none;padding-right:14px;border-right:1px solid var(--line);color:#eee}
+.admin-command-brand .brand-mark{width:30px;height:30px;display:grid;place-items:center;border:1px solid #554832;border-radius:9px;color:var(--gold);font-weight:900;font-size:13px}
+.admin-command-brand b{font-size:12px;letter-spacing:.12em}.admin-command-brand small{font-size:7px;color:#6d6658;letter-spacing:.1em}
+.admin-command-links{display:flex;align-items:center;gap:3px;min-width:0;overflow-x:auto;scrollbar-width:none}.admin-command-links::-webkit-scrollbar{display:none}
+.admin-command-links>button,.admin-command-money .money-trigger{height:36px;border:1px solid transparent;border-radius:9px;background:transparent;color:#777;padding:0 10px;white-space:nowrap;font-size:9px;font-weight:800;cursor:pointer}
+.admin-command-links>button:hover,.admin-command-money .money-trigger:hover{color:#ddd;background:#121313;border-color:#292a28}
+.admin-command-links>button.active,.admin-command-money .money-trigger.active{color:var(--gold);background:#17130d;border-color:#4b402c;box-shadow:inset 0 1px 0 #ffffff08}
+.admin-command-money{position:relative;flex:none}.admin-command-money .money-trigger{display:flex;align-items:center;gap:6px}
+.admin-command-money .money-trigger span{font-size:6px;letter-spacing:.12em;color:#7b6b4e;border:1px solid #3d3323;border-radius:5px;padding:3px 4px}
+.admin-command-money .money-trigger svg{transition:transform .18s}.admin-command-money.open .money-trigger svg{transform:rotate(90deg)}
+.admin-command-money-menu{position:absolute;top:42px;left:0;min-width:185px;padding:6px;border:1px solid #3d3425;border-radius:12px;background:#0b0c0c;box-shadow:0 20px 55px #0009;display:grid;gap:3px}
+.admin-command-money-menu button{height:34px;text-align:left;border:0;border-radius:8px;background:transparent;color:#777;padding:0 10px;font-size:9px;font-weight:800;cursor:pointer}
+.admin-command-money-menu button:hover,.admin-command-money-menu button.active{color:var(--gold);background:#17130d}
+.admin-command-status{margin-left:auto;display:flex;align-items:center;gap:6px;flex:none;color:#667069;font-size:8px;font-weight:800;white-space:nowrap}
+.admin-command-status i{width:6px;height:6px;border-radius:50%;background:#c7a75f;box-shadow:0 0 9px #c7a75f77}
+@media(min-width:801px){.admin-frame .admin-sidebar{display:none}.admin-frame .admin-main{margin-left:0}}
+@media(max-width:800px){
+ .admin-command-nav{position:sticky;top:0;margin:-4px -4px 18px;padding:8px;border-radius:13px;gap:10px;overflow:visible}
+ .admin-command-brand{padding-right:10px}.admin-command-brand b,.admin-command-brand small{display:none}.admin-command-brand .brand-mark{width:29px;height:29px}
+ .admin-command-links{flex:1}.admin-command-status{display:none}
+ .admin-command-money-menu{position:fixed;top:118px;left:10px;right:10px;min-width:0}
+}
