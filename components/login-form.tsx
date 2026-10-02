@@ -20,14 +20,11 @@ export default function LoginForm({ initialMode = "login", referralCode = "", zp
   async function applyAttribution(sessionUser?: any) {
     const metadata = sessionUser?.user_metadata || {};
     const code = refCode || localStorage.getItem("zynth_referral_code") || metadata.zynth_referral_code || "";
-    const zpa = partnerCode || localStorage.getItem("zynth_zpa_code") || metadata.zynth_zpa_code || "";
     if (code) {
       const r = await fetch("/api/referral", { method: "POST", headers: {"content-type":"application/json"}, body: JSON.stringify({code}) }).catch(() => null);
       if (r?.ok) localStorage.removeItem("zynth_referral_code");
     }
     if (zpa) {
-      const r = await fetch("/api/zpa/claim", { method: "POST", headers: {"content-type":"application/json"}, body: JSON.stringify({code:zpa}) }).catch(() => null);
-      if (r?.ok) localStorage.removeItem("zynth_zpa_code");
     }
   }
 
@@ -38,7 +35,6 @@ export default function LoginForm({ initialMode = "login", referralCode = "", zp
     try {
       const supabase = createSupabaseBrowserClient();
       if (refCode) localStorage.setItem("zynth_referral_code", refCode);
-      if (partnerCode) localStorage.setItem("zynth_zpa_code", partnerCode);
       if (mode === "login") {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) setMessage(error.message);
