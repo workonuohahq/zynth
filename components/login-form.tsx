@@ -46,7 +46,7 @@ export default function LoginForm({ initialMode = "login", referralCode = "", zp
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
-          options: { data: { full_name: name }, emailRedirectTo: `${ZYNTH_PUBLIC_ORIGIN}/auth/confirmed` }
+          options: { data: { full_name: name, ...(partnerCode ? { zynth_zpa_code: partnerCode } : {}), ...(refCode ? { zynth_referral_code: refCode } : {}) }, emailRedirectTo: `${ZYNTH_PUBLIC_ORIGIN}/auth/confirmed` }
         });
         if (error) setMessage(error.message);
         else if (data.session) { await applyAttribution(); router.push("/dashboard"); }
