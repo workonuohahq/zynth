@@ -52,6 +52,7 @@ export default function NotificationsClient(){
        setPushStatus("available");
        return;
      }
+     window.localStorage.setItem("zynth-vapid-fingerprint",fingerprint);
      setPushStatus("enabled");
    }catch{setPushStatus("error")}
  }
@@ -66,14 +67,18 @@ export default function NotificationsClient(){
      await navigator.serviceWorker.ready;
      const config=await fetch("/api/push/config",{cache:"no-store"}).then(r=>r.ok?r.json():Promise.reject(new Error("Push service unavailable.")));
      if(!config.publicKey) throw new Error("Push service is not configured yet.");
+     const fingerprint=`zynth-vapid:${String(config.publicKey).slice(0,16)}`;
+     const existing=await registration.pushManager.getSubscription();
+     if(existing) await existing.unsubscribe().catch(()=>false);
      const subscription=await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:config.publicKey});
      const payload=subscription.toJSON();
-   if(!payload.endpoint) throw new Error("Push subscription endpoint is unavailable. Please try again.");
+     if(!payload.endpoint) throw new Error("Push subscription endpoint is unavailable. Please try again.");
      const response=await fetch("/api/push/subscribe",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({endpoint:payload.endpoint,keys:payload.keys,userAgent:navigator.userAgent})});
      if(!response.ok){const data=await response.json().catch(()=>({}));throw new Error(data.error||"Unable to activate notifications.")}
      const verifyResponse=await fetch("/api/push/status?endpoint="+encodeURIComponent(payload.endpoint),{cache:"no-store"});
      const verify=await verifyResponse.json().catch(()=>null);
      if(!verifyResponse.ok || verify?.active!==true)throw new Error("Notification subscription could not be verified. Please try again.");
+     window.localStorage.setItem("zynth-vapid-fingerprint",fingerprint);
      setPushStatus("enabled");setPushMessage("Notifications are enabled on this device.");
    }catch(error){setPushMessage(error instanceof Error?error.message:"Unable to enable notifications.");await inspectPush()}
    finally{setPushBusy(false)}
@@ -84,6 +89,7 @@ export default function NotificationsClient(){
      const registration=await navigator.serviceWorker.getRegistration("/");
      const subscription=await registration?.pushManager.getSubscription();
      if(subscription){await fetch("/api/push/unsubscribe",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({endpoint:subscription.endpoint})});await subscription.unsubscribe()}
+     window.localStorage.removeItem("zynth-vapid-fingerprint");
      setPushStatus("available");setPushMessage("Device notifications have been turned off.");
    }catch{setPushMessage("Unable to disable notifications right now.")}
    finally{setPushBusy(false)}
