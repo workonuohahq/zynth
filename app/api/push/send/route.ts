@@ -1,6 +1,5 @@
 import {NextResponse} from "next/server";
 import webpush from "web-push";
-import {createClient} from "@supabase/supabase-js";
 
 export const dynamic="force-dynamic";
 export const runtime="nodejs";
@@ -27,6 +26,38 @@ function describePushError(error:any){
   };
 }
 
+async function bridge(body:Record<string,unknown>){
+  const supabaseUrl=process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  const publishableKey=process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim();
+  const workerSecret=process.env.ZYNTH_PUSH_WORKER_SECRET?.trim();
+  if(!supabaseUrl||!publishableKey||!workerSecret){
+    console.error("[ZYNTH_PUSH_CONFIG_MISSING]",{
+      supabaseUrl:Boolean(supabaseUrl),
+      publishableKey:Boolean(publishableKey),
+      workerSecret:Boolean(workerSecret)
+    });
+    return {ok:false,status:503,error:"Push data service is not configured."};
+  }
+
+  try{
+    const response=await fetch(`${supabaseUrl}/functions/v1/zynth-push-bridge`,{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        "apikey":publishableKey
+      },
+      body:JSON.stringify({...body,secret:workerSecret}),
+      cache:"no-store"
+    });
+    const data=await response.json().catch(()=>({}));
+    if(!response.ok)return {ok:false,status:response.status,error:String(data?.error||"Push bridge request failed.")};
+    return {ok:true,status:200,data:data?.data};
+  }catch(error:any){
+    console.error("[ZYNTH_PUSH_BRIDGE_REQUEST_FAILED]",String(error?.message||error).slice(0,500));
+    return {ok:false,status:502,error:"Push bridge unavailable."};
+  }
+}
+
 export async function POST(req:Request){
   if(!authorized(req))return NextResponse.json({error:"Unauthorized"},{status:401});
 
@@ -42,32 +73,13 @@ export async function POST(req:Request){
   try{webpush.setVapidDetails(subject,publicKey,privateKey);}
   catch{return NextResponse.json({error:"VAPID credentials are invalid."},{status:503});}
 
-  const supabaseUrl=process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
-  // Internal push delivery is a server-only path. Never use a publishable/anon key here.
-  const serverKey=(process.env.SUPABASE_SERVICE_ROLE_KEY||process.env.SUPABASE_SECRET_KEY||"").trim();
-  const workerSecret=process.env.ZYNTH_PUSH_WORKER_SECRET?.trim();
-  if(!supabaseUrl||!serverKey||!workerSecret){
-    console.error("[ZYNTH_PUSH_CONFIG_MISSING]",{
-      supabaseUrl:Boolean(supabaseUrl),
-      serverKey:Boolean(serverKey),
-      workerSecret:Boolean(workerSecret)
-    });
-    return NextResponse.json({error:"Push data service is not configured."},{status:503});
-  }
-
-  const supabase=createClient(supabaseUrl,serverKey,{auth:{autoRefreshToken:false,persistSession:false}});
-  const {data:context,error:contextError}=await supabase.rpc("zynth_get_push_delivery_context",{
-    p_notification_id:notificationId,
-    p_secret:workerSecret
-  });
-  if(contextError){
-    console.error("[ZYNTH_PUSH_CONTEXT_FAILED]",{
-      notificationId,
-      code:contextError.code||null,
-      message:String(contextError.message||"").slice(0,500)
-    });
+  const contextResult=await bridge({action:"context",notification_id:notificationId});
+  if(!contextResult.ok){
+    console.error("[ZYNTH_PUSH_CONTEXT_FAILED]",{notificationId,status:contextResult.status,error:contextResult.error});
     return NextResponse.json({error:"Unable to load push delivery context."},{status:500});
   }
+
+  const context=contextResult.data;
   if(!context?.notification)return NextResponse.json({error:"Notification not found."},{status:404});
 
   const notice=context.notification;
@@ -105,17 +117,9 @@ export async function POST(req:Request){
     }catch(error:any){
       const detail=describePushError(error);
       if(detail.statusCode===404||detail.statusCode===410){
-        const {error:revokeError}=await supabase.rpc("zynth_revoke_push_subscription",{
-          p_subscription_id:subscription.id,
-          p_secret:workerSecret
-        });
-        if(revokeError){
-          console.error("[ZYNTH_PUSH_REVOKE_FAILED]",{
-            notificationId,
-            subscriptionId:subscription.id,
-            code:revokeError.code||null,
-            message:String(revokeError.message||"").slice(0,300)
-          });
+        const revokeResult=await bridge({action:"revoke",subscription_id:subscription.id});
+        if(!revokeResult.ok){
+          console.error("[ZYNTH_PUSH_REVOKE_FAILED]",{notificationId,subscriptionId:subscription.id,status:revokeResult.status});
         }
         revoked++;
         continue;
@@ -133,20 +137,14 @@ export async function POST(req:Request){
   const status=delivered>0?(failed>0||revoked>0?"partial":"sent"):"failed";
 
   if(metadata.source==="admin_broadcast"){
-    const {error:recordError}=await supabase.rpc("zynth_record_broadcast_push_result",{
-      p_notification_id:notificationId,
-      p_secret:workerSecret,
-      p_delivered:delivered,
-      p_failed:failed,
-      p_revoked:revoked
+    const recordResult=await bridge({
+      action:"broadcast_result",
+      notification_id:notificationId,
+      delivered,
+      failed,
+      revoked
     });
-    if(recordError){
-      console.error("[ZYNTH_BROADCAST_PUSH_RECORD_FAILED]",{
-        notificationId,
-        code:recordError.code||null,
-        message:String(recordError.message||"").slice(0,300)
-      });
-    }
+    if(!recordResult.ok)console.error("[ZYNTH_BROADCAST_PUSH_RECORD_FAILED]",{notificationId,status:recordResult.status});
   }
 
   console.log("[ZYNTH_PUSH_DELIVERY_SUMMARY]",{notificationId,delivered,failed,revoked,status});
