@@ -93,7 +93,7 @@ begin
   else
     update public.users set email_reverification_required=true,email_reverification_required_at=now(),
       email_reverification_required_by=auth.uid(),updated_at=now() where id=p_user_id;
-    update auth.users set email_confirmed_at=null,confirmation_sent_at=null,updated_at=now() where id=p_user_id;
+    update auth.users set email_confirmed_at=null,confirmation_token='',confirmation_sent_at=null,updated_at=now() where id=p_user_id;
     new_required:=true;
   end if;
 
