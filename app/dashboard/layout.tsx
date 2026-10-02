@@ -22,6 +22,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
     redirect("/account-disabled");
   }
 
+  const { data: emailStatus } = await supabase.rpc("zynth_get_email_verification_status", { p_user_id: user.id });
+  if (emailStatus?.verified === false) {
+    redirect("/auth/verification-required");
+  }
+
   const roles = Array.isArray(roleKeys) ? roleKeys : [];
   return (
     <PwaWorkspaceGate>
