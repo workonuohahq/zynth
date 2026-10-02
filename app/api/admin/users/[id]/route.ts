@@ -39,10 +39,20 @@ export async function PATCH(request:Request,{params}:{params:{id:string}}){
       ({data,error}=await supabase.rpc("admin_adjust_wallet",{p_admin_user_id:user.id,p_user_id:params.id,p_direction:String(body.direction),p_amount:Number(body.amount),p_reason:String(body.reason||"")}));
     }else if(body.action==="note"){
       ({data,error}=await supabase.rpc("admin_add_user_note",{p_admin_user_id:user.id,p_user_id:params.id,p_note:String(body.note||"")}));
+    }else if(body.action==="email_verification"){
+      ({data,error}=await supabase.rpc("admin_set_email_verification",{
+        p_admin_user_id:user.id,
+        p_user_id:params.id,
+        p_verified:Boolean(body.verified)
+      }));
     }else{
       return NextResponse.json({error:"Unsupported user action."},{status:400});
     }
-    if(error)return NextResponse.json({error:error.message,code:error.message},{status:400});
+    if(error){
+      const code=String(error.message||"");
+      const status=code.includes("EMAIL_MUST_BE_CONFIRMED_FIRST")?409:400;
+      return NextResponse.json({error:code.includes("EMAIL_MUST_BE_CONFIRMED_FIRST")?"The investor must verify the email first.":error.message,code},{status});
+    }
     return NextResponse.json(data||{ok:true});
   }catch(error){
     console.error(error);
