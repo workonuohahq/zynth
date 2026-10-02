@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
+const ZYNTH_PUBLIC_ORIGIN = process.env.NEXT_PUBLIC_APP_URL || "https://zynthhq.vercel.app";
+
 export default function ConfirmedClient({ email }: { email: string }) {
   const router = useRouter();
   const [status, setStatus] = useState<"checking" | "waiting" | "confirmed">("checking");
@@ -86,7 +88,7 @@ export default function ConfirmedClient({ email }: { email: string }) {
     const { error } = await supabase.auth.resend({
       type: "signup",
       email,
-      options: { emailRedirectTo: `${window.location.origin}/auth/confirmed` }
+      options: { emailRedirectTo: `${ZYNTH_PUBLIC_ORIGIN}/auth/confirmed` }
     });
     setMessage(error ? error.message : "A new confirmation email has been sent.");
   }
