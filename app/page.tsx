@@ -1,10 +1,25 @@
 import Link from "next/link";
 import { ArrowRight, LockKeyhole, ShieldCheck, Zap } from "lucide-react";
-import AuthErrorClient from "@/components/auth-error-client";
 
 export default function Home({ searchParams }: { searchParams?: { error?: string; error_code?: string; error_description?: string } }) {
   if (searchParams?.error || searchParams?.error_code) {
-    return <AuthErrorClient code={searchParams.error_code || ""} description={searchParams.error_description || ""} />;
+    const expired = searchParams.error_code === "otp_expired";
+    return (
+      <main className="auth-shell auth-result-shell">
+        <div className="auth-card auth-result-card">
+          <div className="brand"><span className="brand-mark">Z</span><span>ZYNTH</span></div>
+          <span className="eyebrow">{expired ? "EMAIL CONFIRMATION" : "SECURE ACCESS"}</span>
+          <div className="auth-result-icon">{expired ? "!" : "×"}</div>
+          <h1>{expired ? "That confirmation link has expired." : "We couldn't complete that request."}</h1>
+          <p className="auth-copy">{expired ? "For your security, ZYNTH confirmation links can only be used for a limited time and only once. Request a fresh confirmation email and use the newest link." : "The link you followed is no longer valid. Please return to ZYNTH and request a fresh confirmation email."}</p>
+          <div className="auth-result-note"><b>Nothing is wrong with your ZYNTH account.</b><span>You can safely return to sign in or create a fresh confirmation request.</span></div>
+          <div className="auth-result-actions">
+            <Link href="/login?mode=signup" className="primary auth-submit">Return to ZYNTH</Link>
+            <Link href="/login" className="switch">Sign in instead</Link>
+          </div>
+        </div>
+      </main>
+    );
   }
 
   return (
