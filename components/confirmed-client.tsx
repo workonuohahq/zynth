@@ -9,25 +9,42 @@ export default function ConfirmedClient({ email }: { email: string }) {
   const [status, setStatus] = useState<"checking" | "waiting" | "confirmed">("checking");
   const [message, setMessage] = useState("");
 
+  async function applyStoredAttribution() {
+    const referral = localStorage.getItem("zynth_referral_code") || "";
+    const zpa = localStorage.getItem("zynth_zpa_code") || "";
+    if (referral) {
+      const r = await fetch("/api/referral", { method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify({code:referral}) }).catch(() => null);
+      if (r?.ok) localStorage.removeItem("zynth_referral_code");
+    }
+    if (zpa) {
+      const r = await fetch("/api/zpa", { method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify({code:zpa}) }).catch(() => null);
+      if (r?.ok) localStorage.removeItem("zynth_zpa_code");
+    }
+  }
+
   useEffect(() => {
     let mounted = true;
     const supabase = createSupabaseBrowserClient();
 
+    async function finish(session: any) {
+      if (!mounted || !session) return;
+      await applyStoredAttribution();
+      if (!mounted) return;
+      setStatus("confirmed");
+      router.replace("/dashboard");
+    }
+
     supabase.auth.getSession().then(({ data }) => {
       if (!mounted) return;
       if (data.session) {
-        setStatus("confirmed");
-        router.replace("/dashboard");
+        void finish(data.session);
       } else {
         setStatus("waiting");
       }
     });
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session && mounted) {
-        setStatus("confirmed");
-        router.replace("/dashboard");
-      }
+      if (session && mounted) void finish(session);
     });
 
     return () => {
