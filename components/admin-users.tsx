@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import {useEffect,useState} from "react";
-import {CheckCircle2,Mail,Search,ShieldCheck,UserRound,UsersRound,XCircle} from "lucide-react";
+import {CheckCircle2,Search,ShieldCheck,UserRound,UsersRound,XCircle} from "lucide-react";
 
 type Row={id:string;email:string|null;full_name:string|null;role:string;roles?:{key:string;name:string}[];kyc_verified:boolean;account_status:string;main_wallet_balance:number;portfolio_value:number;investment_count:number;active_investments:number;total_deposited:number;total_withdrawn:number;created_at:string;email_verified:boolean;email_reverification_required:boolean};
 const money=(n:any)=>`₦${Number(n||0).toLocaleString("en-NG",{maximumFractionDigits:2})}`;
