@@ -11,9 +11,10 @@ export default function ConfirmedClient({ email }: { email: string }) {
   const [status, setStatus] = useState<"checking" | "waiting" | "confirmed">("checking");
   const [message, setMessage] = useState("");
 
-  async function applyStoredAttribution() {
-    const referral = localStorage.getItem("zynth_referral_code") || "";
-    const zpa = localStorage.getItem("zynth_zpa_code") || "";
+  async function applyStoredAttribution(sessionUser?: any) {
+    const metadata = sessionUser?.user_metadata || {};
+    const referral = localStorage.getItem("zynth_referral_code") || metadata.zynth_referral_code || "";
+    const zpa = localStorage.getItem("zynth_zpa_code") || metadata.zynth_zpa_code || "";
     if (referral) {
       const r = await fetch("/api/referral", { method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify({code:referral}) }).catch(() => null);
       if (r?.ok) localStorage.removeItem("zynth_referral_code");
@@ -30,7 +31,7 @@ export default function ConfirmedClient({ email }: { email: string }) {
 
     async function finish(session: any) {
       if (!mounted || !session) return;
-      await applyStoredAttribution();
+      await applyStoredAttribution(session.user);
       if (!mounted) return;
       setStatus("confirmed");
       router.replace("/dashboard");
