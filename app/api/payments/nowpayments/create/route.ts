@@ -1,23 +1,7 @@
 import {NextResponse} from "next/server";
-import {createClient} from "@supabase/supabase-js";
 import {createSupabaseServerClient} from "@/lib/supabase/server";
 import {decryptProviderSecret} from "@/lib/secure-provider-secrets";
 import {extractMerchantCurrencies,getLiveUsdNgnRate,getNowPaymentsMinAmount,nowRequest} from "@/lib/nowpayments";
-
-async function getServerNowPaymentsConfig(){
-  const url=process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
-  const key=process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim();
-  const runtimeSecret=process.env.ZYNTH_NOWPAYMENTS_RECONCILE_SECRET?.trim();
-  if(!url||!key||!runtimeSecret) throw new Error("NOWPayments server configuration is incomplete.");
-
-  const supabase=createClient(url,key,{
-    auth:{autoRefreshToken:false,persistSession:false},
-    global:{headers:{"x-zynth-runtime-secret":runtimeSecret}}
-  });
-  const {data,error}=await supabase.rpc("get_nowpayments_server_config");
-  if(error||!data) throw new Error(error?.message||"Crypto payment configuration is unavailable.");
-  return data;
-}
 
 export async function POST(req:Request){
   try{
@@ -36,8 +20,14 @@ export async function POST(req:Request){
     if(!payCurrency) return NextResponse.json({error:"Choose a cryptocurrency and network."},{status:400});
 
     let settings:any;
-    try{ settings=await getServerNowPaymentsConfig(); }
-    catch(e:any){ console.error("[ZYNTH_NOWPAYMENTS_CONFIG_FAILED]",String(e?.message||e).slice(0,500)); return NextResponse.json({error:"Crypto payment configuration is unavailable."},{status:503}); }
+    try{
+      const {data,error}=await client.rpc("get_nowpayments_runtime_config");
+      if(error||!data) throw new Error(error?.message||"Crypto payment configuration is unavailable.");
+      settings=data;
+    }catch(e:any){
+      console.error("[ZYNTH_NOWPAYMENTS_CONFIG_FAILED]",String(e?.message||e).slice(0,500));
+      return NextResponse.json({error:"Crypto payment configuration is unavailable."},{status:503});
+    }
 
     if(!settings.enabled||settings.last_test_status!=="success") return NextResponse.json({error:"Crypto payments are temporarily unavailable."},{status:503});
     if(!settings.api_key_ciphertext) return NextResponse.json({error:"Crypto payment configuration is incomplete."},{status:503});
