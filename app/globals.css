@@ -2608,3 +2608,42 @@ html[data-theme="light"] .withdrawal-loading{color:#777167}
 
 .auth-result-card{text-align:left}.auth-result-icon{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;margin:8px 0 18px;background:#211a0e;border:1px solid #4b3d25;color:var(--gold);font-size:24px;font-weight:900}.auth-result-card h1{max-width:360px}.auth-result-note{display:grid;gap:5px;padding:13px 14px;border:1px solid #30291d;border-radius:10px;background:#12110e;margin:18px 0}.auth-result-note b{font-size:10px;color:#d5c5a6}.auth-result-note span{font-size:9px;color:#77736b;line-height:1.5}.auth-result-actions{display:grid;gap:8px}.auth-result-actions .primary{margin:0;text-decoration:none;justify-content:center}.auth-result-actions .switch{margin:6px auto 0;text-decoration:none}
 html[data-theme="light"] .auth-result-icon{background:#faf4e7;border-color:#d8c7a5;color:#8e692d}html[data-theme="light"] .auth-result-note{background:#faf7f0;border-color:#e0d8ca}html[data-theme="light"] .auth-result-note b{color:#6e592f}html[data-theme="light"] .auth-result-note span{color:#777168}
+
+.email-verification-toggle{width:31px;height:31px;display:grid;place-items:center;flex:none;border:1px solid #443a29;border-radius:9px;background:#17140f;color:#756b5a;cursor:pointer;transition:.18s}
+.email-verification-toggle.on{border-color:#66522d;background:#211b10;color:var(--gold)}
+.email-verification-toggle.off{border-color:#4b3232;background:#1b1212;color:#d58a8a}
+.email-verification-toggle:disabled{opacity:.55;cursor:wait}
+.email-verification-status{display:inline-flex;align-items:center;padding:6px 8px;border-radius:999px;font-size:7px;font-weight:900;letter-spacing:.09em}
+.email-verification-status.verified{border:1px solid #5a4b31;background:#201a10;color:var(--gold)}
+.email-verification-status.required{border:1px solid #4b3232;background:#1b1212;color:#d58a8a}
+.email-verification-admin-card .admin-card-head{align-items:center}
+.email-verification-control{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 0;border-top:1px solid var(--line)}
+.email-verification-control b,.email-verification-control small{display:block}
+.email-verification-control b{font-size:11px;color:#ddd8cf}
+.email-verification-control small{margin-top:4px;color:#66635c;font-size:8px}
+.verification-required-card{text-align:left}
+.verification-required-icon{width:54px;height:54px;display:grid;place-items:center;border-radius:16px;margin:8px 0 18px;background:#211a0e;border:1px solid #4b3d25;color:var(--gold)}
+.verification-required-address{display:grid;gap:6px;padding:13px 14px;border:1px solid #30291d;border-radius:10px;background:#12110e;margin:18px 0}
+.verification-required-address span{font-size:7px;color:#7d715e;font-weight:900;letter-spacing:.12em}
+.verification-required-address b{font-size:10px;color:#d7d2c8;word-break:break-word}
+.verification-required-note{display:flex;gap:9px;align-items:flex-start;padding:12px;border:1px solid #30291d;border-radius:10px;background:#12110e;margin-bottom:14px;color:#77736b}
+.verification-required-note svg{flex:none;color:var(--gold);margin-top:1px}
+.verification-required-note b,.verification-required-note span{display:block}
+.verification-required-note b{font-size:9px;color:#cbb98f}
+.verification-required-note span{margin-top:3px;font-size:8px;line-height:1.5}
+.verification-check{display:flex;align-items:center;justify-content:center;gap:6px}
+html[data-theme="light"] .verification-required-icon{background:#faf4e7;border-color:#d8c7a5;color:#8e692d}
+html[data-theme="light"] .verification-required-address,html[data-theme="light"] .verification-required-note{background:#faf7f0;border-color:#e0d8ca}
+html[data-theme="light"] .verification-required-address span{color:#8e692d}
+html[data-theme="light"] .verification-required-address b{color:#3f3a32}
+html[data-theme="light"] .verification-required-note{color:#777168}
+html[data-theme="light"] .verification-required-note b{color:#6e592f}
+html[data-theme="light"] .verification-required-note span{color:#777168}
+html[data-theme="light"] .email-verification-control b{color:#39352e}
+html[data-theme="light"] .email-verification-control small{color:#777167}
+html[data-theme="light"] .email-verification-status.verified{background:#faf4e7;border-color:#d8c7a5;color:#8e692d}
+html[data-theme="light"] .email-verification-status.required{background:#fff6f6;border-color:#e7c9c9;color:#a33d3d}
+@media(max-width:700px){
+  .email-verification-admin-card .admin-card-head{align-items:flex-start;flex-direction:column}
+  .email-verification-control{padding:13px 0}
+}
