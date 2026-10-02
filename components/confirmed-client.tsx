@@ -14,14 +14,9 @@ export default function ConfirmedClient({ email }: { email: string }) {
   async function applyStoredAttribution(sessionUser?: any) {
     const metadata = sessionUser?.user_metadata || {};
     const referral = localStorage.getItem("zynth_referral_code") || metadata.zynth_referral_code || "";
-    const zpa = localStorage.getItem("zynth_zpa_code") || metadata.zynth_zpa_code || "";
     if (referral) {
       const r = await fetch("/api/referral", { method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify({code:referral}) }).catch(() => null);
       if (r?.ok) localStorage.removeItem("zynth_referral_code");
-    }
-    if (zpa) {
-      const r = await fetch("/api/zpa/claim", { method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify({code:zpa}) }).catch(() => null);
-      if (r?.ok) localStorage.removeItem("zynth_zpa_code");
     }
   }
 
