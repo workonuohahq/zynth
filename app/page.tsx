@@ -1,7 +1,12 @@
 import Link from "next/link";
 import { ArrowRight, LockKeyhole, ShieldCheck, Zap } from "lucide-react";
+import AuthErrorClient from "@/components/auth-error-client";
 
-export default function Home() {
+export default function Home({ searchParams }: { searchParams?: { error?: string; error_code?: string; error_description?: string } }) {
+  if (searchParams?.error || searchParams?.error_code) {
+    return <AuthErrorClient code={searchParams.error_code || ""} description={searchParams.error_description || ""} />;
+  }
+
   return (
     <main className="landing">
       <header className="landing-nav">
@@ -11,7 +16,6 @@ export default function Home() {
           <Link href="/login?mode=signup" className="landing-cta">Create account <ArrowRight size={15}/></Link>
         </div>
       </header>
-
       <section className="landing-hero">
         <div className="hero-copy">
           <span className="eyebrow">FOCUSED WEALTH BUILDING</span>
@@ -22,29 +26,20 @@ export default function Home() {
             <Link href="/login" className="secondary-cta">I already have an account</Link>
           </div>
           <div className="trust-row">
-            <span><ShieldCheck size={15}/> Secure account</span>
-            <span><LockKeyhole size={15}/> Protected access</span>
-            <span><Zap size={15}/> 5-day cycles</span>
+            <span><ShieldCheck size={15}/> Secure account</span><span><LockKeyhole size={15}/> Protected access</span><span><Zap size={15}/> 5-day cycles</span>
           </div>
         </div>
-        <div className="landing-visual">
-          <div className="visual-glow"/>
-          <div className="vault-preview">
-            <div className="preview-top"><span>YOUR PORTFOLIO</span><span className="preview-dot"/></div>
-            <strong>₦0.00</strong>
-            <div className="preview-line"/>
-            <div className="preview-grid"><div><small>AVAILABLE</small><b>₦0.00</b></div><div><small>LOCKED</small><b>₦0.00</b></div></div>
-            <div className="preview-cycle"><span>5-DAY YIELD VAULT</span><b>READY</b></div>
-          </div>
-        </div>
+        <div className="landing-visual"><div className="visual-glow"/><div className="vault-preview">
+          <div className="preview-top"><span>YOUR PORTFOLIO</span><span className="preview-dot"/></div><strong>₦0.00</strong><div className="preview-line"/>
+          <div className="preview-grid"><div><small>AVAILABLE</small><b>₦0.00</b></div><div><small>LOCKED</small><b>₦0.00</b></div></div>
+          <div className="preview-cycle"><span>5-DAY YIELD VAULT</span><b>READY</b></div>
+        </div></div>
       </section>
-
       <section className="landing-features">
         <div><span>01</span><h3>Start with structure.</h3><p>Choose a cycle from your wallet and know exactly when it matures.</p></div>
         <div><span>02</span><h3>Track everything.</h3><p>Your balances, vaults and transactions stay visible in one place.</p></div>
         <div><span>03</span><h3>Keep building.</h3><p>Repeat disciplined cycles as your ZYNTH journey grows.</p></div>
       </section>
-
       <footer className="landing-footer"><span>© 2026 ZYNTH</span><span>BUILD BEYOND.</span></footer>
     </main>
   );
