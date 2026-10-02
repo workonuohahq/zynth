@@ -108,6 +108,28 @@ const closePreview=()=>{setPreview(null);setMt5CopyState("");};
    <div className="admin-sidebar-bottom"><span className="admin-session"><i/>Online</span><div className="admin-identity"><span className="avatar">A</span><span><b>Administrator</b><small>{adminEmail}</small></span></div><form action="/auth/signout" method="post" className="admin-signout-form"><button className="admin-signout" type="submit"><LogOut size={14}/><span>Sign out</span></button></form></div>
   </aside>
   <main className="admin-main">
+   <nav className="admin-command-nav" aria-label="Admin navigation">
+    <div className="admin-command-brand"><span className="brand-mark">Z</span><b>ZYNTH</b><small>ADMIN</small></div>
+    <div className="admin-command-links">
+      {[
+        ["overview","Overview"],["settlements","Settlements"],["strategies","Strategies"],["investors","Investors"],["traders","Traders"],
+        ["notifications","Notifications"],["support","Customer Service"],["referrals","Referrals"],["zpa","ZPA"]
+      ].map(([k,l])=><button key={k} className={tab===k?"active":""} onClick={()=>setTab(k)}>{l}</button>)}
+      <div className={"admin-command-money "+(moneyOpen||["deposits","withdrawals","redemptions","transactions"].includes(tab)?"open":"")}>
+       <button className={["deposits","withdrawals","redemptions","transactions"].includes(tab)?"money-trigger active":"money-trigger"} onClick={()=>setMoneyOpen(v=>!v)} aria-expanded={moneyOpen}>
+        Money Movement <span>FLOW</span><ChevronRight size={13}/>
+       </button>
+       {(moneyOpen||["deposits","withdrawals","redemptions","transactions"].includes(tab))&&<div className="admin-command-money-menu">
+        <button className={tab==="deposits"?"active":""} onClick={()=>{setTab("deposits");setMoneyOpen(false)}}>Deposits</button>
+        <button className={tab==="withdrawals"?"active":""} onClick={()=>{setTab("withdrawals");setMoneyOpen(false)}}>Withdrawals</button>
+        <button className={tab==="redemptions"?"active":""} onClick={()=>{setTab("redemptions");setMoneyOpen(false)}}>Redemptions</button>
+        <button className={tab==="transactions"?"active":""} onClick={()=>{setTab("transactions");setMoneyOpen(false)}}>Transactions</button>
+       </div>}
+      </div>
+      <button className={tab==="settings"?"active":""} onClick={()=>setTab("settings")}>Settings</button>
+    </div>
+    <div className="admin-command-status"><i/>Online</div>
+   </nav>
    <header className="admin-topbar"><div><div className="eyebrow-row"><span className="eyebrow">ZYNTH / ADMIN</span><span className="live-dot"><i/> CONTROL ONLINE</span></div><h1>{tab==="overview"?"Control center":tab.charAt(0).toUpperCase()+tab.slice(1)}</h1><p>Portfolio operations, strategy settlement and investor controls.</p></div><div className="admin-top-actions"><AdminNotificationBell/><ThemeSwitcher/><form action="/auth/signout" method="post"><button className="ghost admin-signout-top" type="submit"><LogOut size={14}/> Sign out</button></form><button className="ghost admin-refresh" onClick={refreshData} disabled={refreshing}><RefreshCw size={15} className={refreshing?"spin":""}/> {refreshing?"Refreshing…":"Refresh data"}</button></div></header>
    {notice&&<div className="admin-notice">{notice}</div>}
    <AdminPushPrompt/>
