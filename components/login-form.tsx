@@ -17,9 +17,10 @@ export default function LoginForm({ initialMode = "login", referralCode = "", zp
   const [refCode] = useState(referralCode || "");
   const [partnerCode] = useState(zpaCode || "");
 
-  async function applyAttribution() {
-    const code = refCode || localStorage.getItem("zynth_referral_code") || "";
-    const zpa = partnerCode || localStorage.getItem("zynth_zpa_code") || "";
+  async function applyAttribution(sessionUser?: any) {
+    const metadata = sessionUser?.user_metadata || {};
+    const code = refCode || localStorage.getItem("zynth_referral_code") || metadata.zynth_referral_code || "";
+    const zpa = partnerCode || localStorage.getItem("zynth_zpa_code") || metadata.zynth_zpa_code || "";
     if (code) {
       const r = await fetch("/api/referral", { method: "POST", headers: {"content-type":"application/json"}, body: JSON.stringify({code}) }).catch(() => null);
       if (r?.ok) localStorage.removeItem("zynth_referral_code");
@@ -41,7 +42,7 @@ export default function LoginForm({ initialMode = "login", referralCode = "", zp
       if (mode === "login") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) setMessage(error.message);
-        else { await applyAttribution(); router.push("/dashboard"); }
+        else { await applyAttribution(data.user); router.push("/dashboard"); }
       } else {
         const { data, error } = await supabase.auth.signUp({
           email,
@@ -49,7 +50,7 @@ export default function LoginForm({ initialMode = "login", referralCode = "", zp
           options: { data: { full_name: name, ...(partnerCode ? { zynth_zpa_code: partnerCode } : {}), ...(refCode ? { zynth_referral_code: refCode } : {}) }, emailRedirectTo: `${ZYNTH_PUBLIC_ORIGIN}/auth/confirmed` }
         });
         if (error) setMessage(error.message);
-        else if (data.session) { await applyAttribution(); router.push("/dashboard"); }
+        else if (data.session) { await applyAttribution(data.user); router.push("/dashboard"); }
         else router.push(`/auth/confirmed?email=${encodeURIComponent(email)}`);
       }
     } catch (error) {
