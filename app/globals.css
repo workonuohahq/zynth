@@ -1596,8 +1596,12 @@ html[data-theme="light"] .trader-strategy-pro{background:#fffdf8}.trader-strateg
   border-radius:50%;
   background:var(--gold-surface);
   pointer-events:none;
+  z-index:0;
 }
-.admin-kpi-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:16px}
+.admin-kpi > *{position:relative;z-index:1}
+.admin-kpi-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:16px;min-width:0}
+.admin-kpi-top em{min-width:0;overflow-wrap:anywhere}
+
 .admin-kpi-icon{
   width:30px;height:30px;
   margin:0;
@@ -1613,6 +1617,8 @@ html[data-theme="light"] .trader-strategy-pro{background:#fffdf8}.trader-strateg
   font-weight:900;
   letter-spacing:.12em;
   color:var(--muted);
+  text-align:right;
+  line-height:1.25;
 }
 .admin-kpi small{
   display:block;
