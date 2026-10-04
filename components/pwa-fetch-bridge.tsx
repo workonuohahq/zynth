@@ -24,7 +24,7 @@ export default function PwaFetchBridge() {
         return originalFetch(input, init);
       }
 
-      // Ensure sessionStorage credential hydration has completed before the
+      // Ensure persistent PWA credential hydration has completed before the
       // protected request is sent. The credential itself never leaves the
       // browser except as the dedicated PWA header.
       await loadPwaCredential();
