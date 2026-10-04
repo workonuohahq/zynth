@@ -25,7 +25,7 @@ create index if not exists zynth_crypto_payments_address_idx
   where pay_address is not null;
 
 -- Never allow clients to submit arbitrary referral/risk points.
-revoke all on function public.zynth_risk_record_event(uuid,text,text,text,text,jsonb) from public,anon,authenticated;
+drop function if exists public.zynth_risk_record_event(uuid,text,text,text,text,jsonb);
 revoke all on function public.zynth_risk_record_system_event(uuid,text,text,text,text,text,uuid,text,jsonb) from public,anon,authenticated;
 grant execute on function public.zynth_risk_record_system_event(uuid,text,text,text,text,text,uuid,text,jsonb) to service_role;
 
@@ -52,3 +52,8 @@ begin
     raise exception 'Phase 9/10/11 reconciliation: admin referral dashboard function missing';
   end if;
 end $$;
+
+-- Purged duplicate indexes found during the Phase 9-11 deep audit.
+drop index if exists public.idx_transactions_status;
+drop index if exists public.withdrawal_requests_queue_idx;
+drop index if exists public.withdrawal_requests_one_active_per_user;
