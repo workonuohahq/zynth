@@ -1,0 +1,2 @@
+import {NextResponse} from "next/server";import {getAdminContext} from "@/lib/admin/auth";
+export async function GET(_r:Request,{params}:{params:{id:string}}){try{const {supabase,user}=await getAdminContext();if(!user)return NextResponse.json({error:"Admin authorization required."},{status:403});const {data,error}=await supabase.rpc("zynth_kyc_admin_detail",{p_admin_id:user.id,p_user_id:params.id});if(error)throw error;return NextResponse.json(data)}catch(e){console.error(e);return NextResponse.json({error:"Unable to load KYC profile."},{status:500})}}
