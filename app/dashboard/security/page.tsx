@@ -109,7 +109,7 @@ export default function SecurityPage(){
     <div className="panel-head"><div><span className="muted">SESSION CONTROL</span><h2>Active sessions</h2></div><button className="danger-outline" onClick={revokeOthers} disabled={busy!==null}><LogOut size={15}/> Sign out all others</button></div>
     {message&&<div className="notice">{message}</div>}
     {loading?<div className="security-loading"><RefreshCw className="spin" size={18}/> Loading security activity…</div>:data.sessions.length?<div className="security-list">
-     {data.sessions.map((s:any)=>{const Device=icon(s.device_type);const current=s.id===currentId;return <article className={"security-row "+(current?"current":"")} key={s.id}>
+     {data.sessions.map((s:any)=>{const Device=icon(s.device_type);const current=s.current===true||s.id===currentId;return <article className={"security-row "+(current?"current":"")} key={s.id}>
       <span className="security-device-icon"><Device size={19}/></span>
       <span className="security-row-copy"><b>{current?"Current device":s.device_type==="mobile"?"Mobile device":"Desktop browser"}</b><small>{s.browser_name||"Browser"} · {s.os_name||"Unknown OS"}</small><small>Last active {fmt(s.last_seen_at)}</small></span>
       {current?<span className="security-current"><i/> Active now</span>:<button className="danger-link" onClick={()=>revoke(s.id)} disabled={busy!==null}>{busy===s.id?"Signing out…":"Sign out"}</button>}
