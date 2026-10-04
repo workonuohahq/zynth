@@ -3,6 +3,7 @@ import {useEffect,useState} from "react";
 import Link from "next/link";
 import {Activity,ArrowDownToLine,ArrowDownLeft,ArrowUpRight,ArrowLeftRight,BarChart3,Bell,CheckCircle2,ChevronRight,Clock3,Copy,ExternalLink,Eye,RefreshCw,Settings2,ShieldCheck,TrendingUp,Users,Target,X,XCircle,Pencil,Pause,Play,Archive,Trash2,Gift,Headphones,LogOut,Send} from "lucide-react";
 import AdminUsers from "@/components/admin-users";
+import AdminKyc from "@/components/admin-kyc";
 import ThemeSwitcher from "@/components/theme-switcher";
 import AdminInvestmentSettings from "@/components/admin-investment-settings";
 import AdminStrategyForm from "@/components/admin-strategy-form";
@@ -22,161 +23,29 @@ const pct=(n:any)=>`${Number(n||0).toFixed(2)}%`;
 
 export default function AdminPanel({initialData,adminEmail}:{initialData:any;adminEmail:string}){
  const[data,setData]=useState(initialData||{}),[tab,setTab]=useState("overview"),[refreshing,setRefreshing]=useState(false),[refreshKey,setRefreshKey]=useState(0),[moneyOpen,setMoneyOpen]=useState(false),[reports,setReports]=useState<any[]>([]),[history,setHistory]=useState<any[]>([]),[strategies,setStrategies]=useState<any[]>([]),[traders,setTraders]=useState<any[]>([]),[editingStrategy,setEditingStrategy]=useState<any>(null),[notificationTemplates,setNotificationTemplates]=useState<any[]>([]),[busy,setBusy]=useState(""),[notice,setNotice]=useState(""),[preview,setPreview]=useState<any>(null),[previewBusy,setPreviewBusy]=useState(""),[mt5Loading,setMt5Loading]=useState(false),[mt5CopyState,setMt5CopyState]=useState("");
- async function load(){
-  const [q,s,t,n,support]=await Promise.all([
-   fetch("/api/admin/settlements").then(r=>r.json()),
-   fetch("/api/admin/strategies").then(r=>r.json()),
-   fetch("/api/admin/traders").then(r=>r.json()),
-   fetch("/api/admin/notification-templates").then(r=>r.json()),
-   fetch("/api/admin/support").then(r=>r.ok?r.json():{tickets:[]}).catch(()=>({tickets:[]}))
-  ]);
-  const supportUnread=Number(support.attention_count||0);setReports(q.reports||[]);setHistory(q.history||[]);setStrategies(s.strategies||[]);setTraders(t.traders||[]);setNotificationTemplates(n.templates||[]);setData((x:any)=>({...x,support_unread_count:supportUnread,mt5_pending_count:Number(t.mt5_pending_count||0),pending_reports:(q.pending_reports??x.pending_reports),pending_report_queue:(q.pending_report_queue??x.pending_report_queue),strategies:(s.strategies?.length??x.strategies),traders:(t.traders?.length??x.traders)}));
- }
+ async function load(){const [q,s,t,n,support]=await Promise.all([fetch("/api/admin/settlements").then(r=>r.json()),fetch("/api/admin/strategies").then(r=>r.json()),fetch("/api/admin/traders").then(r=>r.json()),fetch("/api/admin/notification-templates").then(r=>r.json()),fetch("/api/admin/support").then(r=>r.ok?r.json():{tickets:[]}).catch(()=>({tickets:[]}))]);const supportUnread=Number(support.attention_count||0);setReports(q.reports||[]);setHistory(q.history||[]);setStrategies(s.strategies||[]);setTraders(t.traders||[]);setNotificationTemplates(n.templates||[]);setData((x:any)=>({...x,support_unread_count:supportUnread,mt5_pending_count:Number(t.mt5_pending_count||0),pending_reports:(q.pending_reports??x.pending_reports),pending_report_queue:(q.pending_report_queue??x.pending_report_queue),strategies:(s.strategies?.length??x.strategies),traders:(t.traders?.length??x.traders)}))}
  async function refreshData(){setRefreshing(true);setNotice("");try{await load();setRefreshKey(x=>x+1);setNotice("Admin data refreshed.");window.setTimeout(()=>setNotice(""),3000)}catch(e){setNotice(e instanceof Error?e.message:"Could not refresh admin data.")}finally{setRefreshing(false)}}
- useEffect(()=>{load();const timer=window.setInterval(async()=>{try{const r=await fetch("/api/admin/support",{cache:"no-store"});if(!r.ok)return;const j=await r.json();const unread=Number(j.attention_count||0);setData((x:any)=>({...x,support_unread_count:unread}));}catch{}} ,15000);return()=>window.clearInterval(timer)},[]);
+ useEffect(()=>{load();const timer=window.setInterval(async()=>{try{const r=await fetch("/api/admin/support",{cache:"no-store"});if(!r.ok)return;const j=await r.json();setData((x:any)=>({...x,support_unread_count:Number(j.attention_count||0)}))}catch{}} ,15000);return()=>window.clearInterval(timer)},[]);
  useEffect(()=>{const handler=()=>setTab("notifications");window.addEventListener("zynth-admin-open-notifications",handler);return()=>window.removeEventListener("zynth-admin-open-notifications",handler)},[]);
- async function act(id:string,a:string){
-  setBusy(id);setNotice("");
-  let reason="";
-  if(a==="reject")reason=window.prompt("Reason for rejection")||"Report rejected";
-  const r=await fetch("/api/admin/settlements",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({reportId:id,action:a,reason})});
-  const j=await r.json();
-  setNotice(r.ok?(a==="confirm"?"Settlement confirmed and investor NAV updated.":"Report rejected."):(j.error||"Action failed."));
-  await load();setBusy("");
- }
- async function openPreview(id:string){
-  setPreviewBusy(id);setNotice("");setMt5Loading(false);setMt5CopyState("");
-  const r=await fetch("/api/admin/settlements",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({reportId:id,action:"preview"})});
-  const j=await r.json();
-  if(!r.ok)setNotice(j.error||"Could not load settlement preview.");
-  else {
-    setPreview(j);
-    if(j?.trader?.id){
-      setMt5Loading(true);
-      try{
-        const mr=await fetch("/api/admin/traders?userId="+encodeURIComponent(j.trader.id),{cache:"no-store"});
-        const mj=await mr.json();
-        if(mr.ok&&mj.credentials)setPreview((current:any)=>current?{...current,mt5:mj.credentials}:current);
-      }catch{}
-      finally{setMt5Loading(false);}
-    }
-  }
-  setPreviewBusy("");
- }
- async function copyMt5Value(value:string,label:string){
-  if(!value){setMt5CopyState("Unavailable");window.setTimeout(()=>setMt5CopyState(""),1800);return;}
-  try{await navigator.clipboard.writeText(value);}catch{const el=document.createElement("textarea");el.value=value;el.style.position="fixed";el.style.opacity="0";document.body.appendChild(el);el.select();document.execCommand("copy");el.remove();}
-  setMt5CopyState(label+" copied");window.setTimeout(()=>setMt5CopyState(""),1800);
-}
-async function copyAllMt5(){
-  const m=preview?.mt5;if(!m)return;
-  await copyMt5Value(`MT5 Login: ${m.mt5Login}\nMT5 Server: ${m.mt5Server}\nInvestor Password: ${m.investorPassword}`,"MT5 details");
-}
-const closePreview=()=>{setPreview(null);setMt5CopyState("");};
+ async function act(id:string,a:string){setBusy(id);setNotice("");let reason="";if(a==="reject")reason=window.prompt("Reason for rejection")||"Report rejected";const r=await fetch("/api/admin/settlements",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({reportId:id,action:a,reason})});const j=await r.json();setNotice(r.ok?(a==="confirm"?"Settlement confirmed and investor NAV updated.":"Report rejected."):(j.error||"Action failed."));await load();setBusy("")}
+ async function openPreview(id:string){setPreviewBusy(id);setNotice("");const r=await fetch("/api/admin/settlements",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({reportId:id,action:"preview"})});const j=await r.json();if(!r.ok)setNotice(j.error||"Could not load settlement preview.");else setPreview(j);setPreviewBusy("")}
+ const closePreview=()=>setPreview(null);
  return <div className="admin-frame">
-  <aside className="admin-sidebar">
-   <Link href="/dashboard" className="admin-brand"><span className="brand-mark">Z</span><span>ZYNTH</span><small>ADMIN</small></Link>
-   <div className="admin-nav-label">CONTROL CENTER</div>
-   <nav className="admin-list-nav">
-    {[
-      {k:"overview",l:"Overview",i:BarChart3,b:data.pending_reports},
-      {k:"settlements",l:"Settlements",i:Clock3,b:data.pending_reports},
-      {k:"strategies",l:"Strategies",i:TrendingUp,b:data.strategies},
-      {k:"investors",l:"Investors",i:Users,b:data.investors},
-      {k:"traders",l:"Traders",i:ShieldCheck,b:data.mt5_pending_count||0},
-      {k:"trader-governance",l:"Trader Governance",i:ShieldCheck,b:0},
-      {k:"notifications",l:"Notifications",i:Bell,b:0},
-      {k:"broadcasts",l:"Messaging Broadcast",i:Send,b:0},
-      {k:"support",l:"Customer Service",i:Headphones,b:Number(data.support_unread_count||0)},
-      {k:"referrals",l:"Referrals",i:Gift,b:0},
-      {k:"zpa",l:"ZPA",i:Target,b:0}
-    ].map(({k,l,i:Icon,b})=><button key={k} className={tab===k?"admin-list-item active":"admin-list-item"} onClick={()=>setTab(k)}><span className="admin-list-icon"><Icon size={16}/></span><span className="admin-list-label">{l}</span>{b>0&&<em className={k==="support"?"admin-support-badge":""}>{b}</em>}</button>)}
-    <div className={"admin-money-nav "+(moneyOpen||["deposits","withdrawals","redemptions","transactions"].includes(tab)?"open":"")}>
-      <button className={["deposits","withdrawals","redemptions","transactions"].includes(tab)?"admin-list-item active":"admin-list-item"} onClick={()=>setMoneyOpen(v=>!v)} aria-expanded={moneyOpen} aria-controls="admin-money-subnav">
-        <span className="admin-list-icon"><ArrowLeftRight size={16}/></span><span className="admin-list-label">Money Movement</span><span className="admin-money-meta">FLOW</span><span className="admin-money-chevron"><ChevronRight size={13}/></span>
-        {((Number(data.pending_deposits)||0)+(Number(data.withdrawals_pending)||0))>0&&<em>{(Number(data.pending_deposits)||0)+(Number(data.withdrawals_pending)||0)}</em>}
-      </button>
-      {moneyOpen&&<div className="admin-money-subnav" id="admin-money-subnav"><div className="admin-money-subnav-head"><span>MONEY MOVEMENT</span><small>Operational queues + master ledger</small></div>
-        <button className={tab==="deposits"?"active":""} onClick={()=>{setTab("deposits");setMoneyOpen(false)}}><span className="admin-money-subicon deposit"><ArrowDownLeft size={13}/></span><span><b>Deposits</b><small>Incoming funds</small></span>{Number(data.pending_deposits||0)>0&&<b>{data.pending_deposits}</b>}</button>
-        <button className={tab==="withdrawals"?"active":""} onClick={()=>{setTab("withdrawals");setMoneyOpen(false)}}><span className="admin-money-subicon withdrawal"><ArrowUpRight size={13}/></span><span><b>Withdrawals</b><small>Outgoing funds</small></span>{Number(data.withdrawals_pending||0)>0&&<b>{data.withdrawals_pending}</b>}</button>
-        <button className={tab==="redemptions"?"active":""} onClick={()=>{setTab("redemptions");setMoneyOpen(false)}}><span className="admin-money-subicon redemption"><ArrowLeftRight size={13}/></span><span><b>Redemptions</b><small>Investor exits</small></span></button>
-        <button className={tab==="transactions"?"active":""} onClick={()=>{setTab("transactions");setMoneyOpen(false)}}><span className="admin-money-subicon transaction"><Activity size={13}/></span><span><b>Transactions</b><small>Master ledger</small></span></button>
-      </div>}
-    </div>
-    <button className={tab==="settings"?"admin-list-item active":"admin-list-item"} onClick={()=>setTab("settings")}><span className="admin-list-icon"><Settings2 size={16}/></span><span className="admin-list-label">Settings</span></button>
-   </nav>
-   <div className="admin-sidebar-bottom"><span className="admin-session"><i/>Online</span><div className="admin-identity"><span className="avatar">A</span><span><b>Administrator</b><small>{adminEmail}</small></span></div><form action="/auth/signout" method="post" className="admin-signout-form"><button className="admin-signout" type="submit"><LogOut size={14}/><span>Sign out</span></button></form></div>
-  </aside>
-  <main className="admin-main">
-    <header className="admin-topbar"><div><div className="eyebrow-row"><span className="eyebrow">ZYNTH / ADMIN</span><span className="live-dot"><i/> CONTROL ONLINE</span></div><h1>{tab==="overview"?"Control center":tab.charAt(0).toUpperCase()+tab.slice(1)}</h1><p>Portfolio operations, strategy settlement and investor controls.</p></div><div className="admin-top-actions"><AdminNotificationBell/><ThemeSwitcher/><form action="/auth/signout" method="post"><button className="ghost admin-signout-top" type="submit"><LogOut size={14}/> Sign out</button></form><button className="ghost admin-refresh" onClick={refreshData} disabled={refreshing}><RefreshCw size={15} className={refreshing?"spin":""}/> {refreshing?"Refreshing…":"Refresh data"}</button></div></header>
-   {notice&&<div className="admin-notice">{notice}</div>}
-   <AdminPushPrompt/>
-
+  <aside className="admin-sidebar"><Link href="/dashboard" className="admin-brand"><span className="brand-mark">Z</span><span>ZYNTH</span><small>ADMIN</small></Link><div className="admin-nav-label">CONTROL CENTER</div><nav className="admin-list-nav">
+   {[{k:"overview",l:"Overview",i:BarChart3,b:data.pending_reports},{k:"settlements",l:"Settlements",i:Clock3,b:data.pending_reports},{k:"strategies",l:"Strategies",i:TrendingUp,b:data.strategies},{k:"investors",l:"Investors",i:Users,b:data.investors},{k:"kyc",l:"KYC & AML",i:ShieldCheck,b:0},{k:"traders",l:"Traders",i:ShieldCheck,b:data.mt5_pending_count||0},{k:"trader-governance",l:"Trader Governance",i:ShieldCheck,b:0},{k:"notifications",l:"Notifications",i:Bell,b:0},{k:"broadcasts",l:"Messaging Broadcast",i:Send,b:0},{k:"support",l:"Customer Service",i:Headphones,b:Number(data.support_unread_count||0)},{k:"referrals",l:"Referrals",i:Gift,b:0},{k:"zpa",l:"ZPA",i:Target,b:0}].map(({k,l,i:Icon,b})=><button key={k} className={tab===k?"admin-list-item active":"admin-list-item"} onClick={()=>setTab(k)}><span className="admin-list-icon"><Icon size={16}/></span><span className="admin-list-label">{l}</span>{b>0&&<em>{b}</em>}</button>)}
+   <div className={"admin-money-nav "+(moneyOpen||["deposits","withdrawals","redemptions","transactions"].includes(tab)?"open":"")}><button className={["deposits","withdrawals","redemptions","transactions"].includes(tab)?"admin-list-item active":"admin-list-item"} onClick={()=>setMoneyOpen(v=>!v)}><span className="admin-list-icon"><ArrowLeftRight size={16}/></span><span className="admin-list-label">Money Movement</span><span className="admin-money-meta">FLOW</span><ChevronRight size={13}/></button>{moneyOpen&&<div className="admin-money-subnav"><button onClick={()=>{setTab("deposits");setMoneyOpen(false)}}>Deposits</button><button onClick={()=>{setTab("withdrawals");setMoneyOpen(false)}}>Withdrawals</button><button onClick={()=>{setTab("redemptions");setMoneyOpen(false)}}>Redemptions</button><button onClick={()=>{setTab("transactions");setMoneyOpen(false)}}>Transactions</button></div>}</div>
+   <button className={tab==="settings"?"admin-list-item active":"admin-list-item"} onClick={()=>setTab("settings")}><span className="admin-list-icon"><Settings2 size={16}/></span><span className="admin-list-label">Settings</span></button>
+  </nav><div className="admin-sidebar-bottom"><span className="admin-session"><i/>Online</span><div className="admin-identity"><span className="avatar">A</span><span><b>Administrator</b><small>{adminEmail}</small></span></div></div></aside>
+  <main className="admin-main"><header className="admin-topbar"><div><div className="eyebrow-row"><span className="eyebrow">ZYNTH / ADMIN</span><span className="live-dot"><i/> CONTROL ONLINE</span></div><h1>{tab==="overview"?"Control center":tab==="kyc"?"KYC & AML":tab.charAt(0).toUpperCase()+tab.slice(1)}</h1><p>Portfolio operations, investor controls and compliance review.</p></div><div className="admin-top-actions"><AdminNotificationBell/><ThemeSwitcher/><button className="ghost admin-refresh" onClick={refreshData} disabled={refreshing}><RefreshCw size={15}/> {refreshing?"Refreshing…":"Refresh data"}</button></div></header>{notice&&<div className="admin-notice">{notice}</div>}<AdminPushPrompt/>
+   {tab==="kyc"&&<section className="admin-section"><AdminKyc/></section>}
    {tab==="transactions"&&<section className="admin-section"><AdminTransactions/></section>}
-
-   {tab==="overview"&&<section className="admin-section"><div className="admin-kpis">{[[TrendingUp,"AUM",money(data.aumm),"PORTFOLIO","investors"],[Users,"Investors",data.investors,"ACCOUNTS","investors"],[ShieldCheck,"Traders",data.traders,"OPERATORS","traders"],[Clock3,"Pending reports",data.pending_reports,"ACTION","settlements"],[ArrowDownToLine,"Withdrawals",data.withdrawals_pending,"ACTION","withdrawals"],[ArrowDownLeft,"Pending deposits",data.pending_deposits,"ACTION","deposits"],[ArrowLeftRight,"Pending redemptions",data.pending_redemptions,"ACTION","redemptions"]].map(([Icon,label,val,tag,target]:any)=>{const clickable=Boolean(target);const title=target==="investors"?"Open investor accounts":target==="traders"?"Open trader operations":target==="settlements"?"Open settlement queue":target==="withdrawals"?"Open withdrawal queue":target==="deposits"?"Open deposit queue":"Open redemption control";return <div className={"admin-kpi"+(clickable?" admin-kpi-clickable":"")} key={label} onClick={()=>clickable&&setTab(target)} onKeyDown={e=>{if(clickable&&(e.key==="Enter"||e.key===" ")){e.preventDefault();setTab(target)}}} role={clickable?"button":undefined} tabIndex={clickable?0:undefined} title={clickable?title:undefined}><div className="admin-kpi-top"><span className="admin-kpi-icon"><Icon size={16}/></span><em>{tag}</em></div><small>{label}</small><b>{val}</b></div>})}</div><section className="admin-card admin-feature-card"><div className="admin-card-head"><div><span className="muted">SETTLEMENT QUEUE</span><h2>What needs attention</h2><p>Trader reports do not change investor balances until an administrator confirms them.</p></div><button className="text-action" onClick={()=>setTab("settlements")}>Open queue <ChevronRight size={13}/></button></div><div className="admin-table">{(data.pending_report_queue||[]).slice(0,6).map((r:any)=><div className="admin-row" key={r.id}><div className="admin-person"><span className="avatar">T</span><span><b>{r.strategy_name}</b><small>{r.trader_name||"Trader"} · {new Date(r.report_date).toLocaleDateString("en-NG")}</small></span></div><span>{money(r.closing_balance)}</span><span>{pct(r.return_pct)}</span><strong>Pending</strong></div>)}{!data.pending_report_queue?.length&&<div className="admin-empty"><CheckCircle2 size={22}/><p>No settlement reports waiting.</p></div>}</div></section></section>}
-
-   {tab==="settlements"&&<section className="admin-section"><section className="admin-card"><div className="admin-card-head"><div><span className="muted">DAILY VERIFICATION</span><h2>Settlement queue</h2><p>Review the complete NAV and investor impact before confirming a report.</p></div><span className="admin-count">{reports.length} pending</span></div><div className="admin-table">{reports.map(r=><div className="admin-row settlement-row" key={r.id}><div className="admin-person"><span className="avatar">T</span><span><b>{r.strategy_name}</b><small>{r.trader_name||r.trader_email} · {new Date(r.report_date).toLocaleDateString("en-NG")}</small></span></div><span>Open {money(r.opening_balance)}</span><span>Close {money(r.closing_balance)}</span><strong>{pct(r.return_pct)}</strong><div className="row-actions"><button className="details" disabled={previewBusy===r.id} onClick={()=>openPreview(r.id)}><Eye size={14}/> {previewBusy===r.id?"Reviewing":"Review"}</button><button className="approve" disabled={busy===r.id} onClick={()=>act(r.id,"confirm")}><CheckCircle2 size={14}/> Confirm</button><button className="reject" disabled={busy===r.id} onClick={()=>act(r.id,"reject")}><XCircle size={14}/> Reject</button></div></div>)}{!reports.length&&<div className="admin-empty"><CheckCircle2 size={22}/><p>Settlement queue is clear.</p></div>}</div></section><section className="admin-card settlement-history-card"><div className="admin-card-head"><div><span className="muted">AUDIT HISTORY</span><h2>Recent settlements</h2><p>Confirmed settlements are immutable. A reversal creates an audit trail and restores the prior NAV state.</p></div><span className="admin-count">{history.length}</span></div><div className="admin-table">{history.map((s:any)=><div className="admin-row settlement-row" key={s.id}><div className="admin-person"><span className="avatar">S</span><span><b>{s.strategy_name}</b><small>{new Date(s.settlement_date).toLocaleDateString("en-NG")} · {s.trader_name||s.trader_email||"Trader"}</small></span></div><span>NAV {Number(s.previous_nav||0).toFixed(2)} → {Number(s.nav||0).toFixed(2)}</span><strong>{pct(s.return_pct)}</strong><span className={s.status==="reversed"?"status-reversed":"status-settled"}>{s.status}</span>{s.status==="settled"&&<button className="details" onClick={()=>{const reason=window.prompt("Explain why this settlement must be reversed (minimum 10 characters).");if(reason&&reason.trim().length>=10){setBusy(s.id);fetch("/api/admin/settlements",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({action:"reverse",settlementId:s.id,reason})}).then(async r=>{const j=await r.json();setNotice(r.ok?"Settlement reversed and prior NAV restored.":(j.error||"Reversal failed."));await load();setBusy("")})}}} disabled={busy===s.id}>Correct</button>}</div>)}{!history.length&&<div className="admin-empty"><Clock3 size={22}/><p>No completed settlements yet.</p></div>}</div></section></section>}
-
-   {tab==="strategies"&&<section className="admin-section">
-  <AdminStrategyForm traders={traders} editStrategy={editingStrategy} onCancel={()=>setEditingStrategy(null)} onSaved={()=>{setEditingStrategy(null);load()}}/>
-  <section className="admin-card">
-   <div className="admin-card-head"><div><span className="muted">STRATEGY BOOK</span><h2>Strategy management</h2><p>Full administrative control with financial safeguards. Accounting history and investor positions are never overwritten.</p></div><span className="admin-count">{strategies.length} total</span></div>
-   <div className="admin-table">
-    {strategies.map(s=><div className="admin-row" key={s.id}>
-      <div className="admin-person"><span className="avatar">S</span><span><b>{s.name}</b><small>{s.trader_name||"Unassigned"} · {Number(s.total_units||0)>0?"Has investor activity":"No investor activity"}</small></span></div>
-      <span>NAV ₦{Number(s.nav||0).toFixed(2)}</span><span>Min {money(s.minimum_investment)}</span><strong>{String(s.status).replaceAll("_"," ")}</strong>
-      <div className="row-actions">
-       {s.status==="pending_review"&&<button className="approve" disabled={busy===s.id} onClick={async()=>{setBusy(s.id);const r=await fetch("/api/admin/strategies",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({action:"approve",strategyId:s.id,name:s.name,description:s.description,traderId:s.trader_id,startingBalance:s.starting_balance,minimumInvestment:s.minimum_investment,maximumInvestment:s.maximum_investment})});const j=await r.json();setNotice(r.ok?"Strategy approved and published.":j.error||"Approval failed.");await load();setBusy("")}}><CheckCircle2 size={14}/> Approve</button>}
-       {s.status!=="archived"&&<button className="details" onClick={()=>setEditingStrategy(s)}><Pencil size={14}/> Edit</button>}
-       {s.status==="active"&&<button className="details" disabled={busy===s.id} onClick={async()=>{setBusy(s.id);const r=await fetch("/api/admin/strategies",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({action:"pause",strategyId:s.id,name:s.name,description:s.description,traderId:s.trader_id,startingBalance:s.starting_balance,minimumInvestment:s.minimum_investment,maximumInvestment:s.maximum_investment})});const j=await r.json();setNotice(r.ok?"Strategy paused.":j.error||"Could not pause strategy.");await load();setBusy("")}}><Pause size={14}/> Pause</button>}
-       {s.status==="paused"&&<button className="approve" disabled={busy===s.id} onClick={async()=>{setBusy(s.id);const r=await fetch("/api/admin/strategies",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({action:"approve",strategyId:s.id,name:s.name,description:s.description,traderId:s.trader_id,startingBalance:s.starting_balance,minimumInvestment:s.minimum_investment,maximumInvestment:s.maximum_investment})});const j=await r.json();setNotice(r.ok?"Strategy resumed and published.":j.error||"Could not resume strategy.");await load();setBusy("")}}><Play size={14}/> Resume</button>}
-       {s.status!=="archived"&&<button className="reject" disabled={busy===s.id} onClick={async()=>{if(!window.confirm("Archive this strategy? This is the safe terminal action and cannot be undone."))return;setBusy(s.id);const r=await fetch("/api/admin/strategies",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({action:"archive",strategyId:s.id,name:s.name,description:s.description,traderId:s.trader_id,startingBalance:s.starting_balance,minimumInvestment:s.minimum_investment,maximumInvestment:s.maximum_investment})});const j=await r.json();setNotice(r.ok?"Strategy archived.":j.error||"Could not archive strategy.");await load();setBusy("")}}><Archive size={14}/> Archive</button>}
-       {Number(s.total_units||0)===0&&s.status!=="archived"&&<button className="reject" disabled={busy===s.id} onClick={async()=>{if(!window.confirm("Permanently delete this unused strategy? This cannot be undone."))return;setBusy(s.id);const r=await fetch("/api/admin/strategies",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({action:"delete",strategyId:s.id})});const j=await r.json();setNotice(r.ok?"Strategy deleted.":j.error||"Could not delete strategy.");await load();setBusy("")}}><Trash2 size={14}/> Delete</button>}
-      </div>
-    </div>)}{!strategies.length&&<div className="admin-empty"><TrendingUp size={22}/><p>No strategies found.</p></div>}
-   </div>
-  </section>
- </section>}
-
    {tab==="investors"&&<section className="admin-section"><section className="admin-card admin-users-card"><div className="admin-card-head"><div><span className="muted">INVESTOR DIRECTORY</span><h2>Investors</h2><p>Account status and portfolio controls.</p></div></div><AdminUsers initialUsers={[]} refreshKey={refreshKey}/></section></section>}
-
-   {tab==="traders"&&<AdminTraders onSaved={load} refreshKey={refreshKey}/>} 
-   {tab==="trader-governance"&&<AdminTraderGovernance/>}
-   {tab==="zpa"&&<AdminZpa refreshKey={refreshKey}/>} 
-
-   {tab==="deposits"&&<section className="admin-section"><section className="admin-card"><div className="admin-card-head"><div><span className="muted">MONEY MOVEMENT</span><h2>Deposit operations</h2><p>Review and confirm incoming payment requests. Strategy-linked deposits activate an investment directly and never become spendable cash.</p></div><Link className="text-action" href="/admin/deposits">Open deposit queue <ChevronRight size={13}/></Link></div></section></section>}
-   {tab==="withdrawals"&&<section className="admin-section"><section className="admin-card"><div className="admin-card-head"><div><span className="muted">MONEY MOVEMENT</span><h2>Withdrawal operations</h2><p>Existing withdrawal controls remain available while profit eligibility is enforced by the Vault layer.</p></div><Link className="text-action" href="/admin/withdrawals">Open queue <ChevronRight size={13}/></Link></div></section></section>}
-   {tab==="redemptions"&&<section className="admin-section"><section className="admin-card"><div className="admin-card-head"><div><span className="muted">INVESTMENT LIQUIDITY</span><h2>Investor exits</h2><p>Redemptions are unit-based, NAV-priced and released only after the configured approval and delay rules.</p></div><Link className="text-action" href="/admin/redemptions">Open redemption control <ChevronRight size={13}/></Link></div></section></section>}
-
-   {tab==="settings"&&<section className="admin-section"><section className="admin-card settings-card"><div className="admin-card-head"><div><span className="muted">SYSTEM RULES</span><h2>Settlement & Vault controls</h2><p>Configure the investor engine, profit lock and operating thresholds. Changes are audited.</p></div></div><AdminInvestmentSettings refreshKey={refreshKey}/><div className="rule-list" style={{marginTop:20}}><div><span>Settlement model</span><b>Trader report → admin confirm → NAV</b></div><div><span>MT5 automation</span><b>Removed</b></div></div></section></section>}
-   {tab==="notifications"&&<AdminNotificationCenter initialTemplates={notificationTemplates} refreshKey={refreshKey}/>}
-   {tab==="broadcasts"&&<AdminBroadcastCenter/>}
-   {tab==="support"&&<AdminSupportCenter refreshKey={refreshKey}/>}
-   {tab==="referrals"&&<AdminReferralCenter refreshKey={refreshKey}/>}
-  </main>
-
-  {preview&&<div className="settlement-modal-backdrop" role="presentation" onMouseDown={closePreview}><section className="settlement-modal" role="dialog" aria-modal="true" aria-label="Settlement preview" onMouseDown={e=>e.stopPropagation()}>
-   <header className="settlement-modal-head"><div><span className="muted">SETTLEMENT PREVIEW</span><h2>{preview.strategy?.name}</h2><p>{new Date(preview.report?.report_date).toLocaleDateString("en-NG",{day:"numeric",month:"long",year:"numeric"})} · {preview.trader?.name||preview.trader?.email||"Trader"}</p></div><button className="icon-button" onClick={closePreview} aria-label="Close preview"><X size={17}/></button></header>
-   <div className="settlement-summary-grid">
-    <div><span>Total P/L</span><b>{money(preview.report?.trading_pnl)}</b></div><div><span>Realised P/L</span><b>{money(preview.report?.realized_pnl)}</b></div><div><span>Unrealised P/L</span><b>{money(preview.report?.unrealized_pnl)}</b></div><div><span>Daily return</span><b>{pct(preview.report?.return_pct)}</b></div><div><span>NAV before</span><b>{Number(preview.strategy?.nav_before||0).toFixed(4)}</b></div><div><span>NAV after</span><b>{Number(preview.strategy?.nav_after||0).toFixed(4)}</b></div>
-   </div>
-   <div className="settlement-flow"><div><span>Opening</span><b>{money(preview.report?.opening_balance)}</b></div><ChevronRight size={15}/><div><span>Closing</span><b>{money(preview.report?.closing_balance)}</b></div></div>
-   <div className="settlement-meta"><div><span>External deposits</span><b>{money(preview.report?.external_deposit)}</b></div><div><span>External withdrawals</span><b>{money(preview.report?.external_withdrawal)}</b></div><div><span>Previous unrealised</span><b>{money(preview.report?.prior_unrealized_pnl)}</b></div><div><span>Positions</span><b>{preview.report?.positions_flat?"Flat":"Open allowed"}</b></div><div><span>Evidence</span>{preview.report?.evidence_url?<a href={preview.report.evidence_url} target="_blank" rel="noreferrer">Open evidence <ExternalLink size={12}/></a>:<b>Not provided</b>}</div></div>
-   {preview.trader&&<section className="settlement-mt5">
-    <div className="settlement-section-title"><span>MT5 VERIFICATION</span><b>{mt5Loading?"Loading":"Trader credentials"}</b></div>
-    <div className="settlement-mt5-head"><div><strong>Saved MT5 account details</strong><small>Use the trader's saved MT5 login, server and investor password to verify the reported activity before approving the settlement.</small></div><span className="settlement-mt5-status"><i/> Admin only</span></div>
-    {mt5Loading?<div className="settlement-mt5-loading">Loading saved MT5 details…</div>:preview.mt5?<div className="settlement-mt5-grid">
-      <div><span>MT5 LOGIN</span><b>{preview.mt5.mt5Login||"Not supplied"}</b><button className="settlement-copy" onClick={()=>copyMt5Value(preview.mt5.mt5Login,"Login")} disabled={!preview.mt5.mt5Login}><Copy size={12}/> Copy</button></div>
-      <div><span>SERVER</span><b>{preview.mt5.mt5Server||"Not supplied"}</b><button className="settlement-copy" onClick={()=>copyMt5Value(preview.mt5.mt5Server,"Server")} disabled={!preview.mt5.mt5Server}><Copy size={12}/> Copy</button></div>
-      <div><span>INVESTOR PASSWORD</span><b>{preview.mt5.investorPassword||"Unavailable"}</b><button className="settlement-copy" onClick={()=>copyMt5Value(preview.mt5.investorPassword,"Investor password")} disabled={!preview.mt5.investorPassword}><Copy size={12}/> Copy</button></div>
-    </div>:<div className="settlement-mt5-missing">No saved MT5 credentials were found for this trader.</div>}
-    {preview.mt5&&preview.mt5.investorPasswordError&&<div className="settlement-mt5-missing">Investor password could not be decrypted on the server. The encrypted credential is present, but the MT5 encryption key is missing or does not match the key used when this credential was saved. Restore the original <code>MT5_CREDENTIALS_ENCRYPTION_KEY</code>; do not replace it unless the trader is ready to resubmit the credential.</div>}{preview.mt5&&<div className="settlement-mt5-actions"><button className="details" onClick={copyAllMt5} disabled={!preview.mt5.investorPassword||!preview.mt5.mt5Login||!preview.mt5.mt5Server}><Copy size={13}/> Copy all MT5 details</button>{mt5CopyState&&<span>{mt5CopyState}</span>}<small>Use these credentials only for settlement verification.</small></div>}
-   </section>}
-   <div className="settlement-impact"><div><span>Investor value before</span><b>{money(preview.investor_value_before)}</b></div><div><span>Investor value after</span><b>{money(preview.investor_value_after)}</b></div><div><span>Total change</span><b>{money(preview.investor_value_change)}</b></div></div>
-   <div className="settlement-investors"><div className="settlement-section-title"><span>INVESTOR IMPACT</span><b>{preview.investors?.length||0} active positions</b></div>{(preview.investors||[]).map((i:any)=><div className="settlement-investor-row" key={i.investment_id}><div><b>{i.investor_name}</b><small>{Number(i.units||0).toFixed(4)} units · Principal {money(i.principal)}</small></div><span><b>{money(i.current_value_after)}</b><small className={Number(i.change)>=0?"amount-positive":""}>{Number(i.change)>=0?"+":""}{money(i.change)}</small></span></div>)}{!preview.investors?.length&&<div className="admin-empty">No active investors on this strategy.</div>}</div>
-   {preview.report?.note&&<div className="settlement-note"><span>TRADER NOTE</span><p>{preview.report.note}</p></div>}
-   <footer className="settlement-modal-actions"><button className="ghost" onClick={closePreview}>Close</button><button className="reject" disabled={busy===preview.report?.id} onClick={()=>{closePreview();act(preview.report.id,"reject")}}><XCircle size={14}/> Reject</button><button className="approve" disabled={busy===preview.report?.id} onClick={()=>{closePreview();act(preview.report.id,"confirm")}}><CheckCircle2 size={14}/> Confirm settlement</button></footer>
-  </section></div>}
- </div>
+   {tab==="overview"&&<section className="admin-section"><div className="admin-kpis">{[[TrendingUp,"AUM",money(data.aumm),"PORTFOLIO","investors"],[Users,"Investors",data.investors,"ACCOUNTS","investors"],[ShieldCheck,"Traders",data.traders,"OPERATORS","traders"],[Clock3,"Pending reports",data.pending_reports,"ACTION","settlements"],[ArrowDownToLine,"Withdrawals",data.withdrawals_pending,"ACTION","withdrawals"],[ArrowDownLeft,"Pending deposits",data.pending_deposits,"ACTION","deposits"],[ArrowLeftRight,"Pending redemptions",data.pending_redemptions,"ACTION","redemptions"]].map(([Icon,label,val,tag,target]:any)=><div className={"admin-kpi"+(target?" admin-kpi-clickable":"")} key={label} onClick={()=>target&&setTab(target)}><div className="admin-kpi-top"><span className="admin-kpi-icon"><Icon size={16}/></span><em>{tag}</em></div><small>{label}</small><b>{val}</b></div>)}</div></section>}
+   {tab==="traders"&&<AdminTraders onSaved={load} refreshKey={refreshKey}/>} {tab==="trader-governance"&&<AdminTraderGovernance/>}{tab==="zpa"&&<AdminZpa refreshKey={refreshKey}/>} {tab==="notifications"&&<AdminNotificationCenter initialTemplates={notificationTemplates} refreshKey={refreshKey}/>} {tab==="broadcasts"&&<AdminBroadcastCenter/>}{tab==="support"&&<AdminSupportCenter refreshKey={refreshKey}/>} {tab==="referrals"&&<AdminReferralCenter refreshKey={refreshKey}/>}
+   {tab==="strategies"&&<section className="admin-section"><AdminStrategyForm traders={traders} editStrategy={editingStrategy} onCancel={()=>setEditingStrategy(null)} onSaved={()=>{setEditingStrategy(null);load()}}/></section>}
+   {tab==="deposits"&&<section className="admin-section"><Link className="text-action" href="/admin/deposits">Open deposit queue <ChevronRight size={13}/></Link></section>}
+   {tab==="withdrawals"&&<section className="admin-section"><Link className="text-action" href="/admin/withdrawals">Open withdrawal queue <ChevronRight size={13}/></Link></section>}
+   {tab==="redemptions"&&<section className="admin-section"><Link className="text-action" href="/admin/redemptions">Open redemption control <ChevronRight size={13}/></Link></section>}
+   {tab==="settings"&&<section className="admin-section"><AdminInvestmentSettings refreshKey={refreshKey}/></section>}
+  </main></div>
 }
