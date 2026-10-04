@@ -4,8 +4,8 @@ const TOKEN_HEADER = "x-zynth-pwa-token";
 let memoryCredential: string | null = null;
 let loadPromise: Promise<string | null> | null = null;
 
-function hasSessionStorage() {
-  return typeof window !== "undefined" && "sessionStorage" in window;
+function hasStorage() {
+  return typeof window !== "undefined" && "localStorage" in window;
 }
 
 export function isPwaStandalone() {
@@ -26,9 +26,9 @@ export async function loadPwaCredential(): Promise<string | null> {
   if (memoryCredential) return memoryCredential;
   if (loadPromise) return loadPromise;
   loadPromise = Promise.resolve().then(() => {
-    if (!hasSessionStorage()) return null;
+    if (!hasStorage()) return null;
     try {
-      const token = window.sessionStorage.getItem(STORAGE_KEY);
+      const token = window.localStorage.getItem(STORAGE_KEY);
       memoryCredential = token;
       return token;
     } catch {
@@ -40,9 +40,9 @@ export async function loadPwaCredential(): Promise<string | null> {
 
 export async function setPwaCredential(token: string) {
   memoryCredential = token;
-  if (!hasSessionStorage()) return;
+  if (!hasStorage()) return;
   try {
-    window.sessionStorage.setItem(STORAGE_KEY, token);
+    window.localStorage.setItem(STORAGE_KEY, token);
   } catch {
     // The in-memory credential still protects the current app session.
   }
@@ -50,9 +50,9 @@ export async function setPwaCredential(token: string) {
 
 export async function clearPwaCredential() {
   memoryCredential = null;
-  if (!hasSessionStorage()) return;
+  if (!hasStorage()) return;
   try {
-    window.sessionStorage.removeItem(STORAGE_KEY);
+    window.localStorage.removeItem(STORAGE_KEY);
   } catch {
     // Nothing else is required for sign-out.
   }
