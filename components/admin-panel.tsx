@@ -147,7 +147,8 @@ const closePreview=()=>{setPreview(null);setMt5CopyState("");};
 
    {tab==="investors"&&<section className="admin-section"><section className="admin-card admin-users-card"><div className="admin-card-head"><div><span className="muted">INVESTOR DIRECTORY</span><h2>Investors</h2><p>Account status and portfolio controls.</p></div></div><AdminUsers initialUsers={[]} refreshKey={refreshKey}/></section></section>}
 
-   {tab==="risk"&&<AdminRisk/>}\n   {tab==="traders"&&<AdminTraders onSaved={load} refreshKey={refreshKey}/>} 
+   {tab==="risk"&&<AdminRisk/>} 
+   {tab==="traders"&&<AdminTraders onSaved={load} refreshKey={refreshKey}/>} 
    {tab==="trader-governance"&&<AdminTraderGovernance/>}
    {tab==="zpa"&&<AdminZpa refreshKey={refreshKey}/>} 
 
