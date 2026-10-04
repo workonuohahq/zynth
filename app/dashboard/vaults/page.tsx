@@ -233,10 +233,12 @@ export default function VaultPage() {
 
         {vaultComposition.total > 0 ? (
           <div
+            className="vault-composition-grid"
             style={{
               display: "grid",
-              gridTemplateColumns: "minmax(180px, 240px) 1fr",
-              gap: 28,
+              gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)",
+              gap: 20,
+              minWidth: 0,
               alignItems: "center",
               padding: "18px 4px 6px",
             }}
@@ -245,8 +247,9 @@ export default function VaultPage() {
               aria-label="Vault composition pie chart"
               role="img"
               style={{
-                width: 190,
-                height: 190,
+                width: "min(190px, 100%)",
+                height: "auto",
+                aspectRatio: "1 / 1",
                 borderRadius: "50%",
                 margin: "0 auto",
                 background: `conic-gradient(
@@ -280,7 +283,7 @@ export default function VaultPage() {
               </div>
             </div>
 
-            <div style={{ display: "grid", gap: 14 }}>
+            <div style={{ display: "grid", gap: 14, minWidth: 0 }}>
               {[
                 {
                   label: "Principal",
@@ -305,8 +308,9 @@ export default function VaultPage() {
                   key={item.label}
                   style={{
                     display: "grid",
-                    gridTemplateColumns: "10px 1fr auto",
+                    gridTemplateColumns: "10px minmax(0, 1fr) minmax(0, auto)",
                     gap: 10,
+                    minWidth: 0,
                     alignItems: "center",
                   }}
                 >
@@ -325,7 +329,7 @@ export default function VaultPage() {
                       {item.pct.toFixed(1)}% of portfolio
                     </div>
                   </div>
-                  <strong>{money(item.value)}</strong>
+                  <strong style={{ minWidth: 0, maxWidth: "100%", textAlign: "right", overflowWrap: "anywhere", fontSize: "clamp(11px, 3.2vw, 15px)" }}>{money(item.value)}</strong>
                 </div>
               ))}
             </div>
@@ -486,6 +490,7 @@ export default function VaultPage() {
           )}
         </div>
       </section>
+\n      <style jsx>{`\n        .vault-composition-grid { min-width: 0; }\n        @media (max-width: 620px) {\n.vault-composition-grid { grid-template-columns: 1fr !important; gap: 22px !important; }\n        }\n      `}</style>
     </section>
   );
 }
