@@ -43,5 +43,10 @@ export async function POST(req:Request){
   const {data,error}=await supabase.rpc("zynth_security_revoke_all_other_sessions",{p_current_session_id:String(body.currentSessionId||"")});
   if(error)return NextResponse.json({error:"Unable to revoke other sessions."},{status:400}); return NextResponse.json({ok:true,count:Number(data||0)});
  }
+ if(action==="revoke_device"){
+  const {data,error}=await supabase.rpc("zynth_security_revoke_device",{p_device_id:String(body.deviceId||"")});
+  if(error)return NextResponse.json({error:"Unable to revoke that device."},{status:400});
+  return NextResponse.json({ok:true,count:Number(data||0)});
+ }
  return NextResponse.json({error:"Unsupported action."},{status:400});
 }
