@@ -465,9 +465,9 @@ begin
  from public.transactions t
  where t.user_id=p_user_id and t.status='completed' and t.created_at::date between p_period_start and p_period_end;
 
- select coalesce(sum(ie.amount) filter(where ie.event_type='settled'),0) into returns
- from public.zynth_investment_events ie
- where ie.user_id=p_user_id and ie.created_at::date between p_period_start and p_period_end;
+ select coalesce(sum(t.amount) filter(where t.type::text in ('profit','investment_profit','strategy_profit') and t.status::text='completed'),0) into returns
+ from public.transactions t
+ where t.user_id=p_user_id and t.created_at::date between p_period_start and p_period_end;
 
  select coalesce(jsonb_agg(jsonb_build_object('strategy_id',x.strategy_id,'strategy_name',x.name,'nav',x.nav) order by x.name),'[]'::jsonb)
  into ending_nav
