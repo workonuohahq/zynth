@@ -85,7 +85,7 @@ async function invest(id:string){await openFunding("new",id)}
    {strategies.map(s=>(
     <section className="panel strategy-market-card" key={s.id}>
      <div className="panel-head">
-      <div><span className="muted">ACTIVE STRATEGY</span><h2>{s.name}</h2></div>
+      <div><span className="muted">ACTIVE STRATEGY</span><h2>{s.name}</h2></div><Link className="text-action" href={"/dashboard/strategy/"+s.id}>View intelligence</Link>
       <span className="status-badge"><i/> LIVE</span>
      </div>
      <div className="health-grid strategy-market-metrics">
@@ -113,7 +113,7 @@ async function invest(id:string){await openFunding("new",id)}
            <div className="investment-action-label"><span>START POSITION</span><small>Choose an amount within the strategy limits</small></div>
            <div className="investment-command">
             <div className="money-input investment-money-input"><span>₦</span><input inputMode="decimal" placeholder="0.00" value={amounts[s.id]||""} onChange={e=>setAmounts({...amounts,[s.id]:e.target.value})}/></div>
-            <button className="investment-action-button primary" disabled={busy==="invest:"+s.id} onClick={()=>invest(s.id)}><TrendingUp size={16}/> Invest in <span className="investment-action-name">{s.name}</span></button>
+            <button className="investment-action-button primary" disabled={busy==="invest:"+s.id||s.accepting_new_capital===false} onClick={()=>invest(s.id)}>{s.accepting_new_capital===false?"Capacity reached":<><TrendingUp size={16}/> Invest in <span className="investment-action-name">{s.name}</span></>}</button>
            </div>
           </div>
          </div>
