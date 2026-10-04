@@ -47,11 +47,10 @@ export default function AdminRisk(){
  return <section className="admin-risk">
   <header className="risk-header">
    <div>
-    <div className="risk-eyebrow"><span>RISK & COMPLIANCE</span><i/> CENTRAL CONTROL</div>
-    <h2>Risk intelligence</h2>
-    <p>One evidence-driven risk engine across identity, behaviour, referrals, ZPA and withdrawals.</p>
+    <div className="risk-eyebrow"><span>RISK & COMPLIANCE</span></div>
+    <h2>Risk & Compliance</h2>
+    <p>Monitor identity, behavioural, acquisition and money-movement risk from one central control centre.</p>
    </div>
-   <button className="risk-refresh" onClick={load} disabled={loading}><RefreshCw size={15} className={loading?"risk-spin":""}/>{loading?"Refreshing…":"Refresh"}</button>
   </header>
 
   {notice&&<div className="risk-notice"><ShieldCheck size={16}/><span>{notice}</span><button aria-label="Dismiss" onClick={()=>setNotice("")}><XCircle size={15}/></button></div>}
