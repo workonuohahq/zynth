@@ -5,7 +5,6 @@ import Link from "next/link";
 import {ArrowLeft,Clock3,KeyRound,LogOut,Monitor,RefreshCw,ShieldCheck,Smartphone,TabletSmartphone,UserRound,AlertTriangle,ShieldAlert} from "lucide-react";
 import {createSupabaseBrowserClient} from "@/lib/supabase/client";
 
-const SID="zynth-security-session-id";
 const fmt=(v:any)=>v?new Date(v).toLocaleString("en-NG",{dateStyle:"medium",timeStyle:"short"}):"—";
 const icon=(t:string)=>t==="mobile"?Smartphone:t==="tablet"?TabletSmartphone:Monitor;
 
@@ -17,6 +16,18 @@ export default function SecurityPage(){
 
  async function load(){
   setLoading(true);
+  // The installed PWA credential is the single device/session identity.
+  // Reuse it when valid; register security telemetry only when needed.
+  try {
+   const heartbeat=await fetch("/api/security/session",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({action:"heartbeat"})});
+   const hb=await heartbeat.json().catch(()=>null);
+   if(!heartbeat.ok || hb?.active!==true){
+    await fetch("/api/security/session",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({action:"register"})});
+   }
+  } catch {}
+  localStorage.removeItem("zynth-security-device-key");
+  localStorage.removeItem("zynth-security-session-key");
+  localStorage.removeItem("zynth-security-session-id");
   const {data:result,error}=await supabase.rpc("zynth_security_center");
   if(!error&&result){setData(result);setPinMode(result.withdrawal_pin?.configured?"change":"set");}
   setLoading(false);
@@ -41,7 +52,7 @@ export default function SecurityPage(){
   setBusy(null);
  }
  async function revokeOthers(){
-  const current=localStorage.getItem(SID)||"";
+  const current=data.sessions.find((s:any)=>s.current===true)?.id||"";
   if(!current){setMessage("This session is still being registered. Try again in a moment.");return;}
   setBusy("all");
   const r=await fetch("/api/security/session",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({action:"revoke_all",currentSessionId:current})});
@@ -59,7 +70,6 @@ export default function SecurityPage(){
   setPinMsg(pinMode==="set"?"Withdrawal PIN configured.":"Withdrawal PIN updated.");
   setPin("");setNewPin("");setPinMode("change");await load();setPinBusy(false);
  }
- const currentId=typeof window!=="undefined"?localStorage.getItem(SID):null;
  const pinConfigured=Boolean(data.withdrawal_pin?.configured);
  const status=data.security_status==="GOOD"?"GOOD":"REVIEW";
 
@@ -109,7 +119,7 @@ export default function SecurityPage(){
     <div className="panel-head"><div><span className="muted">SESSION CONTROL</span><h2>Active sessions</h2></div><button className="danger-outline" onClick={revokeOthers} disabled={busy!==null}><LogOut size={15}/> Sign out all others</button></div>
     {message&&<div className="notice">{message}</div>}
     {loading?<div className="security-loading"><RefreshCw className="spin" size={18}/> Loading security activity…</div>:data.sessions.length?<div className="security-list">
-     {data.sessions.map((s:any)=>{const Device=icon(s.device_type);const current=s.current===true||s.id===currentId;return <article className={"security-row "+(current?"current":"")} key={s.id}>
+     {data.sessions.map((s:any)=>{const Device=icon(s.device_type);const current=s.current===true;return <article className={"security-row "+(current?"current":"")} key={s.id}>
       <span className="security-device-icon"><Device size={19}/></span>
       <span className="security-row-copy"><b>{current?"Current device":s.device_type==="mobile"?"Mobile device":"Desktop browser"}</b><small>{s.browser_name||"Browser"} · {s.os_name||"Unknown OS"}</small><small>Last active {fmt(s.last_seen_at)}</small></span>
       {current?<span className="security-current"><i/> Active now</span>:<button className="danger-link" onClick={()=>revoke(s.id)} disabled={busy!==null}>{busy===s.id?"Signing out…":"Sign out"}</button>}
