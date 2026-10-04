@@ -18,7 +18,7 @@ export default function SecurityPage(){
  async function load(){
   setLoading(true);
   const {data:result,error}=await supabase.rpc("zynth_security_center");
-  if(!error&&result)setData(result);
+  if(!error&&result){setData(result);setPinMode(result.withdrawal_pin?.configured?"change":"set");}
   setLoading(false);
  }
  useEffect(()=>{void load()},[]);
