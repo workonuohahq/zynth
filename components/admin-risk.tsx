@@ -56,8 +56,8 @@ export default function AdminRisk(){
 
   {notice&&<div className="risk-notice"><ShieldCheck size={16}/><span>{notice}</span><button aria-label="Dismiss" onClick={()=>setNotice("")}><XCircle size={15}/></button></div>}
 
-  <div className="risk-kpis">
-   {(["critical","high","medium","low"] as const).map(k=><button key={k} className={"risk-kpi risk-kpi-"+k} onClick={()=>setSection(k)}><span>{k}</span><strong>{Number(o[k]||0)}</strong><small>{k==="critical"?"Immediate attention":k==="high"?"Priority review":k==="medium"?"Monitor closely":"No immediate action"}</small><ChevronRight size={15}/></button>)}
+  <div className="admin-kpis risk-kpis">
+   {(["critical","high","medium","low"] as const).map(k=><button key={k} className={"admin-kpi risk-kpi risk-kpi-"+k} onClick={()=>setSection(k)}><span className="admin-kpi-icon"><ShieldAlert size={16}/></span><small>{k} risk</small><b>{Number(o[k]||0)}</b></button>)}
   </div>
 
   <div className="risk-layout">
