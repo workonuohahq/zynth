@@ -1,24 +1,92 @@
 "use client";
 import {useEffect} from "react";
 import {createSupabaseBrowserClient} from "@/lib/supabase/client";
-const KEY="zynth-security-session-key", ID="zynth-security-session-id";
-function randomKey(){const bytes=new Uint8Array(32);crypto.getRandomValues(bytes);return Array.from(bytes).map(x=>x.toString(16).padStart(2,"0")).join("");}
+
+const DEVICE_KEY="zynth-security-device-key";
+const SESSION_KEY="zynth-security-session-key";
+const SESSION_ID="zynth-security-session-id";
+
+function randomKey(){
+ const bytes=new Uint8Array(32);
+ crypto.getRandomValues(bytes);
+ return Array.from(bytes).map(x=>x.toString(16).padStart(2,"0")).join("");
+}
+
+function isStandalone(){
+ if(typeof window==="undefined")return false;
+ return window.matchMedia("(display-mode: standalone)").matches
+   || (navigator as Navigator & {standalone?:boolean}).standalone===true
+   || document.referrer.startsWith("android-app://");
+}
+
 export default function SecuritySessionGuard(){
- useEffect(()=>{let stopped=false;
+ useEffect(()=>{
+  let stopped=false;
+
   const register=async()=>{
-   let sessionKey=localStorage.getItem(KEY)||randomKey();
-   const existingId=localStorage.getItem(ID);
+   let deviceKey=localStorage.getItem(DEVICE_KEY)||randomKey();
+   let sessionKey=localStorage.getItem(SESSION_KEY)||randomKey();
+   const existingId=localStorage.getItem(SESSION_ID);
+
+   if(!localStorage.getItem(DEVICE_KEY))localStorage.setItem(DEVICE_KEY,deviceKey);
+
    if(existingId){
-    const hb=await fetch("/api/security/session",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({action:"heartbeat",sessionKey})});
+    const hb=await fetch("/api/security/session",{
+     method:"POST",
+     headers:{"content-type":"application/json"},
+     body:JSON.stringify({action:"heartbeat",sessionKey})
+    });
     const hd=await hb.json().catch(()=>null);
     if(hb.ok&&hd?.active===true)return;
-    localStorage.removeItem(KEY);localStorage.removeItem(ID);sessionKey=randomKey();
+
+    localStorage.removeItem(SESSION_KEY);
+    localStorage.removeItem(SESSION_ID);
+    sessionKey=randomKey();
+    localStorage.setItem(SESSION_KEY,sessionKey);
    }
-   const res=await fetch("/api/security/session",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({action:"register",sessionKey,appMode:window.matchMedia("(display-mode: standalone)").matches?"standalone":"browser"})});
+
+   const res=await fetch("/api/security/session",{
+    method:"POST",
+    headers:{"content-type":"application/json"},
+    body:JSON.stringify({
+     action:"register",
+     deviceKey,
+     sessionKey,
+     appMode:isStandalone()?"standalone":"browser"
+    })
+   });
    const d=await res.json().catch(()=>null);
-   if(res.ok&&d?.sessionId){localStorage.setItem(KEY,d.sessionKey||sessionKey);localStorage.setItem(ID,d.sessionId);}
+
+   if(res.ok&&d?.sessionId){
+    localStorage.setItem(DEVICE_KEY,deviceKey);
+    localStorage.setItem(SESSION_KEY,d.sessionKey||sessionKey);
+    localStorage.setItem(SESSION_ID,d.sessionId);
+   }
   };
-  const heartbeat=async()=>{const key=localStorage.getItem(KEY);if(!key)return;const res=await fetch("/api/security/session",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({action:"heartbeat",sessionKey:key})});const d=await res.json().catch(()=>null);if(!stopped&&res.ok&&d?.active===false){localStorage.removeItem(KEY);localStorage.removeItem(ID);await createSupabaseBrowserClient().auth.signOut({scope:"local"});window.location.href="/login?security=revoked";}};
-  void register();const timer=window.setInterval(()=>void heartbeat(),30000);return()=>{stopped=true;window.clearInterval(timer)};
- },[]);return null;
+
+  const heartbeat=async()=>{
+   const key=localStorage.getItem(SESSION_KEY);
+   if(!key)return;
+
+   const res=await fetch("/api/security/session",{
+    method:"POST",
+    headers:{"content-type":"application/json"},
+    body:JSON.stringify({action:"heartbeat",sessionKey:key})
+   });
+   const d=await res.json().catch(()=>null);
+
+   if(!stopped&&res.ok&&d?.active===false){
+    localStorage.removeItem(SESSION_KEY);
+    localStorage.removeItem(SESSION_ID);
+    await createSupabaseBrowserClient().auth.signOut({scope:"local"});
+    window.location.href="/login?security=revoked";
+   }
+  };
+
+  void register();
+  const timer=window.setInterval(()=>void heartbeat(),30000);
+  return()=>{stopped=true;window.clearInterval(timer)};
+ },[]);
+
+ return null;
 }
