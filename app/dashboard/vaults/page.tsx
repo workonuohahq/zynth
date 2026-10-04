@@ -1,0 +1,502 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import {
+  ArrowLeft,
+  ArrowUpRight,
+  Clock3,
+  LockKeyhole,
+  ShieldCheck,
+  WalletCards,
+  FileText,
+  Download,
+} from "lucide-react";
+import { pwaFetch } from "@/lib/pwa/client";
+
+const money = (n: any) =>
+  `₦${Number(n || 0).toLocaleString("en-NG", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+
+const unlockDate = (value: any) =>
+  new Date(value).toLocaleDateString("en-NG", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+
+const unlockTime = (value: any) =>
+  new Date(value).toLocaleTimeString("en-NG", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+
+export default function VaultPage() {
+  const [s, setS] = useState<any>({});
+  const [lots, setLots] = useState<any[]>([]);
+  const [statements, setStatements] = useState<any[]>([]);
+  const [statementType, setStatementType] = useState("monthly");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const [statementBusy, setStatementBusy] = useState(false);
+  const [statementMsg, setStatementMsg] = useState("");
+  const [downloadBusy, setDownloadBusy] = useState<string | null>(null);
+
+  useEffect(() => {
+    Promise.all([
+      pwaFetch("/api/account/summary").then((r) => r.json()),
+      pwaFetch("/api/account/profit-lots").then((r) => r.json()),
+      pwaFetch("/api/account/statements").then((r) => r.json()),
+    ])
+      .then(([a, b, c]) => {
+        setS(a.summary || {});
+        setLots(b.lots || []);
+        setStatements(c.statements || []);
+      })
+      .catch(() => {});
+  }, []);
+
+  const vaultComposition = useMemo(() => {
+    const principal = Math.max(0, Number(s.principal || 0));
+    const totalProfit = Math.max(0, Number(s.profit || 0));
+    const availableProfit = Math.min(
+      totalProfit,
+      Math.max(0, Number(s.withdrawable_profit || 0)),
+    );
+    const lockedProfit = Math.max(0, totalProfit - availableProfit);
+    const total = principal + availableProfit + lockedProfit;
+
+    if (total <= 0) {
+      return {
+        total: 0,
+        principal,
+        availableProfit,
+        lockedProfit,
+        principalPct: 0,
+        availablePct: 0,
+        lockedPct: 0,
+      };
+    }
+
+    return {
+      total,
+      principal,
+      availableProfit,
+      lockedProfit,
+      principalPct: (principal / total) * 100,
+      availablePct: (availableProfit / total) * 100,
+      lockedPct: (lockedProfit / total) * 100,
+    };
+  }, [s]);
+
+  async function generateStatement() {
+    setStatementBusy(true);
+    setStatementMsg("");
+
+    try {
+      const r = await pwaFetch("/api/account/statements", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ periodType: statementType, from, to }),
+      });
+
+      const d = await r.json();
+
+      if (!r.ok) {
+        setStatementMsg(d.error || "Unable to generate statement.");
+        return;
+      }
+
+      setStatementMsg("Statement generated.");
+      const x = await pwaFetch("/api/account/statements").then((res) =>
+        res.json(),
+      );
+      setStatements(x.statements || []);
+    } catch {
+      setStatementMsg("Unable to generate statement. Please try again.");
+    } finally {
+      setStatementBusy(false);
+    }
+  }
+
+  async function downloadStatement(
+    id: string,
+    periodStart: string,
+    version: number,
+  ) {
+    setDownloadBusy(id);
+    setStatementMsg("");
+
+    try {
+      const r = await pwaFetch(`/api/account/statements/${id}/pdf`, {
+        method: "GET",
+        cache: "no-store",
+      });
+
+      if (!r.ok) {
+        const contentType = r.headers.get("content-type") || "";
+        let message = "Statement PDF unavailable.";
+        if (contentType.includes("application/json")) {
+          const d = await r.json().catch(() => ({}));
+          message = d.error || message;
+        }
+        throw new Error(message);
+      }
+
+      const blob = await r.blob();
+      if (!blob.size) throw new Error("Statement PDF is empty.");
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `ZYNTH-Vault-Statement-${periodStart}-v${version}.pdf`;
+      a.style.display = "none";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 10_000);
+
+      setStatementMsg("Statement PDF downloaded.");
+    } catch (error: any) {
+      setStatementMsg(error?.message || "Unable to download statement PDF.");
+    } finally {
+      setDownloadBusy(null);
+    }
+  }
+
+  return (
+    <section className="dashboard-content dashboard-spacing-page">
+      <header className="dashboard-header">
+        <div>
+          <span className="eyebrow">ZYNTH / VAULT</span>
+          <h1>Your profit vault.</h1>
+          <p>
+            Profit generated by confirmed settlements is locked for the period
+            set by operations.
+          </p>
+        </div>
+        <Link className="fund-btn secondary-dark" href="/dashboard">
+          <ArrowLeft size={16} /> Overview
+        </Link>
+      </header>
+
+      <section className="wealth-hero">
+        <div className="wealth-main">
+          <div className="wealth-label">
+            <span>Withdrawable profit</span>
+            <span className="secure-chip">
+              <ShieldCheck size={13} /> Eligibility checked
+            </span>
+          </div>
+          <strong>{money(s.withdrawable_profit)}</strong>
+          <div className="wealth-breakdown">
+            <span>
+              <i className="dot available" /> Available now{" "}
+              {money(s.withdrawable_profit)}
+            </span>
+            <span>
+              <i className="dot locked" /> Still locked {money(s.locked_profit)}
+            </span>
+          </div>
+        </div>
+        <div className="wealth-side">
+          <div>
+            <span>Portfolio value</span>
+            <b>{money(s.invested)}</b>
+          </div>
+          <div>
+            <span>Principal</span>
+            <b>{money(s.principal)}</b>
+          </div>
+          <div>
+            <span>Total profit</span>
+            <b>{money(s.profit)}</b>
+          </div>
+          <Link href="/dashboard/withdraw">
+            Withdraw eligible profit <ArrowUpRight size={14} />
+          </Link>
+        </div>
+      </section>
+
+      <section className="panel">
+        <div className="panel-head">
+          <div>
+            <span className="muted">VAULT COMPOSITION</span>
+            <h2>Where your portfolio stands</h2>
+          </div>
+          <span className="admin-count">
+            {vaultComposition.total ? money(vaultComposition.total) : "—"}
+          </span>
+        </div>
+
+        {vaultComposition.total > 0 ? (
+          <div
+            className="vault-composition-grid"
+            style={{
+              display: "grid",
+              gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)",
+              gap: 20,
+              minWidth: 0,
+              alignItems: "center",
+              padding: "18px 4px 6px",
+            }}
+          >
+            <div
+              aria-label="Vault composition pie chart"
+              role="img"
+              style={{
+                width: "min(190px, 100%)",
+                height: "auto",
+                aspectRatio: "1 / 1",
+                borderRadius: "50%",
+                margin: "0 auto",
+                background: `conic-gradient(
+                  var(--zynth-gold, #d4af37) 0 ${vaultComposition.principalPct}%,
+                  #7b6b38 ${vaultComposition.principalPct}% ${vaultComposition.principalPct + vaultComposition.availablePct}%,
+                  #3d3d3d ${vaultComposition.principalPct + vaultComposition.availablePct}% 100%
+                )`,
+                position: "relative",
+                boxShadow:
+                  "0 0 0 1px rgba(212,175,55,.18), 0 16px 40px rgba(0,0,0,.18)",
+              }}
+            >
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 34,
+                  borderRadius: "50%",
+                  background: "var(--dashboard-card, #111)",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  textAlign: "center",
+                  border: "1px solid rgba(255,255,255,.06)",
+                }}
+              >
+                <span style={{ fontSize: 11, opacity: 0.62 }}>Portfolio</span>
+                <strong style={{ fontSize: 17 }}>
+                  {money(vaultComposition.total)}
+                </strong>
+              </div>
+            </div>
+
+            <div style={{ display: "grid", gap: 14, minWidth: 0 }}>
+              {[
+                {
+                  label: "Principal",
+                  value: vaultComposition.principal,
+                  pct: vaultComposition.principalPct,
+                  dot: "var(--zynth-gold, #d4af37)",
+                },
+                {
+                  label: "Available profit",
+                  value: vaultComposition.availableProfit,
+                  pct: vaultComposition.availablePct,
+                  dot: "#7b6b38",
+                },
+                {
+                  label: "Locked profit",
+                  value: vaultComposition.lockedProfit,
+                  pct: vaultComposition.lockedPct,
+                  dot: "#3d3d3d",
+                },
+              ].map((item) => (
+                <div
+                  key={item.label}
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "10px minmax(0, 1fr) minmax(0, auto)",
+                    gap: 10,
+                    minWidth: 0,
+                    alignItems: "center",
+                  }}
+                >
+                  <span
+                    aria-hidden
+                    style={{
+                      width: 9,
+                      height: 9,
+                      borderRadius: "50%",
+                      background: item.dot,
+                    }}
+                  />
+                  <div>
+                    <div style={{ fontWeight: 600 }}>{item.label}</div>
+                    <div style={{ fontSize: 12, opacity: 0.58 }}>
+                      {item.pct.toFixed(1)}% of portfolio
+                    </div>
+                  </div>
+                  <strong style={{ minWidth: 0, maxWidth: "100%", textAlign: "right", overflowWrap: "anywhere", fontSize: "clamp(11px, 3.2vw, 15px)" }}>{money(item.value)}</strong>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="premium-empty">
+            <WalletCards size={20} />
+            <h3>No portfolio composition yet</h3>
+            <p>
+              Once your vault has a funded position, this chart will show the
+              relationship between principal and profit.
+            </p>
+          </div>
+        )}
+      </section>
+
+      <section className="panel">
+        <div className="panel-head">
+          <div>
+            <span className="muted">PROFIT LOTS</span>
+            <h2>Unlock schedule</h2>
+          </div>
+          <span className="admin-count">{lots.length} lots</span>
+        </div>
+        <div className="activity-list">
+          {lots.map((l) => (
+            <div className="activity-row" key={l.id}>
+              <span
+                className={`activity-icon ${
+                  new Date(l.unlock_at) <= new Date() ? "positive" : "neutral"
+                }`}
+              >
+                {new Date(l.unlock_at) <= new Date() ? (
+                  <WalletCards size={16} />
+                ) : (
+                  <LockKeyhole size={16} />
+                )}
+              </span>
+              <span className="activity-info">
+                <b>{money(l.profit_amount - l.withdrawn_amount)} profit</b>
+                <small>
+                  {new Date(l.unlock_at) <= new Date()
+                    ? "Available now"
+                    : "Unlocks " +
+                      unlockDate(l.unlock_at) +
+                      " at " +
+                      unlockTime(l.unlock_at)}
+                </small>
+              </span>
+              <strong>
+                {new Date(l.unlock_at) <= new Date() ? "AVAILABLE" : "LOCKED"}
+              </strong>
+            </div>
+          ))}
+          {!lots.length && (
+            <div className="premium-empty">
+              <Clock3 size={20} />
+              <h3>No profit lots yet</h3>
+              <p>
+                Once a strategy settlement creates profit, ZYNTH will show its
+                exact unlock date and time here.
+              </p>
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className="panel vault-statements-panel">
+        <div className="panel-head">
+          <div>
+            <span className="muted">VAULT → STATEMENTS</span>
+            <h2>Investor statements</h2>
+          </div>
+          <FileText size={18} />
+        </div>
+
+        <div className="statement-controls">
+          <select
+            value={statementType}
+            onChange={(e) => setStatementType(e.target.value)}
+          >
+            <option value="monthly">Monthly</option>
+            <option value="since_inception">Since inception</option>
+            <option value="custom">Custom date range</option>
+          </select>
+
+          {statementType === "custom" && (
+            <>
+              <input
+                type="date"
+                value={from}
+                onChange={(e) => setFrom(e.target.value)}
+              />
+              <input
+                type="date"
+                value={to}
+                onChange={(e) => setTo(e.target.value)}
+              />
+            </>
+          )}
+
+          <button
+            className="fund-btn"
+            onClick={generateStatement}
+            disabled={statementBusy}
+          >
+            {statementBusy ? "Generating…" : "Generate statement"}
+          </button>
+        </div>
+
+        {statementMsg && (
+          <p className="statement-message" role="status">
+            {statementMsg}
+          </p>
+        )}
+
+        <div className="statement-list">
+          {statements.map((x) => (
+            <div className="statement-row" key={x.id}>
+              <span className="activity-icon neutral">
+                <FileText size={16} />
+              </span>
+
+              <span className="activity-info">
+                <b>
+                  {x.period_start} — {x.period_end}
+                </b>
+                <small>
+                  {String(x.period_type).replace("_", " ")} · Version{" "}
+                  {x.version} · {x.status}
+                </small>
+              </span>
+
+              <button
+                className="text-action"
+                onClick={() =>
+                  downloadStatement(x.id, x.period_start, x.version)
+                }
+                disabled={downloadBusy === x.id}
+                type="button"
+                aria-label={`Download statement PDF for ${x.period_start}`}
+              >
+                <Download size={14} />
+                {downloadBusy === x.id ? "PDF…" : "PDF"}
+              </button>
+            </div>
+          ))}
+
+          {!statements.length && (
+            <div className="premium-empty">
+              <FileText size={20} />
+              <h3>No statements yet</h3>
+              <p>
+                Monthly statements are generated automatically at month close
+                and custom statements can be generated here.
+              </p>
+            </div>
+          )}
+        </div>
+      </section>
+
+      <style jsx>{`
+        .vault-composition-grid { min-width: 0; }
+        @media (max-width: 620px) {
+          .vault-composition-grid { grid-template-columns: 1fr !important; gap: 22px !important; }
+        }
+      `}</style>
+    </section>
+  );
+}
