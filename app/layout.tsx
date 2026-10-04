@@ -1,6 +1,7 @@
 import "./globals.css";
 import "./dashboard/dashboard-features.css";
 import "./zynth-notifications.css";
+import "./../components/security-center.css";
 import ZynthNotifications from "@/components/zynth-notifications";
 import type { Metadata, Viewport } from "next";
 
