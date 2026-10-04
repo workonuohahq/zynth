@@ -7,7 +7,6 @@ import SupportLauncher from "@/components/support-launcher";
 import PwaWorkspaceGate from "@/components/pwa-workspace-gate";
 import PwaFetchBridge from "@/components/pwa-fetch-bridge";
 import PushNotificationManager from "@/components/push-notification-manager";
-import SecuritySessionGuard from "@/components/security-session-guard";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createSupabaseServerClient();
@@ -33,7 +32,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
     <PwaWorkspaceGate>
       <PwaFetchBridge />
       <PushNotificationManager />
-      <SecuritySessionGuard />
       <div className="dashboard-frame">
         <DashboardNav roles={roles} />
         <NotificationBell />
