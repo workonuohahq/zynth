@@ -63,9 +63,6 @@ end; $$;
 revoke all on function public.zynth_strategy_risk_evaluate(uuid,numeric,numeric,numeric) from public,anon,authenticated;
 grant execute on function public.zynth_strategy_risk_evaluate(uuid,numeric,numeric,numeric) to service_role;
 
-create index if not exists transactions_user_created_at_idx on public.transactions(user_id,created_at desc);
-create index if not exists zynth_investment_events_user_created_at_idx on public.zynth_investment_events(user_id,created_at desc);
-
 create or replace function public.zynth_vault_statement_snapshot(p_user_id uuid,p_period_start date,p_period_end date)
 returns jsonb language plpgsql security definer set search_path='public','pg_temp'
 as $$
