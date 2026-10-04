@@ -17,6 +17,7 @@ import AdminSupportCenter from "@/components/admin-support-center";
 import AdminTraderGovernance from "@/components/admin-trader-governance";
 import AdminZpa from "@/components/admin-zpa";
 import AdminTransactions from "@/components/admin-transactions";
+import AdminRisk from "@/components/admin-risk";
 
 const money=(n:any)=>`₦${Number(n||0).toLocaleString("en-NG",{minimumFractionDigits:2,maximumFractionDigits:2})}`;
 const pct=(n:any)=>`${Number(n||0).toFixed(2)}%`;
@@ -91,7 +92,8 @@ const closePreview=()=>{setPreview(null);setMt5CopyState("");};
       {k:"broadcasts",l:"Messaging Broadcast",i:Send,b:0},
       {k:"support",l:"Customer Service",i:Headphones,b:Number(data.support_unread_count||0)},
       {k:"referrals",l:"Referrals",i:Gift,b:0},
-      {k:"zpa",l:"ZPA",i:Target,b:0}
+      {k:"zpa",l:"ZPA",i:Target,b:0},
+      {k:"risk",l:"Risk & Compliance",i:ShieldCheck,b:0}
     ].map(({k,l,i:Icon,b})=><button key={k} className={tab===k?"admin-list-item active":"admin-list-item"} onClick={()=>setTab(k)}><span className="admin-list-icon"><Icon size={16}/></span><span className="admin-list-label">{l}</span>{b>0&&<em className={k==="support"?"admin-support-badge":""}>{b}</em>}</button>)}
     <div className={"admin-money-nav "+(moneyOpen||["deposits","withdrawals","redemptions","transactions"].includes(tab)?"open":"")}>
       <button className={["deposits","withdrawals","redemptions","transactions"].includes(tab)?"admin-list-item active":"admin-list-item"} onClick={()=>setMoneyOpen(v=>!v)} aria-expanded={moneyOpen} aria-controls="admin-money-subnav">
@@ -145,7 +147,7 @@ const closePreview=()=>{setPreview(null);setMt5CopyState("");};
 
    {tab==="investors"&&<section className="admin-section"><section className="admin-card admin-users-card"><div className="admin-card-head"><div><span className="muted">INVESTOR DIRECTORY</span><h2>Investors</h2><p>Account status and portfolio controls.</p></div></div><AdminUsers initialUsers={[]} refreshKey={refreshKey}/></section></section>}
 
-   {tab==="traders"&&<AdminTraders onSaved={load} refreshKey={refreshKey}/>} 
+   {tab==="risk"&&<AdminRisk/>}\n   {tab==="traders"&&<AdminTraders onSaved={load} refreshKey={refreshKey}/>} 
    {tab==="trader-governance"&&<AdminTraderGovernance/>}
    {tab==="zpa"&&<AdminZpa refreshKey={refreshKey}/>} 
 
