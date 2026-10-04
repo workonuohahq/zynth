@@ -69,3 +69,51 @@ begin
  insert into public.notifications(user_id,title,body,type,metadata) values(p_user_id,'Investment topped up','₦'||to_char(p_amount,'FM999G999G999G990D00')||' has been added to your '||s.name||' at NAV ₦'||to_char(s.nav,'FM999G999G999G990D00')||'.','investment',jsonb_build_object('investment_id',inv.id,'amount',p_amount,'units_added',units,'nav',s.nav));
  return jsonb_build_object('ok',true,'investment_id',inv.id,'strategy_id',inv.strategy_id,'amount',p_amount,'units_added',units,'nav',s.nav);
 end; $function$;
+
+
+-- Phase 7/8 hardening: risk evaluation must run whenever a strategy NAV is
+-- authoritatively settled/reported, not only when a client opens an investment.
+create or replace function public.zynth_strategy_risk_evaluate(
+  p_strategy_id uuid,p_new_nav numeric,p_previous_nav numeric,p_report_return_pct numeric
+) returns jsonb
+language plpgsql security definer set search_path='public','pg_temp'
+as $function$
+declare s public.zynth_strategies%rowtype; dd numeric:=0; aum numeric:=0;
+ breached text[]:=array[]::text[]; reason text; action text:='NONE'; frozen boolean:=false;
+begin
+ select * into s from public.zynth_strategies where id=p_strategy_id for update;
+ if not found then raise exception 'STRATEGY_NOT_FOUND'; end if;
+ if p_new_nav is null or p_new_nav<=0 then raise exception 'INVALID_NAV'; end if;
+ if s.high_water_mark>0 then dd:=(p_new_nav/s.high_water_mark-1)*100; end if;
+ select coalesce(sum(i.units*p_new_nav),0) into aum
+ from public.zynth_investments i where i.strategy_id=s.id and i.status='active';
+
+ if s.maximum_aum is not null and aum>s.maximum_aum then breached:=array_append(breached,'MAXIMUM_AUM'); end if;
+ if s.maximum_drawdown_pct is not null and dd<=-abs(s.maximum_drawdown_pct) then breached:=array_append(breached,'MAXIMUM_DRAWDOWN'); end if;
+ if s.daily_loss_limit_pct is not null and p_report_return_pct<=-abs(s.daily_loss_limit_pct) then breached:=array_append(breached,'DAILY_LOSS_LIMIT'); end if;
+ if s.emergency_freeze_threshold_pct is not null and dd<=-abs(s.emergency_freeze_threshold_pct) then breached:=array_append(breached,'EMERGENCY_FREEZE'); end if;
+
+ if coalesce(array_length(breached,1),0)>0 then
+   frozen:=true; action:='STRATEGY_PAUSED'; reason:=array_to_string(breached,', ');
+   update public.zynth_strategies
+   set status='paused',risk_frozen=true,risk_freeze_reason=reason,
+       risk_frozen_at=coalesce(risk_frozen_at,now()),risk_last_evaluated_at=now(),updated_at=now()
+   where id=s.id;
+   -- Only emit a new admin alert on the transition into the frozen state.
+   if not coalesce(s.risk_frozen,false) then
+     insert into public.zynth_strategy_risk_events(strategy_id,event_type,threshold_value,observed_value,action,reason)
+     values(s.id,coalesce(breached[1],'RISK_THRESHOLD'),null,dd,action,reason);
+     perform public.zynth_emit_admin_notification(
+       'strategy.risk.freeze','Strategy paused — risk threshold breached',
+       s.name||' has been automatically paused. New investments are disabled. Trigger: '||reason,
+       'risk','critical','/admin/strategies');
+   end if;
+ else
+   update public.zynth_strategies set risk_last_evaluated_at=now(),updated_at=now() where id=s.id;
+ end if;
+ return jsonb_build_object('strategy_id',s.id,'drawdown_pct',dd,'daily_return_pct',p_report_return_pct,
+   'aum',aum,'breached',to_jsonb(breached),'frozen',frozen,'action',action);
+end $function$;
+
+revoke all on function public.zynth_strategy_risk_evaluate(uuid,numeric,numeric,numeric) from public,anon,authenticated;
+grant execute on function public.zynth_strategy_risk_evaluate(uuid,numeric,numeric,numeric) to service_role;
