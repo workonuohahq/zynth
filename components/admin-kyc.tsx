@@ -34,7 +34,7 @@ function initials(name:string){
 }
 
 export default function AdminKyc(){
-  const[rows,setRows]=useState<any[]>([]);
+  const[rows,setRows]=useState<any[]>([]),[view,setView]=useState<"queue"|"form">("queue"),[formFields,setFormFields]=useState<any[]>([]),[editingField,setEditingField]=useState<any>(null);
   const[q,setQ]=useState("");
   const[status,setStatus]=useState("ALL");
   const[risk,setRisk]=useState("ALL");
@@ -58,6 +58,11 @@ export default function AdminKyc(){
     }catch(e:any){setNotice(e.message||"Unable to load KYC records.");}
     finally{setBusy("");}
   }
+
+  async function loadForm(){const r=await fetch("/api/admin/kyc?view=form",{cache:"no-store"});const j=await r.json();if(!r.ok)throw new Error(j.error||"Unable to load KYC form.");setFormFields(j.fields||[])}
+  async function saveField(f:any){setBusy("form");try{const r=await fetch("/api/admin/kyc",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"form_upsert",...f})});const j=await r.json();if(!r.ok)throw new Error(j.error||"Unable to save field.");setNotice("KYC form field saved.");setEditingField(null);await loadForm()}catch(e:any){setNotice(e.message||"Unable to save field.")}finally{setBusy("")}}
+  async function removeField(id:string){if(!window.confirm("Remove this KYC field from the live form? Existing submitted data will be preserved."))return;setBusy("form");try{const r=await fetch("/api/admin/kyc",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"form_remove",id})});const j=await r.json();if(!r.ok)throw new Error(j.error||"Unable to remove field.");setNotice("KYC field removed. Existing data was preserved.");await loadForm()}catch(e:any){setNotice(e.message||"Unable to remove field.")}finally{setBusy("")}}
+  useEffect(()=>{if(view==="form")loadForm().catch((e:any)=>setNotice(e.message))},[view]);
 
   async function open(id:string){
     setSel(id);setDetail(null);setTab("overview");
@@ -93,7 +98,7 @@ export default function AdminKyc(){
     <style jsx>{`
       .kyc-console{--gold:#d6b36a;--gold2:#8e6a2d;--bg:#080808;--panel:#101010;--panel2:#141414;--line:#252525;--muted:#7e7e7e;color:#f5f5f5}
       .hero{position:relative;overflow:hidden;border:1px solid #3a3121;border-radius:22px;padding:28px;background:radial-gradient(circle at 85% 0%,#4a381955,transparent 38%),linear-gradient(135deg,#17130d,#0c0c0c 68%);margin-bottom:14px}
-      .hero:after{content:"";position:absolute;width:180px;height:180px;border:1px solid #6b542f33;border-radius:50%;right:-65px;top:-80px;box-shadow:0 0 80px #8e6a2d22}
+      .view-switch{display:flex;gap:5px;margin-bottom:18px;position:relative;z-index:2}.view-switch button{display:inline-flex;align-items:center;gap:6px;border:1px solid #302a20;background:#0e0e0e;color:#777;border-radius:9px;padding:8px 10px;font-size:9px;font-weight:800}.view-switch button.active{background:#2a2112;border-color:#5a4524;color:#e0bf79}.hero:after{content:"";position:absolute;width:180px;height:180px;border:1px solid #6b542f33;border-radius:50%;right:-65px;top:-80px;box-shadow:0 0 80px #8e6a2d22}
       .hero-top{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;position:relative;z-index:1}
       .eyebrow{font-size:9px;letter-spacing:.18em;color:#9a9a9a;font-weight:800}
       .hero h2{font-size:clamp(28px,4vw,42px);letter-spacing:-.055em;margin:9px 0 7px}
@@ -144,26 +149,46 @@ export default function AdminKyc(){
       .row-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}.mini{border:1px solid var(--line);background:#151515;color:#aaa;border-radius:8px;padding:7px 9px;font-size:8px;font-weight:800}.mini.gold{color:var(--gold);border-color:#4d3d20}.mini.danger{color:#dc9b9b;border-color:#4b2929}
       .primary{border:0;background:var(--gold);color:#120e07;border-radius:9px;padding:9px 12px;font-weight:900;font-size:9px;display:inline-flex;align-items:center;gap:6px}
       .risk-select{background:#111;border:1px solid var(--line);color:#bbb;border-radius:9px;padding:0 9px;font-size:9px}
-      .empty-inner{padding:28px 8px;text-align:center;color:#555;font-size:10px}
+      .form-builder{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px}.builder-head{display:flex;justify-content:space-between;gap:20px;align-items:flex-start}.builder-head h3{font-size:20px;margin:7px 0 5px}.builder-head p{font-size:10px;color:#666;margin:0;max-width:620px;line-height:1.5}.builder-note{display:flex;align-items:center;gap:8px;margin:15px 0;padding:11px 12px;background:#15120d;border:1px solid #40341f;color:#bda66f;border-radius:10px;font-size:9px}.field-editor{border:1px solid #40341f;background:#111;border-radius:14px;padding:15px;margin-bottom:13px}.editor-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}.editor-title b{display:block;font-size:12px}.editor-title small{display:block;color:#666;font-size:8px;margin-top:4px}.editor-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.editor-grid label{display:flex;flex-direction:column;gap:6px;color:#777;font-size:8px;text-transform:uppercase;letter-spacing:.08em}.editor-grid input,.editor-grid select,.editor-grid textarea{background:#090909;border:1px solid #292929;color:#eee;border-radius:8px;padding:9px;font:inherit;text-transform:none;letter-spacing:0}.editor-grid .wide{grid-column:1/-1}.toggle-row{display:flex;align-items:center;gap:15px;margin-top:13px}.toggle-row label{font-size:9px;color:#999}.toggle-row input{accent-color:#d6b36a}.field-list{display:grid;gap:8px}.field-card{display:grid;grid-template-columns:20px 1fr auto;gap:12px;align-items:center;background:#0d0d0d;border:1px solid #222;border-radius:12px;padding:12px}.field-card.inactive{opacity:.55}.drag-handle{color:#555;font-size:13px}.field-main{display:flex;justify-content:space-between;gap:12px;min-width:0}.field-main b{display:block;font-size:11px}.field-main small{display:block;color:#5e5e5e;font-size:8px;margin-top:4px}.field-tags{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}.field-tags span{font-size:7px;color:#a99772;border:1px solid #443a29;background:#17130d;padding:4px 6px;border-radius:999px;text-transform:uppercase}.field-actions{display:flex;gap:5px}.empty-inner{padding:28px 8px;text-align:center;color:#555;font-size:10px}
       @media(max-width:900px){.metric-grid{grid-template-columns:repeat(2,1fr)}.table-head,.kyc-row{grid-template-columns:minmax(220px,1.5fr) 105px 105px 34px}.table-head span:nth-child(3),.kyc-row>span:nth-child(3){display:none}}
-      @media(max-width:650px){.hero{padding:20px}.hero-top{flex-direction:column}.secure-mark{display:none}.metric-grid{grid-template-columns:1fr 1fr}.metric{padding:13px}.metric strong{font-size:21px}.toolbar{padding:10px}.search{min-width:100%;order:1}.filter{flex:1;min-width:0}.table-head{display:none}.kyc-row{grid-template-columns:1fr auto;padding:14px}.kyc-row>span:nth-child(2),.kyc-row>span:nth-child(4){display:none}.drawer-head,.drawer-body{padding-left:16px;padding-right:16px}.drawer-tabs{padding:0 12px}.fact-grid{grid-template-columns:1fr}.drawer-actions .primary,.drawer-actions .mini{flex:1;justify-content:center}}
+      @media(max-width:650px){.builder-head{flex-direction:column}.editor-grid{grid-template-columns:1fr}.editor-grid .wide{grid-column:auto}.field-card{grid-template-columns:16px 1fr}.field-actions{grid-column:2}.field-main{display:block}.field-tags{justify-content:flex-start;margin-top:8px}.toggle-row{flex-wrap:wrap}.hero{padding:20px}.hero-top{flex-direction:column}.secure-mark{display:none}.metric-grid{grid-template-columns:1fr 1fr}.metric{padding:13px}.metric strong{font-size:21px}.toolbar{padding:10px}.search{min-width:100%;order:1}.filter{flex:1;min-width:0}.table-head{display:none}.kyc-row{grid-template-columns:1fr auto;padding:14px}.kyc-row>span:nth-child(2),.kyc-row>span:nth-child(4){display:none}.drawer-head,.drawer-body{padding-left:16px;padding-right:16px}.drawer-tabs{padding:0 12px}.fact-grid{grid-template-columns:1fr}.drawer-actions .primary,.drawer-actions .mini{flex:1;justify-content:center}}
     `}</style>
 
     <div className="hero">
+      <div className="view-switch"><button className={view==="queue"?"active":""} onClick={()=>setView("queue")}><ShieldCheck size={13}/> Review queue</button><button className={view==="form"?"active":""} onClick={()=>setView("form")}><FileCheck2 size={13}/> Form builder</button></div>
       <div className="hero-top">
         <div><div className="eyebrow">COMPLIANCE OPERATIONS</div><h2>KYC & AML Command Center</h2><p>Review identity, documents, source-of-funds evidence, screening results and compliance risk from one controlled workspace.</p></div>
         <div style={{display:"flex",gap:8,alignItems:"center",position:"relative",zIndex:1}}><Link href="/admin/kyc/forms" className="secure-mark"><FileCheck2 size={13}/> Form builder</Link><div className="secure-mark"><ShieldCheck size={13}/> Admin-only compliance workspace</div></div>
       </div>
     </div>
 
-    <div className="metric-grid">
+    {view==="form" ? <div className="form-builder">
+      <div className="builder-head"><div><div className="eyebrow">KYC CONFIGURATION</div><h3>Verification form builder</h3><p>Control the fields investors see, without touching compliance records or stored submissions.</p></div><button className="primary" onClick={()=>setEditingField({id:null,fieldKey:"",label:"",fieldType:"text",section:"General",helpText:"",options:[],required:false,active:true,sortOrder:(formFields.length+1)*10,storageMode:"custom",storageKey:""})}><Plus size={14}/> Add field</button></div>
+      <div className="builder-note"><ShieldCheck size={14}/> Changes apply to new and editable KYC submissions. Removing a field deactivates it; existing applicant data is never deleted.</div>
+      {editingField&&<div className="field-editor"><div className="editor-title"><div><b>{editingField.id?"Edit field":"New KYC field"}</b><small>Configure presentation and storage safely.</small></div><button className="close" onClick={()=>setEditingField(null)}>×</button></div>
+        <div className="editor-grid">
+          <label>Field key<input value={editingField.fieldKey} onChange={e=>setEditingField({...editingField,fieldKey:e.target.value})} placeholder="employment_status"/></label>
+          <label>Label<input value={editingField.label} onChange={e=>setEditingField({...editingField,label:e.target.value})} placeholder="Employment status"/></label>
+          <label>Type<select value={editingField.fieldType} onChange={e=>setEditingField({...editingField,fieldType:e.target.value})}>{["text","date","select","textarea","country"].map(x=><option key={x}>{x}</option>)}</select></label>
+          <label>Section<input value={editingField.section} onChange={e=>setEditingField({...editingField,section:e.target.value})} placeholder="Financial profile"/></label>
+          <label>Storage<select value={editingField.storageMode} onChange={e=>setEditingField({...editingField,storageMode:e.target.value,storageKey:e.target.value==="custom"?(editingField.storageKey||editingField.fieldKey):editingField.storageKey})}><option value="custom">Custom applicant data</option><option value="core">Core KYC field</option></select></label>
+          <label>Storage key<input value={editingField.storageKey||""} onChange={e=>setEditingField({...editingField,storageKey:e.target.value})} disabled={editingField.storageMode==="core"} placeholder="employment_status"/></label>
+          <label>Sort order<input type="number" value={editingField.sortOrder??100} onChange={e=>setEditingField({...editingField,sortOrder:Number(e.target.value)})}/></label>
+          <label>Options (one per line)<textarea rows={4} value={(editingField.options||[]).map((x:any)=>typeof x==="string"?x:(x.label||x.value||"")).join("\n")} onChange={e=>setEditingField({...editingField,options:e.target.value.split("\n").map(x=>x.trim()).filter(Boolean)})} disabled={editingField.fieldType!=="select"}/></label>
+          <label className="wide">Help text<input value={editingField.helpText||""} onChange={e=>setEditingField({...editingField,helpText:e.target.value})}/></label>
+        </div>
+        <div className="toggle-row"><label><input type="checkbox" checked={editingField.required===true} onChange={e=>setEditingField({...editingField,required:e.target.checked})}/> Required</label><label><input type="checkbox" checked={editingField.active!==false} onChange={e=>setEditingField({...editingField,active:e.target.checked})}/> Active</label><button className="primary" disabled={busy==="form"} onClick={()=>saveField(editingField)}>{busy==="form"?"Saving…":"Save field"}</button></div>
+      </div>}
+      <div className="field-list">{formFields.map((f:any)=><div className={"field-card "+(!f.active?"inactive":"")} key={f.id}><div className="drag-handle">⋮⋮</div><div className="field-main"><div><b>{f.label}</b><small>{f.field_key} · {f.section} · {f.field_type}</small></div><div className="field-tags"><span>{f.storage_mode==="core"?"Core":"Custom"}</span>{f.required&&<span>Required</span>}{!f.active&&<span>Inactive</span>}</div></div><div className="field-actions"><button className="mini" onClick={()=>setEditingField({...f})}>Edit</button><button className="mini danger" onClick={()=>removeField(f.id)}>Remove</button></div></div>)}</div>
+    </div> : null}
+    {view==="queue"&&<div className="metric-grid">
       <div className="metric"><div className="metric-label"><UserRound size={13}/>Cases in view</div><strong>{metrics.total}</strong><small>Matching current filters</small></div>
       <div className="metric"><div className="metric-label"><Clock3 size={13}/>Needs review</div><strong>{metrics.review}</strong><small>Pending, in review or reverification</small></div>
       <div className="metric"><div className="metric-label"><ShieldAlert size={13}/>Elevated risk</div><strong>{metrics.high}</strong><small>High + critical classifications</small></div>
       <div className="metric"><div className="metric-label"><CheckCircle2 size={13}/>Verified</div><strong>{metrics.verified}</strong><small>Verified in current result set</small></div>
     </div>
 
-    <div className="workspace">
+    {view==="queue"&&<div className="workspace">
       <div className="toolbar">
         <div className="search"><Search size={15}/><input value={q} onChange={e=>setQ(e.target.value)} onKeyDown={e=>e.key==="Enter"&&load()} placeholder="Search name, email or user ID"/></div>
         <select className="filter" value={status} onChange={e=>{setStatus(e.target.value);setTimeout(load,0)}}><option value="ALL">All statuses</option>{statuses.slice(1).map(x=><option key={x}>{x.replaceAll("_"," ")}</option>)}</select>
@@ -176,7 +201,7 @@ export default function AdminKyc(){
         <span className="identity"><i className="avatar">{initials(r.full_name)}</i><span><b>{r.full_name||"Unnamed account"}</b><small>{r.email||r.user_id}</small></span></span>
         <span><Badge value={r.status}/></span><span className="level">{r.verification_level||"—"}</span><span><Badge value={r.risk_classification||"LOW"} risk/></span><ChevronRight className="arrow" size={16}/>
       </button>) : <div className="empty"><ShieldCheck size={26}/><div>No KYC cases match these filters.</div></div>}
-    </div>
+    </div>}
 
     {detail&&<><div className="drawer-backdrop" onClick={()=>setDetail(null)}/><aside className="drawer">
       <div className="drawer-head">
