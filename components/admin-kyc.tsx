@@ -1,6 +1,6 @@
 "use client";
 
-import {useEffect, useMemo, useState} from "react";
+import {useEffect, useMemo, useState} from "react";\nimport Link from "next/link";
 import {
   Search, ShieldCheck, ShieldAlert, RefreshCw, ChevronRight, X,
   UserRound, FileCheck2, MapPin, WalletCards, ScanFace, History,
@@ -151,7 +151,7 @@ export default function AdminKyc(){
     <div className="hero">
       <div className="hero-top">
         <div><div className="eyebrow">COMPLIANCE OPERATIONS</div><h2>KYC & AML Command Center</h2><p>Review identity, documents, source-of-funds evidence, screening results and compliance risk from one controlled workspace.</p></div>
-        <div className="secure-mark"><ShieldCheck size={13}/> Admin-only compliance workspace</div>
+        <div style={{display:"flex",gap:8,alignItems:"center",position:"relative",zIndex:1}}><Link href="/admin/kyc/forms" className="secure-mark"><FileCheck2 size={13}/> Form builder</Link><div className="secure-mark"><ShieldCheck size={13}/> Admin-only compliance workspace</div></div>
       </div>
     </div>
 
