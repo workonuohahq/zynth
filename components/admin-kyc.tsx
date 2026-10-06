@@ -1,236 +1,110 @@
 "use client";
+import{useEffect,useState}from"react";
+import{Search,ShieldCheck,ShieldAlert,RefreshCw,ChevronRight,X,UserRound,FileCheck2,ScanFace,History,AlertTriangle,CheckCircle2,Clock3,Ban,Plus,Edit3,Trash2}from"lucide-react";
 
-import {useEffect, useMemo, useState} from "react";
-import Link from "next/link";
-import {
-  Search, ShieldCheck, ShieldAlert, RefreshCw, ChevronRight, X,
-  UserRound, FileCheck2, MapPin, WalletCards, ScanFace, History,
-  AlertTriangle, CheckCircle2, Clock3, Ban, MoreHorizontal
-} from "lucide-react";
+const QUEUES=[
+ ["ALL","All cases"],["NOT_STARTED","Not started"],["PENDING","Pending"],["IN_REVIEW","In review"],
+ ["COMPLETED","Completed"],["EXPIRED","Expired"],["REVERIFICATION_REQUIRED","Reverification"],["REJECTED","Rejected"],["SUSPENDED","Suspended"]
+] as const;
+const RISKS=["ALL","LOW","MEDIUM","HIGH","CRITICAL"];
 
-const queues=[["ALL","All cases"],["NOT_STARTED","Not started"],["PENDING","Pending"],["IN_REVIEW","In review"],["COMPLETED","Completed"],["EXPIRED","Expired"],["REVERIFICATION_REQUIRED","Reverification"],["REJECTED","Rejected"],["SUSPENDED","Suspended"]];
-const risks=["ALL","LOW","MEDIUM","HIGH","CRITICAL"];
-
-const statusMeta:any={
-  NOT_STARTED:{label:"Not started",tone:"neutral",icon:Clock3},
-  PENDING:{label:"Pending",tone:"gold",icon:Clock3},
-  IN_REVIEW:{label:"In review",tone:"gold",icon:ScanFace},
-  VERIFIED:{label:"Verified",tone:"green",icon:CheckCircle2},
-  REJECTED:{label:"Rejected",tone:"red",icon:Ban},
-  EXPIRED:{label:"Expired",tone:"red",icon:AlertTriangle},
-  REVERIFICATION_REQUIRED:{label:"Reverification",tone:"gold",icon:AlertTriangle},
-  SUSPENDED:{label:"Suspended",tone:"red",icon:Ban}
+const STATUS:any={
+ NOT_STARTED:{label:"Not started",tone:"neutral",icon:Clock3},
+ PENDING:{label:"Pending",tone:"gold",icon:Clock3},
+ IN_REVIEW:{label:"In review",tone:"gold",icon:ScanFace},
+ VERIFIED:{label:"Completed",tone:"green",icon:CheckCircle2},
+ EXPIRED:{label:"Expired",tone:"red",icon:AlertTriangle},
+ REVERIFICATION_REQUIRED:{label:"Reverification",tone:"gold",icon:AlertTriangle},
+ REJECTED:{label:"Rejected",tone:"red",icon:Ban},
+ SUSPENDED:{label:"Suspended",tone:"red",icon:Ban}
 };
 
 function Badge({value,risk=false}:{value:string;risk?:boolean}){
-  const key=String(value||"").toUpperCase();
-  const m=risk ? {label:key,tone:key==="CRITICAL"||key==="HIGH"?"red":key==="MEDIUM"?"gold":"green",icon:key==="CRITICAL"||key==="HIGH"?ShieldAlert:ShieldCheck} : (statusMeta[key]||{label:key,tone:"neutral",icon:Clock3});
-  const Icon=m.icon;
-  return <span className={"kyc-badge "+m.tone}><Icon size={12}/>{m.label.replaceAll("_"," ")}</span>;
+ const key=String(value||"LOW").toUpperCase();
+ const m=risk
+  ? {label:key,tone:["HIGH","CRITICAL"].includes(key)?"red":key==="MEDIUM"?"gold":"green",icon:["HIGH","CRITICAL"].includes(key)?ShieldAlert:ShieldCheck}
+  : (STATUS[key]||{label:key,tone:"neutral",icon:Clock3});
+ const Icon=m.icon;
+ return <span className={"kyc-badge "+m.tone}><Icon size={11}/>{m.label}</span>;
 }
+const initials=(name:string)=>(name||"U").split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join("").toUpperCase();
 
-function initials(name:string){
-  return (name||"U").split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join("").toUpperCase();
+function FormBuilder({notice,setNotice}:{notice:string;setNotice:(x:string)=>void}){
+ const[fields,setFields]=useState<any[]>([]),[editing,setEditing]=useState<any>(null),[busy,setBusy]=useState(false);
+ async function load(){const r=await fetch("/api/admin/kyc?view=form",{cache:"no-store"});const j=await r.json();if(!r.ok)throw new Error(j.error||"Unable to load KYC form.");setFields(j.fields||[])}
+ useEffect(()=>{load().catch(e=>setNotice(e.message))},[]);
+ async function save(){
+  setBusy(true);
+  try{
+   const r=await fetch("/api/admin/kyc",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"form_upsert",...editing})});
+   const j=await r.json();if(!r.ok)throw new Error(j.error||"Unable to save field.");
+   setEditing(null);setNotice("KYC form field saved.");await load();
+  }catch(e:any){setNotice(e.message||"Unable to save field.")}finally{setBusy(false)}
+ }
+ async function remove(id:string){
+  if(!window.confirm("Remove this field from the live KYC form? Existing applicant data will remain intact."))return;
+  setBusy(true);
+  try{
+   const r=await fetch("/api/admin/kyc",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"form_remove",id})});
+   const j=await r.json();if(!r.ok)throw new Error(j.error||"Unable to remove field.");
+   setNotice("Field removed from the live form.");await load();
+  }catch(e:any){setNotice(e.message||"Unable to remove field.")}finally{setBusy(false)}
+ }
+ function blank(){return{id:null,fieldKey:"",label:"",fieldType:"text",section:"General",helpText:"",options:[],required:false,active:true,sortOrder:(fields.length+1)*10,storageMode:"custom",storageKey:""}}
+ return <div className="kyc-builder">
+  <div className="builder-top"><div><span className="eyebrow">KYC CONFIGURATION</span><h2>Verification form builder</h2><p>Add, edit, reorder and deactivate the information ZYNTH collects from investors. Existing submissions are never deleted when a field is removed.</p></div><button className="gold-btn" onClick={()=>setEditing(blank())}><Plus size={14}/> Add field</button></div>
+  {notice&&<div className="builder-notice"><ShieldCheck size={14}/>{notice}</div>}
+  {editing&&<div className="editor">
+   <div className="editor-head"><div><b>{editing.id?"Edit KYC field":"Add KYC field"}</b><small>Only approved core storage keys can write to protected profile columns.</small></div><button className="icon-btn" onClick={()=>setEditing(null)}><X size={15}/></button></div>
+   <div className="editor-grid">
+    <label>Field key<input value={editing.fieldKey} onChange={e=>setEditing({...editing,fieldKey:e.target.value})} placeholder="employment_status"/></label>
+    <label>Label<input value={editing.label} onChange={e=>setEditing({...editing,label:e.target.value})}/></label>
+    <label>Type<select value={editing.fieldType} onChange={e=>setEditing({...editing,fieldType:e.target.value})}>{["text","date","select","textarea","country"].map(x=><option key={x}>{x}</option>)}</select></label>
+    <label>Section<input value={editing.section} onChange={e=>setEditing({...editing,section:e.target.value})}/></label>
+    <label>Storage<select value={editing.storageMode} onChange={e=>setEditing({...editing,storageMode:e.target.value,storageKey:e.target.value==="custom"?(editing.storageKey||editing.fieldKey):editing.storageKey})}><option value="custom">Custom applicant data</option><option value="core">Core KYC profile</option></select></label>
+    <label>Storage key<input value={editing.storageKey||""} disabled={editing.storageMode==="core"} onChange={e=>setEditing({...editing,storageKey:e.target.value})}/></label>
+    <label>Sort order<input type="number" value={editing.sortOrder??100} onChange={e=>setEditing({...editing,sortOrder:Number(e.target.value)})}/></label>
+    <label>Options<textarea rows={3} disabled={editing.fieldType!=="select"} value={(editing.options||[]).map((x:any)=>typeof x==="string"?x:(x.label||x.value||"")).join("\n")} onChange={e=>setEditing({...editing,options:e.target.value.split("\n").map(x=>x.trim()).filter(Boolean)})}/></label>
+    <label className="wide">Help text<input value={editing.helpText||""} onChange={e=>setEditing({...editing,helpText:e.target.value})}/></label>
+   </div>
+   <div className="editor-actions"><label><input type="checkbox" checked={editing.required===true} onChange={e=>setEditing({...editing,required:e.target.checked})}/> Required</label><label><input type="checkbox" checked={editing.active!==false} onChange={e=>setEditing({...editing,active:e.target.checked})}/> Active</label><button className="gold-btn" disabled={busy} onClick={save}>{busy?"Saving…":"Save field"}</button></div>
+  </div>}
+  <div className="field-list">{fields.map(f=><div className={"field-card "+(!f.active?"inactive":"")} key={f.id}><div className="field-order">{f.sort_order}</div><div className="field-copy"><b>{f.label}</b><small>{f.field_key} · {f.section} · {f.field_type}</small><div><span>{f.storage_mode==="core"?"Core profile":"Custom data"}</span>{f.required&&<span>Required</span>}{!f.active&&<span>Inactive</span>}</div></div><div className="field-actions"><button onClick={()=>setEditing({...f})}><Edit3 size={12}/> Edit</button><button className="danger" onClick={()=>remove(f.id)}><Trash2 size={12}/> Remove</button></div></div>)}</div>
+  <style jsx>{`
+   .kyc-builder{background:#101010;border:1px solid #252525;border-radius:18px;padding:20px}.builder-top{display:flex;justify-content:space-between;gap:20px;align-items:flex-start}.builder-top h2{margin:7px 0;font-size:23px;letter-spacing:-.04em}.builder-top p{max-width:650px;color:#777;font-size:11px;line-height:1.6;margin:0}.gold-btn{border:0;background:#d6b36a;color:#120e07;border-radius:9px;padding:10px 13px;font-weight:900;font-size:9px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}.builder-notice{display:flex;gap:8px;align-items:center;background:#17130d;border:1px solid #443821;color:#c9b07b;border-radius:10px;padding:10px;margin:16px 0;font-size:9px}.editor{background:#0b0b0b;border:1px solid #4b3b20;border-radius:14px;padding:15px;margin:15px 0}.editor-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}.editor-head b{display:block;font-size:12px}.editor-head small{display:block;color:#666;font-size:8px;margin-top:4px}.icon-btn{border:1px solid #292929;background:#151515;color:#999;border-radius:8px;padding:7px}.editor-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.editor-grid label{display:flex;flex-direction:column;gap:6px;color:#777;font-size:8px;text-transform:uppercase;letter-spacing:.08em}.editor-grid input,.editor-grid select,.editor-grid textarea{background:#080808;border:1px solid #292929;color:#eee;border-radius:8px;padding:9px;font:inherit;text-transform:none;letter-spacing:0}.editor-grid .wide{grid-column:1/-1}.editor-actions{display:flex;align-items:center;gap:15px;margin-top:13px}.editor-actions label{color:#999;font-size:9px}.editor-actions input{accent-color:#d6b36a}.field-list{display:grid;gap:8px}.field-card{display:grid;grid-template-columns:38px 1fr auto;gap:12px;align-items:center;border:1px solid #222;background:#0d0d0d;border-radius:12px;padding:12px}.field-card.inactive{opacity:.55}.field-order{width:30px;height:30px;border-radius:9px;background:#17130d;border:1px solid #3e321e;color:#c7a866;display:grid;place-items:center;font-size:8px;font-weight:900}.field-copy b{font-size:11px}.field-copy small{display:block;color:#5d5d5d;font-size:8px;margin:4px 0 7px}.field-copy div{display:flex;gap:5px;flex-wrap:wrap}.field-copy span{border:1px solid #34302a;color:#9e8b65;border-radius:999px;padding:4px 6px;font-size:7px;text-transform:uppercase}.field-actions{display:flex;gap:6px}.field-actions button{display:inline-flex;align-items:center;gap:5px;background:#151515;border:1px solid #292929;color:#aaa;border-radius:8px;padding:7px 9px;font-size:8px;font-weight:800}.field-actions button.danger{color:#dc9b9b;border-color:#4b2929}@media(max-width:650px){.builder-top{flex-direction:column}.editor-grid{grid-template-columns:1fr}.editor-grid .wide{grid-column:auto}.field-card{grid-template-columns:30px 1fr}.field-actions{grid-column:2}.editor-actions{flex-wrap:wrap}}
+  `}</style>
+ </div>
 }
 
 export default function AdminKyc(){
-  const[rows,setRows]=useState<any[]>([]),[view,setView]=useState<"queue"|"form">("queue"),[formFields,setFormFields]=useState<any[]>([]),[editingField,setEditingField]=useState<any>(null);
-  const[q,setQ]=useState("");
-  const[queue,setQueue]=useState("ALL"),[counts,setCounts]=useState<any>({});
-  const[risk,setRisk]=useState("ALL");
-  const[sel,setSel]=useState<string|null>(null);
-  const[detail,setDetail]=useState<any>(null);
-  const[busy,setBusy]=useState("");
-  const[notice,setNotice]=useState("");
-  const[tab,setTab]=useState<"overview"|"identity"|"documents"|"aml"|"history">("overview");
-
-  async function load(nextQueue=queue,nextRisk=risk){
-    setBusy("load");
-    try{
-      const p=new URLSearchParams();
-      if(q)p.set("q",q);
-      p.set("queue",nextQueue);
-      if(nextRisk!=="ALL")p.set("risk",nextRisk);
-      const r=await fetch("/api/admin/kyc?"+p,{cache:"no-store"});
-      const j=await r.json();
-      if(!r.ok)throw new Error(j.error||"Unable to load KYC records.");
-      setRows(j.items||[]);setCounts(j.counts||{});
-    }catch(e:any){setNotice(e.message||"Unable to load KYC records.");}
-    finally{setBusy("");}
-  }
-
-  async function loadForm(){const r=await fetch("/api/admin/kyc?view=form",{cache:"no-store"});const j=await r.json();if(!r.ok)throw new Error(j.error||"Unable to load KYC form.");setFormFields(j.fields||[])}
-  async function saveField(f:any){setBusy("form");try{const r=await fetch("/api/admin/kyc",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"form_upsert",...f})});const j=await r.json();if(!r.ok)throw new Error(j.error||"Unable to save field.");setNotice("KYC form field saved.");setEditingField(null);await loadForm()}catch(e:any){setNotice(e.message||"Unable to save field.")}finally{setBusy("")}}
-  async function removeField(id:string){if(!window.confirm("Remove this KYC field from the live form? Existing submitted data will be preserved."))return;setBusy("form");try{const r=await fetch("/api/admin/kyc",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"form_remove",id})});const j=await r.json();if(!r.ok)throw new Error(j.error||"Unable to remove field.");setNotice("KYC field removed. Existing data was preserved.");await loadForm()}catch(e:any){setNotice(e.message||"Unable to remove field.")}finally{setBusy("")}}
-  useEffect(()=>{if(view==="form")loadForm().catch((e:any)=>setNotice(e.message))},[view]);
-
-  async function open(id:string){
-    setSel(id);setDetail(null);setTab("overview");
-    const r=await fetch("/api/admin/kyc/"+id,{cache:"no-store"});
-    const j=await r.json();
-    if(!r.ok){setNotice(j.error||"Unable to open profile.");return}
-    setDetail(j);
-  }
-
-  async function act(body:any){
-    setBusy(body.action||"action");
-    try{
-      const r=await fetch("/api/admin/kyc",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
-      const j=await r.json();
-      setNotice(r.ok?"Compliance record updated.":j.error||"KYC update failed.");
-      if(r.ok&&sel)await open(sel);
-      await load();
-    }catch(e:any){setNotice(e.message||"KYC update failed.");}
-    finally{setBusy("");}
-  }
-
-  useEffect(()=>{load()},[]);
-
-  const metrics={total:Number(counts.ALL??rows.length),review:Number(counts.PENDING||0)+Number(counts.IN_REVIEW||0)+Number(counts.REVERIFICATION_REQUIRED||0)+Number(counts.EXPIRED||0),high:rows.filter(r=>["HIGH","CRITICAL"].includes(r.risk_classification)).length,verified:Number(counts.COMPLETED||0)};
-
-  return <section className="kyc-console">
-    <style jsx>{`
-      .kyc-console{--gold:#d6b36a;--gold2:#8e6a2d;--bg:#080808;--panel:#101010;--panel2:#141414;--line:#252525;--muted:#7e7e7e;color:#f5f5f5}
-      .hero{position:relative;overflow:hidden;border:1px solid #3a3121;border-radius:22px;padding:28px;background:radial-gradient(circle at 85% 0%,#4a381955,transparent 38%),linear-gradient(135deg,#17130d,#0c0c0c 68%);margin-bottom:14px}
-      .view-switch{display:flex;gap:5px;margin-bottom:18px;position:relative;z-index:2}.view-switch button{display:inline-flex;align-items:center;gap:6px;border:1px solid #302a20;background:#0e0e0e;color:#777;border-radius:9px;padding:8px 10px;font-size:9px;font-weight:800}.view-switch button.active{background:#2a2112;border-color:#5a4524;color:#e0bf79}.hero:after{content:"";position:absolute;width:180px;height:180px;border:1px solid #6b542f33;border-radius:50%;right:-65px;top:-80px;box-shadow:0 0 80px #8e6a2d22}
-      .hero-top{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;position:relative;z-index:1}
-      .eyebrow{font-size:9px;letter-spacing:.18em;color:#9a9a9a;font-weight:800}
-      .hero h2{font-size:clamp(28px,4vw,42px);letter-spacing:-.055em;margin:9px 0 7px}
-      .hero p{margin:0;color:#8b8b8b;font-size:12px;line-height:1.6;max-width:660px}
-      .secure-mark{display:flex;align-items:center;gap:7px;color:#b9b9b9;font-size:10px;border:1px solid #34302a;background:#0d0d0d;padding:9px 11px;border-radius:999px;white-space:nowrap}
-      .secure-mark svg{color:var(--gold)}
-      .metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0}
-      .metric{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;min-width:0}
-      .metric-label{display:flex;align-items:center;gap:7px;color:#7d7d7d;font-size:10px;font-weight:700}
-      .metric-label svg{color:var(--gold)}
-      .metric strong{display:block;font-size:25px;letter-spacing:-.04em;margin-top:10px}
-      .metric small{display:block;color:#555;margin-top:4px;font-size:9px}
-      .workspace{background:var(--panel);border:1px solid var(--line);border-radius:18px;overflow:hidden}
-      .queue-nav{display:flex;gap:7px;padding:12px 14px 0;overflow:auto}.queue-chip{flex:none;display:flex;align-items:center;gap:8px;border:1px solid #242424;background:#0d0d0d;color:#777;border-radius:10px;padding:8px 10px;font-size:9px;font-weight:800;white-space:nowrap}.queue-chip b{min-width:18px;text-align:center;color:#aaa;font-size:9px}.queue-chip.active{background:#241c0e;border-color:#5a4625;color:#dfbd77}.queue-chip.active b{color:#dfbd77}.active-queue{height:42px;display:flex;align-items:center;gap:7px;border:1px solid #252525;background:#0a0a0a;border-radius:11px;padding:0 11px;white-space:nowrap}.active-queue span{font-size:7px;color:#555;letter-spacing:.1em}.active-queue b{font-size:10px;color:#bbb}.toolbar{padding:14px;border-bottom:1px solid var(--line);display:flex;gap:9px;align-items:center;flex-wrap:wrap}
-      .search{display:flex;align-items:center;gap:9px;flex:1;min-width:240px;background:#0a0a0a;border:1px solid var(--line);border-radius:11px;padding:0 12px;height:42px}
-      .search svg{color:#666;flex:none}.search input{background:transparent;border:0;outline:0;color:#fff;width:100%;font-size:12px}
-      .filter{height:42px;background:#0a0a0a;border:1px solid var(--line);border-radius:11px;color:#aaa;padding:0 11px;font-size:11px;outline:none}
-      .filter:focus{border-color:#5b4a2d}
-      .toolbar button{height:42px}
-      .notice{margin:12px 14px 0;padding:11px 12px;border-radius:10px;background:#17130d;border:1px solid #443821;color:#c9b07b;font-size:11px}
-      .table-head,.kyc-row{display:grid;grid-template-columns:minmax(230px,1.7fr) 130px 120px 130px 34px;gap:16px;align-items:center}
-      .table-head{padding:11px 18px;color:#555;text-transform:uppercase;letter-spacing:.12em;font-size:8px;font-weight:800;border-bottom:1px solid var(--line)}
-      .kyc-row{width:100%;border:0;border-bottom:1px solid #1c1c1c;background:transparent;color:#eee;text-align:left;padding:14px 18px;transition:.15s}
-      .kyc-row:hover{background:#15120d}.kyc-row:last-child{border-bottom:0}
-      .identity{display:flex;align-items:center;gap:11px;min-width:0}
-      .avatar{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;flex:none;background:linear-gradient(145deg,#2b2418,#141414);border:1px solid #443821;color:var(--gold);font-size:10px;font-weight:900}
-      .identity b{display:block;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-      .identity small{display:block;color:#666;font-size:9px;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-      .level{font-size:10px;color:#aaa}.arrow{color:#555}
-      .kyc-badge{display:inline-flex;align-items:center;gap:5px;width:max-content;max-width:100%;border-radius:999px;padding:6px 8px;border:1px solid #303030;font-size:8px;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
-      .kyc-badge.neutral{color:#888;background:#151515}.kyc-badge.gold{color:#d9b871;background:#241d10;border-color:#554421}.kyc-badge.green{color:#9fd0b0;background:#101d16;border-color:#274a37}.kyc-badge.red{color:#e6a4a4;background:#211313;border-color:#512c2c}
-      .empty{padding:65px 20px;text-align:center;color:#666;font-size:12px}.empty svg{color:#5a4728;margin-bottom:12px}
-      .drawer-backdrop{position:fixed;inset:0;background:#0009;z-index:80;backdrop-filter:blur(4px)}
-      .drawer{position:fixed;z-index:81;top:0;right:0;height:100dvh;width:min(760px,100%);background:#0c0c0c;border-left:1px solid #353535;box-shadow:-30px 0 90px #000b;overflow:auto}
-      .drawer-head{position:sticky;top:0;z-index:3;background:#0d0d0dee;backdrop-filter:blur(14px);border-bottom:1px solid var(--line);padding:20px 22px}
-      .drawer-head-top{display:flex;justify-content:space-between;gap:15px}.close{border:1px solid var(--line);background:#121212;width:34px;height:34px;border-radius:10px;display:grid;place-items:center}
-      .case-id{color:#5f5f5f;font-size:8px;letter-spacing:.1em;margin-top:4px}
-      .case-person{display:flex;align-items:center;gap:12px;margin-top:16px}
-      .case-person .avatar{width:48px;height:48px}.case-person h3{font-size:20px;letter-spacing:-.035em;margin:0 0 5px}.case-person p{margin:0;color:#666;font-size:10px}
-      .drawer-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:16px}.drawer-actions button,.risk-select{height:36px}
-      .drawer-tabs{display:flex;gap:2px;padding:0 22px;border-bottom:1px solid var(--line);overflow:auto}
-      .tab{flex:none;border:0;background:transparent;color:#666;padding:14px 11px;font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;border-bottom:2px solid transparent}
-      .tab.active{color:var(--gold);border-bottom-color:var(--gold)}
-      .drawer-body{padding:18px 22px 40px}.section{border:1px solid var(--line);background:#101010;border-radius:15px;padding:16px;margin-bottom:11px}.section h4{margin:0 0 13px;font-size:12px}.section-title{display:flex;justify-content:space-between;gap:12px;align-items:center}.section-title span{color:#555;font-size:9px}
-      .fact-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.fact{background:#0b0b0b;border:1px solid #1e1e1e;border-radius:10px;padding:11px;min-width:0}.fact span{display:block;color:#555;font-size:8px;text-transform:uppercase;letter-spacing:.08em}.fact b{display:block;margin-top:6px;font-size:11px;line-height:1.45;word-break:break-word}
-      .doc,.flag,.history{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;border-top:1px solid #1d1d1d;padding:12px 0}.doc:first-of-type,.flag:first-of-type,.history:first-of-type{border-top:0}
-      .doc b,.flag b,.history b{font-size:10px}.doc small,.flag small,.history small{display:block;color:#666;font-size:8px;margin-top:4px;line-height:1.5}
-      .row-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}.mini{border:1px solid var(--line);background:#151515;color:#aaa;border-radius:8px;padding:7px 9px;font-size:8px;font-weight:800}.mini.gold{color:var(--gold);border-color:#4d3d20}.mini.danger{color:#dc9b9b;border-color:#4b2929}
-      .primary{border:0;background:var(--gold);color:#120e07;border-radius:9px;padding:9px 12px;font-weight:900;font-size:9px;display:inline-flex;align-items:center;gap:6px}
-      .risk-select{background:#111;border:1px solid var(--line);color:#bbb;border-radius:9px;padding:0 9px;font-size:9px}
-      .form-builder{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px}.builder-head{display:flex;justify-content:space-between;gap:20px;align-items:flex-start}.builder-head h3{font-size:20px;margin:7px 0 5px}.builder-head p{font-size:10px;color:#666;margin:0;max-width:620px;line-height:1.5}.builder-note{display:flex;align-items:center;gap:8px;margin:15px 0;padding:11px 12px;background:#15120d;border:1px solid #40341f;color:#bda66f;border-radius:10px;font-size:9px}.field-editor{border:1px solid #40341f;background:#111;border-radius:14px;padding:15px;margin-bottom:13px}.editor-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}.editor-title b{display:block;font-size:12px}.editor-title small{display:block;color:#666;font-size:8px;margin-top:4px}.editor-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.editor-grid label{display:flex;flex-direction:column;gap:6px;color:#777;font-size:8px;text-transform:uppercase;letter-spacing:.08em}.editor-grid input,.editor-grid select,.editor-grid textarea{background:#090909;border:1px solid #292929;color:#eee;border-radius:8px;padding:9px;font:inherit;text-transform:none;letter-spacing:0}.editor-grid .wide{grid-column:1/-1}.toggle-row{display:flex;align-items:center;gap:15px;margin-top:13px}.toggle-row label{font-size:9px;color:#999}.toggle-row input{accent-color:#d6b36a}.field-list{display:grid;gap:8px}.field-card{display:grid;grid-template-columns:20px 1fr auto;gap:12px;align-items:center;background:#0d0d0d;border:1px solid #222;border-radius:12px;padding:12px}.field-card.inactive{opacity:.55}.drag-handle{color:#555;font-size:13px}.field-main{display:flex;justify-content:space-between;gap:12px;min-width:0}.field-main b{display:block;font-size:11px}.field-main small{display:block;color:#5e5e5e;font-size:8px;margin-top:4px}.field-tags{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}.field-tags span{font-size:7px;color:#a99772;border:1px solid #443a29;background:#17130d;padding:4px 6px;border-radius:999px;text-transform:uppercase}.field-actions{display:flex;gap:5px}.empty-inner{padding:28px 8px;text-align:center;color:#555;font-size:10px}
-      @media(max-width:900px){.metric-grid{grid-template-columns:repeat(2,1fr)}.table-head,.kyc-row{grid-template-columns:minmax(220px,1.5fr) 105px 105px 34px}.table-head span:nth-child(3),.kyc-row>span:nth-child(3){display:none}}
-      @media(max-width:650px){.builder-head{flex-direction:column}.editor-grid{grid-template-columns:1fr}.editor-grid .wide{grid-column:auto}.field-card{grid-template-columns:16px 1fr}.field-actions{grid-column:2}.field-main{display:block}.field-tags{justify-content:flex-start;margin-top:8px}.toggle-row{flex-wrap:wrap}.hero{padding:20px}.hero-top{flex-direction:column}.secure-mark{display:none}.metric-grid{grid-template-columns:1fr 1fr}.metric{padding:13px}.metric strong{font-size:21px}.toolbar{padding:10px}.search{min-width:100%;order:1}.filter{flex:1;min-width:0}.table-head{display:none}.kyc-row{grid-template-columns:1fr auto;padding:14px}.kyc-row>span:nth-child(2),.kyc-row>span:nth-child(4){display:none}.drawer-head,.drawer-body{padding-left:16px;padding-right:16px}.drawer-tabs{padding:0 12px}.fact-grid{grid-template-columns:1fr}.drawer-actions .primary,.drawer-actions .mini{flex:1;justify-content:center}}
-    `}</style>
-
-    <div className="hero">
-      <div className="view-switch"><button className={view==="queue"?"active":""} onClick={()=>setView("queue")}><ShieldCheck size={13}/> Review queue</button><button className={view==="form"?"active":""} onClick={()=>setView("form")}><FileCheck2 size={13}/> Form builder</button></div>
-      <div className="hero-top">
-        <div><div className="eyebrow">COMPLIANCE OPERATIONS</div><h2>KYC & AML Command Center</h2><p>Review identity, documents, source-of-funds evidence, screening results and compliance risk from one controlled workspace.</p></div>
-        <div className="secure-mark"><ShieldCheck size={13}/> Admin-only compliance workspace</div>
-      </div>
-    </div>
-
-    {view==="form" ? <div className="form-builder">
-      <div className="builder-head"><div><div className="eyebrow">KYC CONFIGURATION</div><h3>Verification form builder</h3><p>Control the fields investors see, without touching compliance records or stored submissions.</p></div><button className="primary" onClick={()=>setEditingField({id:null,fieldKey:"",label:"",fieldType:"text",section:"General",helpText:"",options:[],required:false,active:true,sortOrder:(formFields.length+1)*10,storageMode:"custom",storageKey:""})}><Plus size={14}/> Add field</button></div>
-      <div className="builder-note"><ShieldCheck size={14}/> Changes apply to new and editable KYC submissions. Removing a field deactivates it; existing applicant data is never deleted.</div>
-      {editingField&&<div className="field-editor"><div className="editor-title"><div><b>{editingField.id?"Edit field":"New KYC field"}</b><small>Configure presentation and storage safely.</small></div><button className="close" onClick={()=>setEditingField(null)}>×</button></div>
-        <div className="editor-grid">
-          <label>Field key<input value={editingField.fieldKey} onChange={e=>setEditingField({...editingField,fieldKey:e.target.value})} placeholder="employment_status"/></label>
-          <label>Label<input value={editingField.label} onChange={e=>setEditingField({...editingField,label:e.target.value})} placeholder="Employment status"/></label>
-          <label>Type<select value={editingField.fieldType} onChange={e=>setEditingField({...editingField,fieldType:e.target.value})}>{["text","date","select","textarea","country"].map(x=><option key={x}>{x}</option>)}</select></label>
-          <label>Section<input value={editingField.section} onChange={e=>setEditingField({...editingField,section:e.target.value})} placeholder="Financial profile"/></label>
-          <label>Storage<select value={editingField.storageMode} onChange={e=>setEditingField({...editingField,storageMode:e.target.value,storageKey:e.target.value==="custom"?(editingField.storageKey||editingField.fieldKey):editingField.storageKey})}><option value="custom">Custom applicant data</option><option value="core">Core KYC field</option></select></label>
-          <label>Storage key<input value={editingField.storageKey||""} onChange={e=>setEditingField({...editingField,storageKey:e.target.value})} disabled={editingField.storageMode==="core"} placeholder="employment_status"/></label>
-          <label>Sort order<input type="number" value={editingField.sortOrder??100} onChange={e=>setEditingField({...editingField,sortOrder:Number(e.target.value)})}/></label>
-          <label>Options (one per line)<textarea rows={4} value={(editingField.options||[]).map((x:any)=>typeof x==="string"?x:(x.label||x.value||"")).join("\n")} onChange={e=>setEditingField({...editingField,options:e.target.value.split("\n").map(x=>x.trim()).filter(Boolean)})} disabled={editingField.fieldType!=="select"}/></label>
-          <label className="wide">Help text<input value={editingField.helpText||""} onChange={e=>setEditingField({...editingField,helpText:e.target.value})}/></label>
-        </div>
-        <div className="toggle-row"><label><input type="checkbox" checked={editingField.required===true} onChange={e=>setEditingField({...editingField,required:e.target.checked})}/> Required</label><label><input type="checkbox" checked={editingField.active!==false} onChange={e=>setEditingField({...editingField,active:e.target.checked})}/> Active</label><button className="primary" disabled={busy==="form"} onClick={()=>saveField(editingField)}>{busy==="form"?"Saving…":"Save field"}</button></div>
-      </div>}
-      <div className="field-list">{formFields.map((f:any)=><div className={"field-card "+(!f.active?"inactive":"")} key={f.id}><div className="drag-handle">⋮⋮</div><div className="field-main"><div><b>{f.label}</b><small>{f.field_key} · {f.section} · {f.field_type}</small></div><div className="field-tags"><span>{f.storage_mode==="core"?"Core":"Custom"}</span>{f.required&&<span>Required</span>}{!f.active&&<span>Inactive</span>}</div></div><div className="field-actions"><button className="mini" onClick={()=>setEditingField({...f})}>Edit</button><button className="mini danger" onClick={()=>removeField(f.id)}>Remove</button></div></div>)}</div>
-    </div> : null}
-    {view==="queue"&&<div className="metric-grid">
-      <div className="metric"><div className="metric-label"><UserRound size={13}/>Cases in view</div><strong>{metrics.total}</strong><small>Matching current filters</small></div>
-      <div className="metric"><div className="metric-label"><Clock3 size={13}/>Needs review</div><strong>{metrics.review}</strong><small>Pending, in review or reverification</small></div>
-      <div className="metric"><div className="metric-label"><ShieldAlert size={13}/>Elevated risk</div><strong>{metrics.high}</strong><small>High + critical classifications</small></div>
-      <div className="metric"><div className="metric-label"><CheckCircle2 size={13}/>Verified</div><strong>{metrics.verified}</strong><small>Verified in current result set</small></div>
-    </div>
-
-    {view==="queue"&&<div className="workspace">
-      <div className="queue-nav">{queues.map(([key,label])=><button key={key} className={queue===key?"queue-chip active":"queue-chip"} onClick={()=>{setQueue(key);load(key,risk)}}><span>{label}</span><b>{Number(counts[key]||0)}</b></button>)}</div><div className="toolbar">
-        <div className="search"><Search size={15}/><input value={q} onChange={e=>setQ(e.target.value)} onKeyDown={e=>e.key==="Enter"&&load()} placeholder="Search name, email or user ID"/></div>
-        <div className="active-queue"><span>QUEUE</span><b>{queues.find(x=>x[0]===queue)?.[1]||"All cases"}</b></div>
-        <select className="filter" value={risk} onChange={e=>{setRisk(e.target.value);load(queue,e.target.value)}}>{risks.map(x=><option key={x}>{x==="ALL"?"All risk levels":x}</option>)}</select>
-        <button className="ghost" onClick={load} disabled={busy==="load"}><RefreshCw size={14} className={busy==="load"?"spin":""}/>Refresh</button>
-      </div>
-      {notice&&<div className="notice">{notice}</div>}
-      <div className="table-head"><span>Applicant</span><span>Verification</span><span>Level</span><span>Risk</span><span></span></div>
-      {rows.length ? rows.map(r=><button key={r.user_id} className="kyc-row" onClick={()=>open(r.user_id)}>
-        <span className="identity"><i className="avatar">{initials(r.full_name)}</i><span><b>{r.full_name||"Unnamed account"}</b><small>{r.email||r.user_id}</small></span></span>
-        <span><Badge value={r.effective_status||r.status}/></span><span className="level">{r.verification_level||"—"}</span><span><Badge value={r.risk_classification||"LOW"} risk/></span><ChevronRight className="arrow" size={16}/>
-      </button>) : <div className="empty"><ShieldCheck size={26}/><div>No KYC cases match these filters.</div></div>}
-    </div>}
-
-    {detail&&<><div className="drawer-backdrop" onClick={()=>setDetail(null)}/><aside className="drawer">
-      <div className="drawer-head">
-        <div className="drawer-head-top"><div><div className="eyebrow">KYC CASE</div><div className="case-id">{detail.user?.id}</div></div><button className="close" onClick={()=>setDetail(null)}><X size={16}/></button></div>
-        <div className="case-person"><i className="avatar">{initials(detail.user?.full_name||detail.user?.email)}</i><div><h3>{detail.user?.full_name||"Unnamed account"}</h3><p>{detail.user?.email||"No email"} · {detail.profile?.country_of_residence||"Residence not supplied"}</p></div></div>
-        <div className="drawer-actions">
-          <button className="primary" disabled={!!busy} onClick={()=>act({action:"profile",userId:detail.user.id,kycAction:"APPROVED",status:"VERIFIED",reason:window.prompt("Reason / compliance note")||"Approved after compliance review"})}><CheckCircle2 size={12}/>Approve</button>
-          <button className="mini danger" disabled={!!busy} onClick={()=>act({action:"profile",userId:detail.user.id,kycAction:"REJECTED",status:"REJECTED",reason:window.prompt("Rejection reason")||"Rejected after compliance review"})}><Ban size={12}/>Reject</button>
-          <button className="mini" disabled={!!busy} onClick={()=>act({action:"profile",userId:detail.user.id,kycAction:"REQUESTED_INFORMATION",status:"IN_REVIEW",reason:window.prompt("Information requested")||"Additional information required"})}><MoreHorizontal size={12}/>Request info</button>
-          <button className="mini danger" disabled={!!busy} onClick={()=>act({action:"profile",userId:detail.user.id,kycAction:"SUSPENDED",status:"SUSPENDED",reason:window.prompt("Suspension reason")||"Suspended by compliance"})}><Ban size={12}/>Suspend</button>
-          <select className="risk-select" value={detail.profile?.risk_classification||"LOW"} onChange={e=>act({action:"profile",userId:detail.user.id,kycAction:"RISK_CHANGED",risk:e.target.value,reason:"Admin risk classification change"})}>{risks.slice(1).map(x=><option key={x}>{x}</option>)}</select>
-        </div>
-      </div>
-      <div className="drawer-tabs">{[["overview","Overview",ShieldCheck],["identity","Identity",UserRound],["documents","Documents",FileCheck2],["aml","AML & screening",AlertTriangle],["history","History",History]].map(([key,label,Icon]:any)=><button key={key} className={"tab "+(tab===key?"active":"")} onClick={()=>setTab(key)}><Icon size={11}/> {label}</button>)}</div>
-      <div className="drawer-body">
-        {tab==="overview"&&<><div className="section"><div className="section-title"><h4>Case posture</h4><span>Current authoritative state</span></div><div className="fact-grid">
-          <div className="fact"><span>Verification status</span><b><Badge value={detail.profile?.status||"NOT_STARTED"}/></b></div>
-          <div className="fact"><span>Risk classification</span><b><Badge value={detail.profile?.risk_classification||"LOW"} risk/></b></div>
-          <div className="fact"><span>Verification level</span><b>{detail.profile?.verification_level||"—"}</b></div>
-          <div className="fact"><span>Country of residence</span><b>{detail.profile?.country_of_residence||"—"}</b></div>
-        </div></div>
-        <div className="section"><div className="section-title"><h4>Financial profile</h4><span>Declared by applicant</span></div><div className="fact-grid">
-          <div className="fact"><span>Source of funds</span><b>{detail.profile?.source_of_funds||"—"}</b></div><div className="fact"><span>Funds review</span><b>{detail.profile?.source_of_funds_status||"—"}</b></div>
-          <div className="fact"><span>Source of wealth</span><b>{detail.profile?.source_of_wealth||"—"}</b></div><div className="fact"><span>Wealth review</span><b>{detail.profile?.source_of_wealth_status||"—"}</b></div>
-        </div></div>
-        <div className="section"><div className="section-title"><h4>Attention signals</h4><span>{(detail.aml_flags||[]).filter((f:any)=>!["CLEARED","DISMISSED"].includes(f.status)).length} open</span></div>{(detail.aml_flags||[]).filter((f:any)=>!["CLEARED","DISMISSED"].includes(f.status)).slice(0,4).map((f:any)=><div className="flag" key={f.id}><span><b>{f.flag_type}</b><small>{f.description||"No description"}</small></span><Badge value={f.severity} risk/></div>)}{!(detail.aml_flags||[]).some((f:any)=>!["CLEARED","DISMISSED"].includes(f.status))&&<div className="empty-inner">No open AML flags.</div>}</div></>}
-        {tab==="identity"&&<div className="section"><div className="section-title"><h4>Identity & address</h4><span>Applicant record</span></div><div className="fact-grid">
-          <div className="fact"><span>Legal name</span><b>{[detail.profile?.legal_first_name,detail.profile?.legal_middle_name,detail.profile?.legal_last_name].filter(Boolean).join(" ")||"—"}</b></div>
-          <div className="fact"><span>Date of birth</span><b>{detail.profile?.date_of_birth||"—"}</b></div><div className="fact"><span>Nationality</span><b>{detail.profile?.nationality||"—"}</b></div><div className="fact"><span>Residence</span><b>{detail.profile?.country_of_residence||"—"}</b></div>
-        </div>{(detail.addresses||[]).map((a:any)=><div className="doc" key={a.id}><span><b><MapPin size={11} style={{verticalAlign:"-2px"}}/> {a.address_type}</b><small>{[a.line1,a.line2,a.city,a.state_region,a.postal_code,a.country].filter(Boolean).join(", ")||"No address supplied"}</small></span><Badge value={a.status||"PENDING"}/></div>)}</div>}
-        {tab==="documents"&&<div className="section"><div className="section-title"><h4>Document verification</h4><span>{(detail.documents||[]).length} submitted</span></div>{(detail.documents||[]).map((d:any)=><div className="doc" key={d.id}><span><b>{String(d.document_type||"Document").replaceAll("_"," ")}</b><small>{d.verification_provider||"Manual"} · Expiry {d.expiration_date||"—"}</small></span><span className="row-actions"><Badge value={d.verification_status||"PENDING"}/><button className="mini gold" disabled={!!busy} onClick={()=>act({action:"document",documentId:d.id,status:"VERIFIED",provider:d.verification_provider||"MANUAL"})}>Verify</button><button className="mini danger" disabled={!!busy} onClick={()=>act({action:"document",documentId:d.id,status:"REJECTED",reason:window.prompt("Rejection reason")||"Rejected"})}>Reject</button></span></div>)}{!(detail.documents||[]).length&&<div className="empty-inner">No documents submitted.</div>}</div>}
-        {tab==="aml"&&<><div className="section"><div className="section-title"><h4>AML flags</h4><button className="mini gold" onClick={()=>act({action:"aml_flag",userId:detail.user.id,flagType:"MANUAL_REVIEW",severity:"MEDIUM",description:window.prompt("AML flag description")||"Manual compliance review",source:"MANUAL"})}>Add flag</button></div>{(detail.aml_flags||[]).map((f:any)=><div className="flag" key={f.id}><span><b>{f.flag_type}</b><small>{f.description||"—"} · {f.source||"—"}</small></span><span className="row-actions"><Badge value={f.severity} risk/>{f.status!=="CLEARED"&&f.status!=="DISMISSED"&&<button className="mini gold" onClick={()=>act({action:"aml_resolve",flagId:f.id,status:"CLEARED",note:"Cleared by compliance review"})}>Clear</button>}</span></div>)}{!(detail.aml_flags||[]).length&&<div className="empty-inner">No AML flags.</div>}</div>
-        <div className="section"><div className="section-title"><h4>Screening</h4><span>Manual control</span></div>{["PEP","SANCTIONS"].map(t=><div className="doc" key={t}><span><b>{t}</b><small>Record the latest screening decision and reviewer outcome.</small></span><span className="row-actions"><button className="mini gold" onClick={()=>act({action:"screening",userId:detail.user.id,type:t,result:"CLEAR",provider:"MANUAL",reviewStatus:"CLEAR",notes:"Manual clear"})}>Clear</button><button className="mini danger" onClick={()=>act({action:"screening",userId:detail.user.id,type:t,result:"POSSIBLE_MATCH",provider:"MANUAL",reviewStatus:"IN_REVIEW",notes:"Requires review"})}>Match</button></span></div>)}</div></>}
-        {tab==="history"&&<div className="section"><div className="section-title"><h4>Review history</h4><span>Immutable audit trail</span></div>{(detail.history||[]).map((h:any)=><div className="history" key={h.id}><span><b>{String(h.action||"Review").replaceAll("_"," ")}</b><small>{h.reason||h.notes||"No note recorded"}</small></span><small>{h.from_status||"—"} → {h.to_status||"—"} · {h.created_at?new Date(h.created_at).toLocaleString("en-NG"):"—"}</small></div>)}{!(detail.history||[]).length&&<div className="empty-inner">No review history recorded.</div>}</div>}
-      </div>
-    </aside></>}
-  </section>
+ const[view,setView]=useState<"queue"|"form">("queue"),[rows,setRows]=useState<any[]>([]),[counts,setCounts]=useState<any>({}),[q,setQ]=useState(""),[queue,setQueue]=useState("ALL"),[risk,setRisk]=useState("ALL"),[busy,setBusy]=useState(false),[notice,setNotice]=useState(""),[detail,setDetail]=useState<any>(null),[tab,setTab]=useState("overview");
+ async function load(nextQueue=queue,nextRisk=risk){
+  setBusy(true);
+  try{
+   const p=new URLSearchParams({queue:nextQueue});if(q)p.set("q",q);if(nextRisk!=="ALL")p.set("risk",nextRisk);
+   const r=await fetch("/api/admin/kyc?"+p.toString(),{cache:"no-store"});const j=await r.json();if(!r.ok)throw new Error(j.error||"Unable to load KYC queue.");
+   setRows(j.items||[]);setCounts(j.counts||{});
+  }catch(e:any){setNotice(e.message||"Unable to load KYC queue.")}finally{setBusy(false)}
+ }
+ useEffect(()=>{load()},[]);
+ async function open(id:string){
+  const r=await fetch("/api/admin/kyc/"+id,{cache:"no-store"});const j=await r.json();if(!r.ok){setNotice(j.error||"Unable to open case.");return}setDetail(j);setTab("overview");
+ }
+ async function action(body:any){
+  setBusy(true);
+  try{
+   const r=await fetch("/api/admin/kyc",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});const j=await r.json();if(!r.ok)throw new Error(j.error||"Compliance action failed.");
+   setNotice("Compliance record updated.");if(detail?.user?.id)await open(detail.user.id);await load();
+  }catch(e:any){setNotice(e.message||"Compliance action failed.")}finally{setBusy(false)}
+ }
+ const total=Number(counts.ALL||0),review=Number(counts.PENDING||0)+Number(counts.IN_REVIEW||0)+Number(counts.REVERIFICATION_REQUIRED||0)+Number(counts.EXPIRED||0),completed=Number(counts.COMPLETED||0),elevated=rows.filter(r=>["HIGH","CRITICAL"].includes(r.risk_classification)).length;
+ return <section className="kyc-console">
+  <style jsx>{`
+   .kyc-console{--gold:#d6b36a;color:#f5f5f5}.hero{border:1px solid #3a3121;border-radius:20px;padding:22px;background:radial-gradient(circle at 90% 0%,#4a381955,transparent 38%),linear-gradient(135deg,#17130d,#0b0b0b);margin-bottom:12px}.switch{display:flex;gap:6px;margin-bottom:18px}.switch button{border:1px solid #302a20;background:#0d0d0d;color:#777;border-radius:9px;padding:8px 11px;font-size:9px;font-weight:800;display:inline-flex;align-items:center;gap:6px}.switch button.active{background:#2a2112;color:#dfbd77;border-color:#5a4625}.hero-row{display:flex;justify-content:space-between;gap:15px;align-items:flex-end}.hero h1{font-size:clamp(27px,4vw,40px);letter-spacing:-.055em;margin:8px 0}.hero p{color:#858585;font-size:11px;max-width:680px;line-height:1.6;margin:0}.secure{border:1px solid #34302a;background:#0e0e0e;color:#aaa;border-radius:999px;padding:8px 11px;font-size:9px;display:flex;gap:6px;align-items:center;white-space:nowrap}.secure svg{color:var(--gold)}.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin:12px 0}.metric{border:1px solid #242424;background:#101010;border-radius:14px;padding:14px}.metric span{display:flex;gap:6px;align-items:center;color:#777;font-size:9px;font-weight:800}.metric span svg{color:var(--gold)}.metric strong{display:block;font-size:24px;margin-top:9px}.metric small{display:block;color:#555;font-size:8px;margin-top:3px}.workspace{border:1px solid #252525;background:#101010;border-radius:17px;overflow:hidden}.queue-nav{display:flex;gap:6px;padding:11px 11px 0;overflow:auto}.queue-btn{flex:none;border:1px solid #252525;background:#0b0b0b;color:#777;border-radius:9px;padding:8px 10px;display:flex;gap:7px;align-items:center;font-size:8px;font-weight:800;white-space:nowrap}.queue-btn b{color:#aaa}.queue-btn.active{background:#241c0e;color:#dfbd77;border-color:#5a4625}.queue-btn.active b{color:#dfbd77}.toolbar{display:flex;gap:8px;padding:11px;align-items:center;border-bottom:1px solid #252525}.search{flex:1;display:flex;align-items:center;gap:8px;border:1px solid #252525;background:#080808;border-radius:9px;height:40px;padding:0 11px}.search svg{color:#666}.search input{background:transparent;border:0;outline:0;color:#eee;width:100%;font-size:11px}.filter,.refresh{height:40px;background:#080808;border:1px solid #252525;color:#aaa;border-radius:9px;padding:0 10px;font-size:9px}.refresh{display:flex;align-items:center;gap:6px}.table-head,.row{display:grid;grid-template-columns:minmax(230px,1.7fr) 135px 110px 115px 25px;gap:12px;align-items:center}.table-head{padding:10px 16px;color:#555;text-transform:uppercase;letter-spacing:.1em;font-size:7px;border-bottom:1px solid #202020}.row{width:100%;border:0;border-bottom:1px solid #1b1b1b;background:transparent;color:#eee;text-align:left;padding:13px 16px}.row:hover{background:#15120d}.person{display:flex;gap:10px;align-items:center;min-width:0}.avatar{width:37px;height:37px;border-radius:11px;display:grid;place-items:center;background:linear-gradient(145deg,#2b2418,#141414);border:1px solid #443821;color:var(--gold);font-size:9px;font-weight:900;flex:none}.person b{font-size:10px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.person small{display:block;color:#5f5f5f;font-size:8px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.level{font-size:9px;color:#aaa}.arrow{color:#555}.kyc-badge{display:inline-flex;align-items:center;gap:5px;border:1px solid #303030;border-radius:999px;padding:5px 7px;font-size:7px;font-weight:900;text-transform:uppercase}.kyc-badge.neutral{color:#888;background:#151515}.kyc-badge.gold{color:#d9b871;background:#241d10;border-color:#554421}.kyc-badge.green{color:#9fd0b0;background:#101d16;border-color:#274a37}.kyc-badge.red{color:#e6a4a4;background:#211313;border-color:#512c2c}.empty{padding:55px;text-align:center;color:#666;font-size:10px}.notice{margin:10px;padding:10px;border-radius:9px;background:#17130d;border:1px solid #443821;color:#c9b07b;font-size:9px}.drawer-bg{position:fixed;inset:0;background:#000a;z-index:80;backdrop-filter:blur(4px)}.drawer{position:fixed;z-index:81;right:0;top:0;width:min(740px,100%);height:100dvh;background:#0c0c0c;border-left:1px solid #333;overflow:auto;box-shadow:-30px 0 90px #000b}.drawer-head{position:sticky;top:0;z-index:2;background:#0d0d0dee;backdrop-filter:blur(14px);border-bottom:1px solid #242424;padding:18px}.drawer-top{display:flex;justify-content:space-between}.drawer-person{display:flex;gap:12px;align-items:center;margin-top:15px}.drawer-person .avatar{width:48px;height:48px}.drawer-person h2{font-size:19px;margin:0 0 4px}.drawer-person p{font-size:9px;color:#666;margin:0}.drawer-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:14px}.action{border:1px solid #292929;background:#151515;color:#aaa;border-radius:8px;padding:8px 10px;font-size:8px;font-weight:800}.action.gold{background:#d6b36a;color:#120e07;border:0}.action.danger{color:#dc9b9b;border-color:#4b2929}.tabs{display:flex;overflow:auto;border-bottom:1px solid #242424;padding:0 18px}.tab{border:0;background:transparent;color:#666;padding:13px 10px;font-size:8px;font-weight:900;text-transform:uppercase;border-bottom:2px solid transparent;white-space:nowrap}.tab.active{color:#d6b36a;border-color:#d6b36a}.drawer-body{padding:16px}.box{border:1px solid #242424;background:#101010;border-radius:13px;padding:14px;margin-bottom:10px}.box h3{font-size:11px;margin:0 0 11px}.facts{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.fact{background:#0a0a0a;border:1px solid #1e1e1e;border-radius:9px;padding:10px}.fact span{display:block;color:#555;font-size:7px;text-transform:uppercase}.fact b{display:block;color:#ddd;font-size:9px;margin-top:5px;word-break:break-word}.item{display:flex;justify-content:space-between;gap:10px;padding:11px 0;border-top:1px solid #1d1d1d}.item:first-of-type{border-top:0}.item b{font-size:9px}.item small{display:block;color:#666;font-size:7px;margin-top:3px}.mini{border:1px solid #292929;background:#151515;color:#aaa;border-radius:7px;padding:6px 8px;font-size:7px}.row-actions{display:flex;gap:5px;align-items:center}@media(max-width:800px){.metrics{grid-template-columns:repeat(2,1fr)}.table-head,.row{grid-template-columns:minmax(190px,1fr) 120px 100px 20px}.table-head span:nth-child(3),.row>span:nth-child(3){display:none}}@media(max-width:600px){.hero-row{align-items:flex-start;flex-direction:column}.secure{display:none}.toolbar{flex-wrap:wrap}.search{min-width:100%}.filter{flex:1}.table-head{display:none}.row{grid-template-columns:1fr 20px;padding:13px}.row>span:nth-child(2),.row>span:nth-child(3),.row>span:nth-child(4){display:none}.facts{grid-template-columns:1fr}.drawer-actions .action{flex:1;justify-content:center}.metrics{gap:7px}.metric{padding:11px}.metric strong{font-size:20px}}
+  `}</style>
+  <div className="hero"><div className="switch"><button className={view==="queue"?"active":""} onClick={()=>setView("queue")}><ShieldCheck size={12}/> Review queue</button><button className={view==="form"?"active":""} onClick={()=>setView("form")}><FileCheck2 size={12}/> Form builder</button></div><div className="hero-row"><div><span className="eyebrow">COMPLIANCE OPERATIONS</span><h1>KYC & AML Command Center</h1><p>Review identity, verification state, documents, screening and risk from one controlled compliance workspace.</p></div><div className="secure"><ShieldCheck size={12}/> Admin-only compliance workspace</div></div></div>
+  {view==="form"?<FormBuilder notice={notice} setNotice={setNotice}/>:<><div className="metrics"><div className="metric"><span><UserRound size={12}/>Cases</span><strong>{total}</strong><small>All non-admin accounts</small></div><div className="metric"><span><Clock3 size={12}/>Needs action</span><strong>{review}</strong><small>Pending, review, reverification or expired</small></div><div className="metric"><span><ShieldAlert size={12}/>Elevated risk</span><strong>{elevated}</strong><small>High / critical in current queue</small></div><div className="metric"><span><CheckCircle2 size={12}/>Completed</span><strong>{completed}</strong><small>Verified and not expired</small></div></div>
+  <div className="workspace"><div className="queue-nav">{QUEUES.map(([key,label])=><button className={queue===key?"queue-btn active":"queue-btn"} key={key} onClick={()=>{setQueue(key);load(key,risk)}}><span>{label}</span><b>{Number(counts[key]||0)}</b></button>)}</div><div className="toolbar"><div className="search"><Search size={14}/><input value={q} onChange={e=>setQ(e.target.value)} onKeyDown={e=>e.key==="Enter"&&load()} placeholder="Search applicant, email or user ID"/></div><select className="filter" value={risk} onChange={e=>{setRisk(e.target.value);load(queue,e.target.value)}}>{RISKS.map(x=><option key={x} value={x}>{x==="ALL"?"All risk levels":x}</option>)}</select><button className="refresh" onClick={()=>load()} disabled={busy}><RefreshCw size={13}/> Refresh</button></div>{notice&&<div className="notice">{notice}</div>}<div className="table-head"><span>Applicant</span><span>Verification</span><span>Level</span><span>Risk</span><span/></div>{rows.length?rows.map(r=><button className="row" key={r.user_id} onClick={()=>open(r.user_id)}><span className="person"><i className="avatar">{initials(r.full_name)}</i><span><b>{r.full_name||"Unnamed account"}</b><small>{r.email||r.user_id}</small></span></span><span><Badge value={r.effective_status}/></span><span className="level">{r.verification_level||"—"}</span><span><Badge value={r.risk_classification||"LOW"} risk/></span><ChevronRight className="arrow" size={15}/></button>):<div className="empty"><ShieldCheck size={25}/><div>No cases match this compliance queue.</div></div>}</div></>}</section>
+  {detail&&<><div className="drawer-bg" onClick={()=>setDetail(null)}/><aside className="drawer"><div className="drawer-head"><div className="drawer-top"><span className="eyebrow">KYC CASE</span><button className="icon-btn" onClick={()=>setDetail(null)}><X size={15}/></button></div><div className="drawer-person"><i className="avatar">{initials(detail.user?.full_name||detail.user?.email)}</i><div><h2>{detail.user?.full_name||"Unnamed account"}</h2><p>{detail.user?.email||"No email"} · {detail.profile?.country_of_residence||"Residence not supplied"}</p></div></div><div className="drawer-actions"><button className="action gold" disabled={busy} onClick={()=>action({action:"profile",userId:detail.user.id,kycAction:"APPROVED",status:"VERIFIED",reason:"Approved after compliance review"})}><CheckCircle2 size={11}/> Approve</button><button className="action danger" disabled={busy} onClick={()=>action({action:"profile",userId:detail.user.id,kycAction:"REJECTED",status:"REJECTED",reason:window.prompt("Rejection reason")||"Rejected after compliance review"})}><Ban size={11}/> Reject</button><button className="action" disabled={busy} onClick={()=>action({action:"profile",userId:detail.user.id,kycAction:"REQUESTED_INFORMATION",status:"IN_REVIEW",reason:window.prompt("Information requested")||"Additional information required"})}>Request info</button><button className="action danger" disabled={busy} onClick={()=>action({action:"profile",userId:detail.user.id,kycAction:"SUSPENDED",status:"SUSPENDED",reason:window.prompt("Suspension reason")||"Suspended by compliance"})}>Suspend</button></div></div><div className="tabs">{["overview","identity","documents","aml","history"].map(x=><button className={tab===x?"tab active":"tab"} key={x} onClick={()=>setTab(x)}>{x==="aml"?"AML & screening":x}</button>)}</div><div className="drawer-body">{tab==="overview"&&<><div className="box"><h3>Case posture</h3><div className="facts"><div className="fact"><span>Status</span><b><Badge value={detail.profile?.status||"NOT_STARTED"}/></b></div><div className="fact"><span>Risk</span><b><Badge value={detail.profile?.risk_classification||"LOW"} risk/></b></div><div className="fact"><span>Verification level</span><b>{detail.profile?.verification_level||"—"}</b></div><div className="fact"><span>Country</span><b>{detail.profile?.country_of_residence||"—"}</b></div></div></div><div className="box"><h3>Financial profile</h3><div className="facts"><div className="fact"><span>Source of funds</span><b>{detail.profile?.source_of_funds||"—"}</b></div><div className="fact"><span>Funds review</span><b>{detail.profile?.source_of_funds_status||"—"}</b></div><div className="fact"><span>Source of wealth</span><b>{detail.profile?.source_of_wealth||"—"}</b></div><div className="fact"><span>Wealth review</span><b>{detail.profile?.source_of_wealth_status||"—"}</b></div></div></div></>}{tab==="identity"&&<div className="box"><h3>Identity</h3><div className="facts"><div className="fact"><span>Legal name</span><b>{[detail.profile?.legal_first_name,detail.profile?.legal_middle_name,detail.profile?.legal_last_name].filter(Boolean).join(" ")||"—"}</b></div><div className="fact"><span>Date of birth</span><b>{detail.profile?.date_of_birth||"—"}</b></div><div className="fact"><span>Nationality</span><b>{detail.profile?.nationality||"—"}</b></div><div className="fact"><span>Residence</span><b>{detail.profile?.country_of_residence||"—"}</b></div></div></div>}{tab==="documents"&&<div className="box"><h3>Documents</h3>{(detail.documents||[]).map((d:any)=><div className="item" key={d.id}><span><b>{String(d.document_type||"Document").replaceAll("_"," ")}</b><small>{d.verification_provider||"Manual"} · Expiry {d.expiration_date||"—"}</small></span><div className="row-actions"><Badge value={d.verification_status||"PENDING"}/><button className="mini" onClick={()=>action({action:"document",documentId:d.id,status:"VERIFIED",provider:d.verification_provider||"MANUAL"})}>Verify</button></div></div>)}{!(detail.documents||[]).length&&<div className="empty">No documents submitted.</div>}</div>}{tab==="aml"&&<div className="box"><h3>AML & screening</h3>{(detail.aml_flags||[]).map((f:any)=><div className="item" key={f.id}><span><b>{f.flag_type}</b><small>{f.description||"No description"}</small></span><Badge value={f.severity} risk/></div>)}{!(detail.aml_flags||[]).length&&<div className="empty">No AML flags.</div>}</div>}{tab==="history"&&<div className="box"><h3>Review history</h3>{(detail.history||[]).map((h:any)=><div className="item" key={h.id}><span><b>{String(h.action||"Review").replaceAll("_"," ")}</b><small>{h.reason||h.notes||"No note recorded"}</small></span><small>{h.created_at?new Date(h.created_at).toLocaleString("en-NG"):"—"}</small></div>)}</div>}</div></aside></>}
+ </section>
 }
