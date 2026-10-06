@@ -64,9 +64,7 @@ function FormBuilder({notice,setNotice}:{notice:string;setNotice:(x:string)=>voi
     <label>Storage<select value={editing.storageMode} onChange={e=>setEditing({...editing,storageMode:e.target.value,storageKey:e.target.value==="custom"?(editing.storageKey||editing.fieldKey):editing.storageKey})}><option value="custom">Custom applicant data</option><option value="core">Core KYC profile</option></select></label>
     <label>Storage key<input value={editing.storageKey||""} disabled={editing.storageMode==="core"} onChange={e=>setEditing({...editing,storageKey:e.target.value})}/></label>
     <label>Sort order<input type="number" value={editing.sortOrder??100} onChange={e=>setEditing({...editing,sortOrder:Number(e.target.value)})}/></label>
-    <label>Options<textarea rows={3} disabled={editing.fieldType!=="select"} value={(editing.options||[]).map((x:any)=>typeof x==="string"?x:(x.label||x.value||"")).join("
-")} onChange={e=>setEditing({...editing,options:e.target.value.split("
-").map(x=>x.trim()).filter(Boolean)})}/></label>
+    <label>Options<textarea rows={3} disabled={editing.fieldType!=="select"} value={(editing.options||[]).map((x:any)=>typeof x==="string"?x:(x.label||x.value||"")).join("\n")} onChange={e=>setEditing({...editing,options:e.target.value.split("\n").map(x=>x.trim()).filter(Boolean)})}/></label>
     <label className="wide">Help text<input value={editing.helpText||""} onChange={e=>setEditing({...editing,helpText:e.target.value})}/></label>
    </div>
    <div className="editor-actions"><label><input type="checkbox" checked={editing.required===true} onChange={e=>setEditing({...editing,required:e.target.checked})}/> Required</label><label><input type="checkbox" checked={editing.active!==false} onChange={e=>setEditing({...editing,active:e.target.checked})}/> Active</label><button className="gold-btn" disabled={busy} onClick={save}>{busy?"Saving…":"Save field"}</button></div>
