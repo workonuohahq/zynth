@@ -44,13 +44,13 @@ export default function AdminKyc(){
   const[notice,setNotice]=useState("");
   const[tab,setTab]=useState<"overview"|"identity"|"documents"|"aml"|"history">("overview");
 
-  async function load(){
+  async function load(nextQueue=queue,nextRisk=risk){
     setBusy("load");
     try{
       const p=new URLSearchParams();
       if(q)p.set("q",q);
-      p.set("queue",queue);
-      if(risk!=="ALL")p.set("risk",risk);
+      p.set("queue",nextQueue);
+      if(nextRisk!=="ALL")p.set("risk",nextRisk);
       const r=await fetch("/api/admin/kyc?"+p,{cache:"no-store"});
       const j=await r.json();
       if(!r.ok)throw new Error(j.error||"Unable to load KYC records.");
@@ -189,10 +189,10 @@ export default function AdminKyc(){
     </div>
 
     {view==="queue"&&<div className="workspace">
-      <div className="queue-nav">{queues.map(([key,label])=><button key={key} className={queue===key?"queue-chip active":"queue-chip"} onClick={()=>{setQueue(key);setTimeout(load,0)}}><span>{label}</span><b>{Number(counts[key]||0)}</b></button>)}</div><div className="toolbar">
+      <div className="queue-nav">{queues.map(([key,label])=><button key={key} className={queue===key?"queue-chip active":"queue-chip"} onClick={()=>{setQueue(key);load(key,risk)}}><span>{label}</span><b>{Number(counts[key]||0)}</b></button>)}</div><div className="toolbar">
         <div className="search"><Search size={15}/><input value={q} onChange={e=>setQ(e.target.value)} onKeyDown={e=>e.key==="Enter"&&load()} placeholder="Search name, email or user ID"/></div>
         <div className="active-queue"><span>QUEUE</span><b>{queues.find(x=>x[0]===queue)?.[1]||"All cases"}</b></div>
-        <select className="filter" value={risk} onChange={e=>{setRisk(e.target.value);setTimeout(load,0)}}>{risks.map(x=><option key={x}>{x==="ALL"?"All risk levels":x}</option>)}</select>
+        <select className="filter" value={risk} onChange={e=>{setRisk(e.target.value);load(queue,e.target.value)}}>{risks.map(x=><option key={x}>{x==="ALL"?"All risk levels":x}</option>)}</select>
         <button className="ghost" onClick={load} disabled={busy==="load"}><RefreshCw size={14} className={busy==="load"?"spin":""}/>Refresh</button>
       </div>
       {notice&&<div className="notice">{notice}</div>}
