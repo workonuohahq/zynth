@@ -8,7 +8,7 @@ import {
   AlertTriangle, CheckCircle2, Clock3, Ban, MoreHorizontal
 } from "lucide-react";
 
-const statuses=["ALL","NOT_STARTED","PENDING","IN_REVIEW","VERIFIED","REJECTED","EXPIRED","REVERIFICATION_REQUIRED","SUSPENDED"];
+const queues=[["ALL","All cases"],["NOT_STARTED","Not started"],["PENDING","Pending"],["IN_REVIEW","In review"],["COMPLETED","Completed"],["EXPIRED","Expired"],["REVERIFICATION_REQUIRED","Reverification"],["REJECTED","Rejected"],["SUSPENDED","Suspended"]];
 const risks=["ALL","LOW","MEDIUM","HIGH","CRITICAL"];
 
 const statusMeta:any={
@@ -36,7 +36,7 @@ function initials(name:string){
 export default function AdminKyc(){
   const[rows,setRows]=useState<any[]>([]),[view,setView]=useState<"queue"|"form">("queue"),[formFields,setFormFields]=useState<any[]>([]),[editingField,setEditingField]=useState<any>(null);
   const[q,setQ]=useState("");
-  const[status,setStatus]=useState("ALL");
+  const[queue,setQueue]=useState("ALL"),[counts,setCounts]=useState<any>({});
   const[risk,setRisk]=useState("ALL");
   const[sel,setSel]=useState<string|null>(null);
   const[detail,setDetail]=useState<any>(null);
@@ -49,12 +49,12 @@ export default function AdminKyc(){
     try{
       const p=new URLSearchParams();
       if(q)p.set("q",q);
-      if(status!=="ALL")p.set("status",status);
+      p.set("queue",queue);
       if(risk!=="ALL")p.set("risk",risk);
       const r=await fetch("/api/admin/kyc?"+p,{cache:"no-store"});
       const j=await r.json();
       if(!r.ok)throw new Error(j.error||"Unable to load KYC records.");
-      setRows(j.items||[]);
+      setRows(j.items||[]);setCounts(j.counts||{});
     }catch(e:any){setNotice(e.message||"Unable to load KYC records.");}
     finally{setBusy("");}
   }
@@ -112,7 +112,7 @@ export default function AdminKyc(){
       .metric strong{display:block;font-size:25px;letter-spacing:-.04em;margin-top:10px}
       .metric small{display:block;color:#555;margin-top:4px;font-size:9px}
       .workspace{background:var(--panel);border:1px solid var(--line);border-radius:18px;overflow:hidden}
-      .toolbar{padding:14px;border-bottom:1px solid var(--line);display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+      .queue-nav{display:flex;gap:7px;padding:12px 14px 0;overflow:auto}.queue-chip{flex:none;display:flex;align-items:center;gap:8px;border:1px solid #242424;background:#0d0d0d;color:#777;border-radius:10px;padding:8px 10px;font-size:9px;font-weight:800;white-space:nowrap}.queue-chip b{min-width:18px;text-align:center;color:#aaa;font-size:9px}.queue-chip.active{background:#241c0e;border-color:#5a4625;color:#dfbd77}.queue-chip.active b{color:#dfbd77}.active-queue{height:42px;display:flex;align-items:center;gap:7px;border:1px solid #252525;background:#0a0a0a;border-radius:11px;padding:0 11px;white-space:nowrap}.active-queue span{font-size:7px;color:#555;letter-spacing:.1em}.active-queue b{font-size:10px;color:#bbb}.toolbar{padding:14px;border-bottom:1px solid var(--line);display:flex;gap:9px;align-items:center;flex-wrap:wrap}
       .search{display:flex;align-items:center;gap:9px;flex:1;min-width:240px;background:#0a0a0a;border:1px solid var(--line);border-radius:11px;padding:0 12px;height:42px}
       .search svg{color:#666;flex:none}.search input{background:transparent;border:0;outline:0;color:#fff;width:100%;font-size:12px}
       .filter{height:42px;background:#0a0a0a;border:1px solid var(--line);border-radius:11px;color:#aaa;padding:0 11px;font-size:11px;outline:none}
@@ -189,9 +189,9 @@ export default function AdminKyc(){
     </div>
 
     {view==="queue"&&<div className="workspace">
-      <div className="toolbar">
+      <div className="queue-nav">{queues.map(([key,label])=><button key={key} className={queue===key?"queue-chip active":"queue-chip"} onClick={()=>{setQueue(key);setTimeout(load,0)}}><span>{label}</span><b>{Number(counts[key]||0)}</b></button>)}</div><div className="toolbar">
         <div className="search"><Search size={15}/><input value={q} onChange={e=>setQ(e.target.value)} onKeyDown={e=>e.key==="Enter"&&load()} placeholder="Search name, email or user ID"/></div>
-        <select className="filter" value={status} onChange={e=>{setStatus(e.target.value);setTimeout(load,0)}}><option value="ALL">All statuses</option>{statuses.slice(1).map(x=><option key={x}>{x.replaceAll("_"," ")}</option>)}</select>
+        <div className="active-queue"><span>QUEUE</span><b>{queues.find(x=>x[0]===queue)?.[1]||"All cases"}</b></div>
         <select className="filter" value={risk} onChange={e=>{setRisk(e.target.value);setTimeout(load,0)}}>{risks.map(x=><option key={x}>{x==="ALL"?"All risk levels":x}</option>)}</select>
         <button className="ghost" onClick={load} disabled={busy==="load"}><RefreshCw size={14} className={busy==="load"?"spin":""}/>Refresh</button>
       </div>
