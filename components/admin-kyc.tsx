@@ -78,9 +78,7 @@ function FormBuilder({notice,setNotice}:{notice:string;setNotice:(x:string)=>voi
 }
 
 export default function AdminKyc(){
- const[view,setView]=useState<"queue"|"form">("queue"),[rows,setRows]=useState<any[]>([]),[counts,setCounts]=useState<any>({}),[q,setQ]=useState(""),[queue,setQueue]=useState("ALL"),[risk,setRisk]=useState("ALL"),[level,setLevel]=useState("ALL"),[accountStatus,setAccountStatus]=useState("ALL"),[age,setAge]=useState("ALL"),[page,setPage]=useState(0),[busy,setBusy]=useState(false),[notice,setNotice]=useState(""),[detail,setDetail]=useState<any>(null),[tab,setTab]=useState("overview"),[theme,setTheme]=useState<"dark"|"light">("dark"),[reasonDialog,setReasonDialog]=useState<any>(null),[reason,setReason]=useState("");
- useEffect(()=>{try{const saved=window.localStorage.getItem("zynth-admin-kyc-theme");if(saved==="light"||saved==="dark")setTheme(saved)}catch{}},[]);
- useEffect(()=>{try{window.localStorage.setItem("zynth-admin-kyc-theme",theme)}catch{}},[theme]);
+ const[view,setView]=useState<"queue"|"form">("queue"),[rows,setRows]=useState<any[]>([]),[counts,setCounts]=useState<any>({}),[q,setQ]=useState(""),[queue,setQueue]=useState("ALL"),[risk,setRisk]=useState("ALL"),[level,setLevel]=useState("ALL"),[accountStatus,setAccountStatus]=useState("ALL"),[age,setAge]=useState("ALL"),[page,setPage]=useState(0),[busy,setBusy]=useState(false),[notice,setNotice]=useState(""),[detail,setDetail]=useState<any>(null),[tab,setTab]=useState("overview"),[filtersOpen,setFiltersOpen]=useState(false),[reasonDialog,setReasonDialog]=useState<any>(null),[reason,setReason]=useState("");
  function updatedSince(){if(age==="24H")return new Date(Date.now()-86400000).toISOString();if(age==="7D")return new Date(Date.now()-7*86400000).toISOString();if(age==="30D")return new Date(Date.now()-30*86400000).toISOString();return ""}
  function clearFilters(){setQ("");setQueue("ALL");setRisk("ALL");setLevel("ALL");setAccountStatus("ALL");setAge("ALL");setPage(0)}
  async function load(nextQueue=queue,nextRisk=risk,nextLevel=level,nextAccountStatus=accountStatus,nextAge=age,nextPage=page){
