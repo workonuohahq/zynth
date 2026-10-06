@@ -1,6 +1,6 @@
 "use client";
 import{useEffect,useState}from"react";
-import{Search,ShieldCheck,ShieldAlert,RefreshCw,ChevronRight,X,UserRound,FileCheck2,ScanFace,AlertTriangle,CheckCircle2,Clock3,Ban,Plus,Edit3,Trash2,Sun,Moon,SlidersHorizontal,RotateCcw,ChevronLeft,ChevronDown}from"lucide-react";
+import{Search,ShieldCheck,ShieldAlert,RefreshCw,ChevronRight,X,UserRound,FileCheck2,ScanFace,AlertTriangle,CheckCircle2,Clock3,Ban,Plus,Edit3,Trash2,SlidersHorizontal,RotateCcw,ChevronLeft,ChevronDown}from"lucide-react";
 
 const QUEUES=[
  ["ALL","All cases"],["NOT_STARTED","Not started"],["PENDING","Pending"],["IN_REVIEW","In review"],
@@ -116,7 +116,7 @@ export default function AdminKyc(){
   <div className="metrics">
     <div className="metric"><span><Clock3 size={12}/>Needs review</span><strong>{review}</strong><small>Cases requiring action</small></div>
     <div className="metric"><span><ShieldAlert size={12}/>Elevated risk</span><strong>{elevated}</strong><small>High or critical</small></div>
-    <div className="metric"><span><CalendarClock size={12}/>Total cases</span><strong>{total}</strong><small>All non-admin accounts</small></div>
+    <div className="metric"><span><UserRound size={12}/>Total cases</span><strong>{total}</strong><small>All non-admin accounts</small></div>
     <div className="metric"><span><CheckCircle2 size={12}/>Verified</span><strong>{completed}</strong><small>Currently verified</small></div>
   </div>
   <div className="workspace">
