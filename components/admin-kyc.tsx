@@ -87,10 +87,10 @@ export default function AdminKyc(){
   useEffect(()=>{load()},[]);
 
   const metrics=useMemo(()=>{
-    const total=rows.length;
-    const review=rows.filter(r=>["PENDING","IN_REVIEW","REVERIFICATION_REQUIRED"].includes(r.status)).length;
+    const total=Number(counts.ALL??rows.length);
+    const review=Number(counts.PENDING||0)+Number(counts.IN_REVIEW||0)+Number(counts.REVERIFICATION_REQUIRED||0)+Number(counts.EXPIRED||0);
     const high=rows.filter(r=>["HIGH","CRITICAL"].includes(r.risk_classification)).length;
-    const verified=rows.filter(r=>r.status==="VERIFIED").length;
+    const verified=Number(counts.COMPLETED||0);
     return {total,review,high,verified};
   },[rows]);
 
@@ -158,7 +158,7 @@ export default function AdminKyc(){
       <div className="view-switch"><button className={view==="queue"?"active":""} onClick={()=>setView("queue")}><ShieldCheck size={13}/> Review queue</button><button className={view==="form"?"active":""} onClick={()=>setView("form")}><FileCheck2 size={13}/> Form builder</button></div>
       <div className="hero-top">
         <div><div className="eyebrow">COMPLIANCE OPERATIONS</div><h2>KYC & AML Command Center</h2><p>Review identity, documents, source-of-funds evidence, screening results and compliance risk from one controlled workspace.</p></div>
-        <div style={{display:"flex",gap:8,alignItems:"center",position:"relative",zIndex:1}}><Link href="/admin/kyc/forms" className="secure-mark"><FileCheck2 size={13}/> Form builder</Link><div className="secure-mark"><ShieldCheck size={13}/> Admin-only compliance workspace</div></div>
+        <div className="secure-mark"><ShieldCheck size={13}/> Admin-only compliance workspace</div>
       </div>
     </div>
 
@@ -199,7 +199,7 @@ export default function AdminKyc(){
       <div className="table-head"><span>Applicant</span><span>Verification</span><span>Level</span><span>Risk</span><span></span></div>
       {rows.length ? rows.map(r=><button key={r.user_id} className="kyc-row" onClick={()=>open(r.user_id)}>
         <span className="identity"><i className="avatar">{initials(r.full_name)}</i><span><b>{r.full_name||"Unnamed account"}</b><small>{r.email||r.user_id}</small></span></span>
-        <span><Badge value={r.status}/></span><span className="level">{r.verification_level||"—"}</span><span><Badge value={r.risk_classification||"LOW"} risk/></span><ChevronRight className="arrow" size={16}/>
+        <span><Badge value={r.effective_status||r.status}/></span><span className="level">{r.verification_level||"—"}</span><span><Badge value={r.risk_classification||"LOW"} risk/></span><ChevronRight className="arrow" size={16}/>
       </button>) : <div className="empty"><ShieldCheck size={26}/><div>No KYC cases match these filters.</div></div>}
     </div>}
 
