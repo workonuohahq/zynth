@@ -110,3 +110,7 @@ revoke execute on function public.request_withdrawal(uuid,numeric,uuid) from pub
 revoke execute on function public.request_profit_withdrawal(uuid,numeric,uuid) from public,anon,authenticated;
 revoke execute on function public.request_withdrawal_by_source(uuid,numeric,uuid,text,text) from public,anon;
 grant execute on function public.request_withdrawal_by_source(uuid,numeric,uuid,text,text) to authenticated,service_role;
+-- Admin RPCs are callable through authenticated sessions but self-authorize by auth.uid() + admin role.
+grant execute on function public.zynth_kyc_admin_form_fields(uuid) to authenticated;
+grant execute on function public.zynth_kyc_admin_form_upsert(uuid,uuid,text,text,text,text,text,jsonb,boolean,boolean,integer,text,text) to authenticated;
+grant execute on function public.zynth_kyc_admin_form_remove(uuid,uuid) to authenticated;
