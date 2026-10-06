@@ -5,7 +5,7 @@ export default function KycPage(){
  const[d,setD]=useState<any>(null),[f,setF]=useState<any>({}),[busy,setBusy]=useState(false),[msg,setMsg]=useState("");
  useEffect(()=>{fetch("/api/kyc",{cache:"no-store"}).then(r=>r.json()).then(j=>{setD(j);setF({...j?.profile,...(j?.profile?.custom_data||{})})}).catch(()=>setMsg("Unable to load KYC form."))},[]);
  const fields=useMemo(()=>Array.isArray(d?.fields)?d.fields.filter((x:any)=>x.active!==false):[],[d]);
- const sections=useMemo(()=>Array.from(new Set(fields.map((x:any)=>x.section||"General"))),[fields]);
+ const sections=useMemo<string[]>(()=>Array.from(new Set(fields.map((x:any)=>String(x.section||"General")))),[fields]);
  const setValue=(key:string,value:any)=>setF((x:any)=>({...x,[key]:value}));
  async function save(){
   setBusy(true);setMsg("");
