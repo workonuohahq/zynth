@@ -1,6 +1,7 @@
 "use client";
 
-import {useEffect, useMemo, useState} from "react";\nimport Link from "next/link";
+import {useEffect, useMemo, useState} from "react";
+import Link from "next/link";
 import {
   Search, ShieldCheck, ShieldAlert, RefreshCw, ChevronRight, X,
   UserRound, FileCheck2, MapPin, WalletCards, ScanFace, History,
