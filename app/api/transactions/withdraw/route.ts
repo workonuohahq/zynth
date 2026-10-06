@@ -2,7 +2,7 @@ import {NextResponse} from "next/server";
 import {createSupabaseServerClient} from "@/lib/supabase/server";
 
 const messages:any={
-  PIN_NOT_SET:"Set your 6-digit withdrawal PIN in Security Center before withdrawing.",
+  KYC_REQUIRED:"KYC verification is required before withdrawals. Complete KYC to continue.",\n  PIN_NOT_SET:"Set your 6-digit withdrawal PIN in Security Center before withdrawing.",
   INVALID_PIN:"Incorrect withdrawal PIN.",
   PIN_LOCKED:"Withdrawal PIN is temporarily locked after too many failed attempts. Try again later.",
   PIN_MUST_BE_6_DIGITS:"Enter your 6-digit withdrawal PIN.",
@@ -38,7 +38,7 @@ export async function POST(request:Request){
   if(!user)return NextResponse.json({error:"Authentication required."},{status:401});
   const {data,error}=await client.rpc("request_withdrawal_by_source",{p_user_id:user.id,p_amount:amount,p_beneficiary_id:beneficiaryId,p_source:source,p_pin:pin});
   if(error){
-   const code=error.message;
+   const code=error.message;\n   if(code==="KYC_REQUIRED") return NextResponse.json({error:messages.KYC_REQUIRED,code,redirectTo:"/dashboard/kyc"},{status:403});
    const status=/PIN_|BENEFICIARY_COOLING|INSUFFICIENT|INVALID_AMOUNT|INVALID_WITHDRAWAL_SOURCE|USER_NOT_FOUND|WITHDRAWAL_TOO_SMALL|AUTHORIZATION|PENDING_DEPOSIT_EXISTS|PENDING_WITHDRAWAL_EXISTS|ACCOUNT_RESTRICTED|WITHDRAWALS_DISABLED|BENEFICIARY_REQUIRED|BENEFICIARY_NOT_FOUND|ZPA_ACCESS_REQUIRED/.test(code)?400:503;
    return NextResponse.json({error:messages[code]||"Unable to submit withdrawal.",code},{status});
   }
