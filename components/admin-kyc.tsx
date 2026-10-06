@@ -86,13 +86,7 @@ export default function AdminKyc(){
 
   useEffect(()=>{load()},[]);
 
-  const metrics=useMemo(()=>{
-    const total=Number(counts.ALL??rows.length);
-    const review=Number(counts.PENDING||0)+Number(counts.IN_REVIEW||0)+Number(counts.REVERIFICATION_REQUIRED||0)+Number(counts.EXPIRED||0);
-    const high=rows.filter(r=>["HIGH","CRITICAL"].includes(r.risk_classification)).length;
-    const verified=Number(counts.COMPLETED||0);
-    return {total,review,high,verified};
-  },[rows]);
+  const metrics={total:Number(counts.ALL??rows.length),review:Number(counts.PENDING||0)+Number(counts.IN_REVIEW||0)+Number(counts.REVERIFICATION_REQUIRED||0)+Number(counts.EXPIRED||0),high:rows.filter(r=>["HIGH","CRITICAL"].includes(r.risk_classification)).length,verified:Number(counts.COMPLETED||0)};
 
   return <section className="kyc-console">
     <style jsx>{`
