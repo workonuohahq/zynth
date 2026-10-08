@@ -116,12 +116,19 @@ export async function POST(req:Request){
       delivered++;
     }catch(error:any){
       const detail=describePushError(error);
-      if(detail.statusCode===404||detail.statusCode===410){
+      const vapidMismatch=detail.statusCode===403 && /VAPID credentials.*do not correspond/i.test(detail.body||"");
+      if(detail.statusCode===404||detail.statusCode===410||vapidMismatch){
         const revokeResult=await bridge({action:"revoke",subscription_id:subscription.id});
         if(!revokeResult.ok){
           console.error("[ZYNTH_PUSH_REVOKE_FAILED]",{notificationId,subscriptionId:subscription.id,status:revokeResult.status});
         }
         revoked++;
+        if(vapidMismatch){
+          console.warn("[ZYNTH_PUSH_VAPID_ROTATION_STALE_SUBSCRIPTION]",{
+            notificationId,
+            subscriptionId:subscription.id
+          });
+        }
         continue;
       }
       failed++;
