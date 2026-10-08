@@ -29,7 +29,7 @@ export async function POST(req:Request){
     }else if(action==="verify"){
       const r=await supabase.rpc("zynth_admin_trade_verify",{p_admin_id:user.id,p_run_id:b.runId,p_approve:Boolean(b.approve),p_reason:String(b.reason||"")});
       error=r.error;data=r.data;
-    }else return NextResponse.json({error:"Unsupported action."},{status:400});
+    }else if(action==="generate"){ const r=await supabase.rpc("zynth_trade_generate_daily",{p_admin_id:user.id,p_instance_id:b.instanceId,p_cycle_date:b.cycleDate||null}); error=r.error;data=r.data; } else return NextResponse.json({error:"Unsupported action."},{status:400});
     if(error) return NextResponse.json({error:error.message},{status:400});
     return NextResponse.json(data||{ok:true});
   }catch(e:any){return NextResponse.json({error:e?.message||"ZYNTH Trade operation failed."},{status:500});}
