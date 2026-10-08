@@ -1,7 +1,7 @@
 "use client";
 import {useEffect,useState} from "react";
 import Link from "next/link";
-import {Activity,ArrowDownToLine,ArrowDownLeft,ArrowUpRight,ArrowLeftRight,BarChart3,Bell,CheckCircle2,ChevronRight,Clock3,Copy,ExternalLink,Eye,RefreshCw,Settings2,ShieldCheck,TrendingUp,Users,Target,X,XCircle,Pencil,Pause,Play,Archive,Trash2,Gift,Headphones,LogOut,Send} from "lucide-react";
+import {Activity,ArrowDownToLine,ArrowDownLeft,ArrowUpRight,ArrowLeftRight,BarChart3,Bell,CheckCircle2,ChevronRight,Clock3,Copy,ExternalLink,Eye,RefreshCw,Settings2,ShieldCheck,TrendingUp,Users,Target,X,XCircle,Zap,Pencil,Pause,Play,Archive,Trash2,Gift,Headphones,LogOut,Send} from "lucide-react";
 import AdminUsers from "@/components/admin-users";
 import AdminKyc from "@/components/admin-kyc";
 import ThemeSwitcher from "@/components/theme-switcher";
@@ -15,6 +15,7 @@ import AdminPushPrompt from "@/components/admin-push-prompt";
 import AdminReferralCenter from "@/components/admin-referral-center";
 import AdminSupportCenter from "@/components/admin-support-center";
 import AdminTraderGovernance from "@/components/admin-trader-governance";
+import AdminZynthTrade from "@/components/admin-zynth-trade";
 import AdminZpa from "@/components/admin-zpa";
 import AdminTransactions from "@/components/admin-transactions";
 import AdminRisk from "@/components/admin-risk";
@@ -88,6 +89,7 @@ const closePreview=()=>{setPreview(null);setMt5CopyState("");};
       {k:"kyc",l:"KYC & AML",i:ShieldCheck,b:0},
       {k:"traders",l:"Traders",i:ShieldCheck,b:data.mt5_pending_count||0},
       {k:"trader-governance",l:"Trader Governance",i:ShieldCheck,b:0},
+      {k:"zynth-trade",l:"ZYNTH Trade",i:Zap,b:0},
       {k:"notifications",l:"Notifications",i:Bell,b:0},
       {k:"broadcasts",l:"Messaging Broadcast",i:Send,b:0},
       {k:"support",l:"Customer Service",i:Headphones,b:Number(data.support_unread_count||0)},
@@ -148,7 +150,8 @@ const closePreview=()=>{setPreview(null);setMt5CopyState("");};
    {tab==="investors"&&<section className="admin-section"><section className="admin-card admin-users-card"><div className="admin-card-head"><div><span className="muted">INVESTOR DIRECTORY</span><h2>Investors</h2><p>Account status and portfolio controls.</p></div></div><AdminUsers initialUsers={[]} refreshKey={refreshKey}/></section></section>}
 
    {tab==="risk"&&<AdminRisk/>} 
-   {tab==="traders"&&<AdminTraders onSaved={load} refreshKey={refreshKey}/>} 
+   {tab==="traders"&&<AdminTraders onSaved={load} refreshKey={refreshKey}/>}
+   {tab==="zynth-trade"&&<AdminZynthTrade strategies={strategies} refreshKey={refreshKey} onSaved={load}/>} 
    {tab==="trader-governance"&&<AdminTraderGovernance/>}
    {tab==="zpa"&&<AdminZpa refreshKey={refreshKey}/>} 
 
