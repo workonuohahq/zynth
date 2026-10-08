@@ -22,8 +22,8 @@ export async function POST(req:Request){
         p_admin_id:user.id,p_id:b.id||null,p_name:String(b.name||""),p_strategy_id:b.strategyId||null,
         p_status:String(b.status||"active"),p_source_mode:"validated_source",
         p_min_return_pct:Number(b.minReturnPct),p_max_return_pct:Number(b.maxReturnPct),
-        p_distribution:String(b.distribution||"balanced"),p_decimal_places:Number(b.decimalPlaces??2),
-        p_weekend_reporting:Boolean(b.weekendReporting),p_auto_verification:Boolean(b.autoVerification)
+        p_distribution:"uniform",p_decimal_places:2,
+        p_weekend_reporting:Boolean(b.weekendReporting),p_auto_verification:false
       });
       error=data.error; data=data.data;
     }else if(action==="verify"){
