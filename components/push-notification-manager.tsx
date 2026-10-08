@@ -2,9 +2,7 @@
 
 import {useEffect} from "react";
 
-const fingerprintFor=(publicKey:string)=>`zynth-vapid:${String(publicKey).slice(0,16)}`;
-
-async function healPushSubscription(){
+async function ensurePushSubscription(){
   if(typeof window==="undefined") return;
   if(!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) return;
   if(Notification.permission!=="granted") return;
@@ -17,18 +15,17 @@ async function healPushSubscription(){
   const config=await configResponse.json().catch(()=>({}));
   if(!config.publicKey) return;
 
-  const keyFingerprint=fingerprintFor(config.publicKey);
   let subscription=await registration.pushManager.getSubscription();
-  if(!subscription) return;
 
-  const healthResponse=await fetch("/api/push/status?endpoint="+encodeURIComponent(subscription.endpoint),{cache:"no-store"});
-  const health=await healthResponse.json().catch(()=>null);
-  const serverActive=healthResponse.ok && health?.active===true;
-  const previousFingerprint=window.localStorage.getItem("zynth-vapid-fingerprint");
+  if(subscription){
+    const healthResponse=await fetch("/api/push/status?endpoint="+encodeURIComponent(subscription.endpoint),{cache:"no-store"});
+    const health=await healthResponse.json().catch(()=>null);
+    if(healthResponse.ok && health?.active===true) return;
 
-  if(serverActive && previousFingerprint===keyFingerprint) return;
+    await subscription.unsubscribe().catch(()=>false);
+    subscription=null;
+  }
 
-  await subscription.unsubscribe().catch(()=>false);
   subscription=await registration.pushManager.subscribe({
     userVisibleOnly:true,
     applicationServerKey:config.publicKey
@@ -50,14 +47,14 @@ async function healPushSubscription(){
 
   const verifyResponse=await fetch("/api/push/status?endpoint="+encodeURIComponent(payload.endpoint),{cache:"no-store"});
   const verify=await verifyResponse.json().catch(()=>null);
-  if(verifyResponse.ok && verify?.active===true){
-    window.localStorage.setItem("zynth-vapid-fingerprint",keyFingerprint);
+  if(!verifyResponse.ok || verify?.active!==true){
+    await subscription.unsubscribe().catch(()=>false);
   }
 }
 
 export default function PushNotificationManager(){
   useEffect(()=>{
-    healPushSubscription().catch(()=>{});
+    ensurePushSubscription().catch(()=>{});
   },[]);
   return null;
 }
