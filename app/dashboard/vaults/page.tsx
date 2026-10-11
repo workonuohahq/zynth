@@ -5,8 +5,6 @@ import Link from "next/link";
 import {
   ArrowLeft,
   ArrowUpRight,
-  Clock3,
-  LockKeyhole,
   ShieldCheck,
   WalletCards,
   FileText,
@@ -20,22 +18,8 @@ const money = (n: any) =>
     maximumFractionDigits: 2,
   })}`;
 
-const unlockDate = (value: any) =>
-  new Date(value).toLocaleDateString("en-NG", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-
-const unlockTime = (value: any) =>
-  new Date(value).toLocaleTimeString("en-NG", {
-    hour: "numeric",
-    minute: "2-digit",
-  });
-
 export default function VaultPage() {
   const [s, setS] = useState<any>({});
-  const [lots, setLots] = useState<any[]>([]);
   const [statements, setStatements] = useState<any[]>([]);
   const [statementType, setStatementType] = useState("monthly");
   const [from, setFrom] = useState("");
@@ -47,12 +31,10 @@ export default function VaultPage() {
   useEffect(() => {
     Promise.all([
       pwaFetch("/api/account/summary").then((r) => r.json()),
-      pwaFetch("/api/account/profit-lots").then((r) => r.json()),
       pwaFetch("/api/account/statements").then((r) => r.json()),
     ])
-      .then(([a, b, c]) => {
+      .then(([a, c]) => {
         setS(a.summary || {});
-        setLots(b.lots || []);
         setStatements(c.statements || []);
       })
       .catch(() => {});
@@ -198,7 +180,7 @@ export default function VaultPage() {
               <i className="dot available" /> Ready to withdraw {money(s.cash)}
             </span>
             <span>
-              <i className="dot locked" /> Profit maturity {money(s.locked_profit)}
+              <i className="dot locked" /> Locked profit {money(s.locked_profit)}
             </span>
           </div>
         </div>
@@ -299,7 +281,7 @@ export default function VaultPage() {
                   dot: "#7b6b38",
                 },
                 {
-                  label: "Profit maturing",
+                  label: "Locked profit",
                   value: vaultComposition.lockedProfit,
                   pct: vaultComposition.lockedPct,
                   dot: "#3d3d3d",
@@ -345,57 +327,6 @@ export default function VaultPage() {
             </p>
           </div>
         )}
-      </section>
-
-      <section className="panel">
-        <div className="panel-head">
-          <div>
-            <span className="muted">PROFIT LOTS</span>
-            <h2>Unlock schedule</h2>
-          </div>
-          <span className="admin-count">{lots.length} lots</span>
-        </div>
-        <div className="activity-list">
-          {lots.map((l) => (
-            <div className="activity-row" key={l.id}>
-              <span
-                className={`activity-icon ${
-                  new Date(l.unlock_at) <= new Date() ? "positive" : "neutral"
-                }`}
-              >
-                {new Date(l.unlock_at) <= new Date() ? (
-                  <WalletCards size={16} />
-                ) : (
-                  <LockKeyhole size={16} />
-                )}
-              </span>
-              <span className="activity-info">
-                <b>{money(l.profit_amount - l.withdrawn_amount)} profit</b>
-                <small>
-                  {new Date(l.unlock_at) <= new Date()
-                    ? "Available now"
-                    : "Unlocks " +
-                      unlockDate(l.unlock_at) +
-                      " at " +
-                      unlockTime(l.unlock_at)}
-                </small>
-              </span>
-              <strong>
-                {new Date(l.unlock_at) <= new Date() ? "AVAILABLE" : "LOCKED"}
-              </strong>
-            </div>
-          ))}
-          {!lots.length && (
-            <div className="premium-empty">
-              <Clock3 size={20} />
-              <h3>No profit lots yet</h3>
-              <p>
-                Once a strategy settlement creates profit, ZYNTH will show its
-                exact unlock date and time here.
-              </p>
-            </div>
-          )}
-        </div>
       </section>
 
       <section className="panel vault-statements-panel">
