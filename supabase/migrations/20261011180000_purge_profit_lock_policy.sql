@@ -115,6 +115,9 @@ begin
     v_new := regexp_replace(v_new,
       'unlock_at\s*=\s*least\(unlock_at,\s*now\(\)\)\s*,\s*status\s*=\s*''paid''',
       'status = ''paid''', 'gi');
+    v_new := replace(v_new,
+      'set status = case when unlock_at <= now() then ''paid'' else ''locked'' end',
+      'set status = ''paid''');
     if v_new ilike '%unlock_at%' then raise exception 'Profit status refresh still uses unlock dates'; end if;
     execute v_new;
   end if;
