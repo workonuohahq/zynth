@@ -15,6 +15,10 @@ begin
     raise exception 'Could not safely remove settlement lock interval';
   end if;
   v_new := replace(v_new, 'now()+unlock', 'now()');
+  v_new := replace(v_new, '  unlock interval;'||E'\\n', '');
+  v_new := replace(v_new, '  unlock:=interval ''0 days'';'||E'\\n', '');
+  v_new := replace(v_new, 'investment_id,settlement_id,user_id,strategy_id,profit_amount,generated_at,unlock_at', 'investment_id,settlement_id,user_id,strategy_id,profit_amount,generated_at');
+  v_new := replace(v_new, 'values(inv.id,st.id,inv.user_id,s.id,investor_delta,now(),now());', 'values(inv.id,st.id,inv.user_id,s.id,investor_delta,now());');
   if position('now()+unlock' in v_new) > 0 then
     raise exception 'Settlement still contains delayed unlock timestamp';
   end if;
@@ -65,8 +69,7 @@ begin
     as $body$
     begin
       update public.zynth_profit_lots
-      set unlock_at = least(unlock_at, now()),
-          status = 'paid'
+      set status = 'paid'
       where status = 'locked'
         and withdrawn_amount < profit_amount;
     end;
@@ -77,6 +80,8 @@ begin
   set unlock_at = now(),
       status = case when status='locked' then 'paid' else status end
   where unlock_at > now() or status='locked';
+
+  alter table public.zynth_profit_lots alter column unlock_at set default now();
 
   update public.system_settings
   set vault_profit_lock_days=0, updated_at=now()
