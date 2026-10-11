@@ -39,6 +39,9 @@ begin
   loop
     v_def := pg_get_functiondef(r.oid);
     v_new := replace(v_def, 'vault_profit_lock_days=p_vault_profit_lock_days', 'vault_profit_lock_days=0');
+    v_new := replace(v_new, 'vault_profit_lock_days=0,', '');
+    v_new := replace(v_new, ',''vault_profit_lock_days'',p_vault_profit_lock_days', '');
+    v_new := replace(v_new, ',''vault_profit_lock_days'',vault_profit_lock_days', '');
     v_new := regexp_replace(v_new,
       'if\s+p_vault_profit_lock_days\s*<\s*0\s+or\s+p_vault_profit_lock_days\s*>\s*3650\s+then\s+raise\s+exception\s+''INVALID_LOCK_DAYS'';\s*end\s+if;',
       '', 'gi');
@@ -114,17 +117,11 @@ begin
   $fn$;
 
   update public.zynth_profit_lots
-  set unlock_at = now(),
-      status = case when status='locked' then 'paid' else status end
-  where unlock_at > now() or status='locked';
+  set status = case when withdrawn_amount >= profit_amount then 'withdrawn' else 'paid' end
+  where status='locked';
 
-  alter table public.zynth_profit_lots alter column unlock_at set default now();
-
-  update public.system_settings
-  set vault_profit_lock_days=0, updated_at=now()
-  where id='00000000-0000-0000-0000-000000000001';
-
-  comment on column public.system_settings.vault_profit_lock_days is
-    'Deprecated compatibility field. Profit locking is disabled; new profit lots are immediately mature.';
+  -- These fields existed only to implement the retired lock policy.
+  alter table public.zynth_profit_lots drop column unlock_at;
+  alter table public.system_settings drop column vault_profit_lock_days;
 end
 $migration$;
