@@ -201,7 +201,7 @@ END;
 $function$;
 
 UPDATE public.system_settings
-SET exit_delay_hours=0, updated_at=now()
+SET exit_delay_hours=0, withdrawal_fee_pct=5, updated_at=now()
 WHERE id='00000000-0000-0000-0000-000000000001';
 
 COMMENT ON COLUMN public.system_settings.exit_delay_hours IS
