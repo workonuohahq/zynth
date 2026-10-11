@@ -34,7 +34,7 @@ begin
     v_def := pg_get_functiondef(r.oid);
     v_new := replace(v_def, 'vault_profit_lock_days=p_vault_profit_lock_days', 'vault_profit_lock_days=0');
     v_new := regexp_replace(v_new,
-      'if\\s+p_vault_profit_lock_days\\s*<\\s*0\\s+or\\s+p_vault_profit_lock_days\\s*>\\s*3650\\s+then\\s+raise\\s+exception\\s+''INVALID_LOCK_DAYS'';\\s*end\\s+if;',
+      'if\s+p_vault_profit_lock_days\s*<\s*0\s+or\s+p_vault_profit_lock_days\s*>\s*3650\s+then\s+raise\s+exception\s+''INVALID_LOCK_DAYS'';\s*end\s+if;',
       '', 'gi');
     if v_new = v_def then raise exception 'Could not neutralize legacy lock-days setting for %', r.proname; end if;
     execute v_new;
