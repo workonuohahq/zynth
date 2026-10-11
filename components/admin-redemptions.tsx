@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import {useEffect,useMemo,useState} from "react";
-import {ArrowLeft,ArrowLeftRight,CheckCircle2,Clock3,RefreshCw,Search,ShieldCheck,X,XCircle,Zap,WalletCards,AlertCircle,ChevronRight} from "lucide-react";
+import {ArrowLeft,ArrowLeftRight,CheckCircle2,Clock3,RefreshCw,Search,ShieldCheck,X,XCircle,WalletCards,AlertCircle,ChevronRight} from "lucide-react";
 
 const money=(n:any)=>"₦"+Number(n||0).toLocaleString("en-NG",{minimumFractionDigits:2,maximumFractionDigits:2});
 const dt=(v:any)=>v?new Date(v).toLocaleString("en-NG",{dateStyle:"medium",timeStyle:"short"}):"—";
