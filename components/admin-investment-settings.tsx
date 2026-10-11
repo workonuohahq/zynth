@@ -8,7 +8,6 @@ import {
   Clock3,
   CreditCard,
   KeyRound,
-  LockKeyhole,
   RefreshCw,
   Save,
   Settings2,
@@ -20,7 +19,6 @@ const DEF: any = {
   investment_enabled: false,
   strategy_entry_enabled: false,
   strategy_exit_enabled: false,
-  vault_profit_lock_days: 30,
   global_min_deposit: 5500,
   global_min_withdrawal: 100,
   deposit_fee_pct: 0,
@@ -89,7 +87,7 @@ const groups: any[] = [
   [
     "Investment liquidity",
     "Redemption fees, eligibility and top-up controls.",
-    LockKeyhole,
+    WalletCards,
     [
       ["n", "exit_fee_pct", "Redemption fee", "Percentage deducted from the requested amount; net proceeds become available when an administrator approves."],
       ["n", "exit_minimum_amount", "Minimum exit", "NGN. Partial/full redemption threshold."],
@@ -99,12 +97,6 @@ const groups: any[] = [
       ["x", "exit_processing_notice", "Exit notice", "Shown to investors before redemption."],
       ["x", "topup_processing_notice", "Top-up notice", "Shown to investors before top-up."],
     ],
-  ],
-  [
-    "Vault & profit rules",
-    "Controls when realized profit becomes withdrawable.",
-    LockKeyhole,
-    [["n", "vault_profit_lock_days", "Profit lock period", "Days. Existing lots keep their original unlock date."]],
   ],
   [
     "Daily settlement",
@@ -398,13 +390,6 @@ export default function AdminInvestmentSettings({ refreshKey }: { refreshKey?: n
                   <Field key={field[1]} f={field} s={settings} update={update} />
                 ))}
               </div>
-
-              {title === "Vault & profit rules" && (
-                <div className="zcall">
-                  <LockKeyhole size={15} />
-                  Principal is separate from Vault profit; eligible profit is capped by current realized portfolio profit.
-                </div>
-              )}
 
               {title === "Withdrawal operations" && (
                 <div className="zcall">
