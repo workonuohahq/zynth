@@ -17,7 +17,8 @@ const messages:any={
   BENEFICIARY_REQUIRED:"Select a payout account.",
   BENEFICIARY_NOT_FOUND:"That payout account could not be found.",
   INSUFFICIENT_BALANCE:"The amount exceeds your available cash.",
-  INSUFFICIENT_WITHDRAWABLE_PROFIT:"Investment profits must be redeemed into Available Balance before withdrawal.",\n  REDEMPTION_REQUIRED_FOR_INVESTMENT_PROFITS:"Exit the investment position first. Settled redemption proceeds will appear in Available Balance.",
+  INSUFFICIENT_WITHDRAWABLE_PROFIT:"Investment profits must be redeemed into Available Balance before withdrawal.",
+  REDEMPTION_REQUIRED_FOR_INVESTMENT_PROFITS:"Exit the investment position first. Settled redemption proceeds will appear in Available Balance.",
   INSUFFICIENT_ZPA_EARNINGS:"The amount exceeds your available ZPA Earnings.",
   INSUFFICIENT_TOTAL_WITHDRAWABLE:"The amount exceeds your total withdrawable balance.",
   ZPA_ACCESS_REQUIRED:"ZPA Earnings are only available to active ZPA partners."
