@@ -96,6 +96,7 @@ DECLARE
   updated_row public.zynth_redemption_requests%rowtype;
   principal_restore numeric;
   credited_user uuid;
+  ledger_transaction_id uuid;
 BEGIN
   IF auth.uid() IS NULL OR auth.uid() <> p_admin_id OR NOT public.zynth_has_role(auth.uid(),'admin') THEN
     RAISE EXCEPTION 'ADMIN_AUTHORIZATION_REQUIRED';
@@ -124,7 +125,9 @@ BEGIN
     UPDATE public.transactions
       SET status='completed',processed_at=now(),
           metadata=coalesce(metadata,'{}'::jsonb)||jsonb_build_object('approved_by',auth.uid(),'approved_at',now(),'net_amount',updated_row.net_amount,'fee_amount',updated_row.fee_amount)
-      WHERE reference=updated_row.reference AND status IN ('pending','processing');
+      WHERE reference=updated_row.reference AND status <> 'failed'
+      RETURNING id INTO ledger_transaction_id;
+    IF NOT FOUND THEN RAISE EXCEPTION 'REDEMPTION_TRANSACTION_NOT_FOUND'; END IF;
 
     IF updated_row.fee_amount > 0 THEN
       INSERT INTO public.transactions(user_id,type,amount,status,reference,metadata)
