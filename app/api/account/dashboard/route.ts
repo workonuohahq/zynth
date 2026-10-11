@@ -10,9 +10,8 @@ export async function GET() {
     s.from("users").select("full_name,kyc_verified").eq("id", user.id).single(),
     s.from("zynth_investments").select("id,principal,principal_remaining,units,entry_nav,current_value,status,strategy_id,zynth_strategies(name,nav)").eq("user_id", user.id).eq("status", "active").order("created_at", { ascending: false }).limit(6),
     s.from("transactions").select("id,type,amount,status,created_at,reference").eq("user_id", user.id).order("created_at", { ascending: false }).limit(6),
-    s.from("zynth_profit_lots").select("id,profit_amount,withdrawn_amount,unlock_at,status").eq("user_id", user.id).order("unlock_at", { ascending: true }).limit(6),
     s.rpc("zynth_investor_summary", { p_user_id: user.id }),
     s.rpc("zynth_get_my_roles", { p_user_id: user.id })
   ]);
-  return NextResponse.json({ profile, roles: Array.isArray(roleKeys) ? roleKeys : [], investments: investments || [], transactions: tx || [], lots: lots || [], summary: summary || {} });
+  return NextResponse.json({ profile, roles: Array.isArray(roleKeys) ? roleKeys : [], investments: investments || [], transactions: tx || [], summary: summary || {} });
 }
