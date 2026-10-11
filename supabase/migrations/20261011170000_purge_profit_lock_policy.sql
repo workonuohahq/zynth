@@ -87,7 +87,11 @@ begin
   v_def := pg_get_functiondef(v_sig);
   if v_def ilike '%unlock_at%' then
     v_new := replace(v_def,
-      $old
+      chr(39)||'active_vaults'||chr(39)||',(select count(*) from public.zynth_profit_lots where user_id=p_user_id and status='||chr(39)||'locked'||chr(39)||'),',
+      chr(39)||'active_vaults'||chr(39)||',(select count(*) from public.zynth_profit_lots where user_id=p_user_id and status in ('||chr(39)||'paid'||chr(39)||','||chr(39)||'partially_withdrawn'||chr(39)||','||chr(39)||'locked'||chr(39)||','||chr(39)||'available'||chr(39)||') and withdrawn_amount<profit_amount),');
+    v_new := replace(v_new,
+      chr(39)||'profit_amount'||chr(39)||',l.profit_amount,'||chr(39)||'generated_at'||chr(39)||',l.generated_at,'||chr(39)||'unlock_at'||chr(39)||',l.unlock_at,',
+      chr(39)||'profit_amount'||chr(39)||',l.profit_amount,'||chr(39)||'generated_at'||chr(39)||',l.generated_at,');
     if v_new ilike '%unlock_at%' then raise exception 'Admin profit history still exposes unlock dates'; end if;
     execute v_new;
   end if;
@@ -96,7 +100,9 @@ begin
   v_def := pg_get_functiondef(v_sig);
   if v_def ilike '%locked_profit%' or v_def ilike '%withdrawable_profit%' then
     v_new := regexp_replace(v_def,
-      $pattern
+      '''withdrawable_profit'',least\(coalesce\(\(select sum\(profit_amount-withdrawn_amount\).*?''pending_redemptions''',
+      '''pending_redemptions''',
+      's');
     if v_new ilike '%locked_profit%' or v_new ilike '%withdrawable_profit%' then
       raise exception 'Investor summary still contains lock-profit metrics';
     end if;
