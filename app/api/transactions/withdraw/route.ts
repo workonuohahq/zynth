@@ -17,7 +17,8 @@ const messages:any={
   BENEFICIARY_REQUIRED:"Select a payout account.",
   BENEFICIARY_NOT_FOUND:"That payout account could not be found.",
   INSUFFICIENT_BALANCE:"The amount exceeds your available cash.",
-  INSUFFICIENT_WITHDRAWABLE_PROFIT:"The amount exceeds your eligible Vault Profit.",
+  INSUFFICIENT_WITHDRAWABLE_PROFIT:"Investment profits must be redeemed into Available Balance before withdrawal.",
+  REDEMPTION_REQUIRED_FOR_INVESTMENT_PROFITS:"Exit the investment position first. Settled redemption proceeds will appear in Available Balance.",
   INSUFFICIENT_ZPA_EARNINGS:"The amount exceeds your available ZPA Earnings.",
   INSUFFICIENT_TOTAL_WITHDRAWABLE:"The amount exceeds your total withdrawable balance.",
   ZPA_ACCESS_REQUIRED:"ZPA Earnings are only available to active ZPA partners."
@@ -32,7 +33,7 @@ export async function POST(request:Request){
   const pin=String(body?.pin||"").trim();
   if(!Number.isFinite(amount)||amount<=0)return NextResponse.json({error:"Enter a valid amount."},{status:400});
   if(!beneficiaryId)return NextResponse.json({error:"Select a payout account."},{status:400});
-  if(!["cash","profit","zpa","all"].includes(source))return NextResponse.json({error:"Select a valid withdrawal source."},{status:400});
+  if(!["cash","zpa"].includes(source))return NextResponse.json({error:"Select a valid withdrawal source."},{status:400});
   if(!/^\d{6}$/.test(pin))return NextResponse.json({error:"Enter your 6-digit withdrawal PIN.",code:"PIN_MUST_BE_6_DIGITS"},{status:400});
   const client=await createSupabaseServerClient();
   const {data:{user}}=await client.auth.getUser();
