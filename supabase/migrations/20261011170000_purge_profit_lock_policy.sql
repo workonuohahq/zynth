@@ -5,31 +5,30 @@ declare
   v_new text;
   r record;
 begin
-  -- Settlement keeps the profit ledger but no longer creates a delayed unlock.
+  -- Remove the settlement-time delay while retaining the profit accounting ledger.
   v_sig := 'public.zynth_admin_settle_report(uuid,uuid)'::regprocedure;
   v_def := pg_get_functiondef(v_sig);
-  v_new := replace(v_def,
-    'unlock:=make_interval(days=>coalesce(
+  if v_def ilike '%vault_profit_lock_days%' or v_def ilike '%unlock_at%' or v_def ilike '%make_interval%' then
+    v_new := replace(v_def,
+      'unlock:=make_interval(days=>coalesce(
     (select vault_profit_lock_days from public.system_settings limit 1),30));',
-    'unlock:=interval ''0 days'';');
-  if v_new = v_def then
-    raise exception 'Could not safely remove settlement lock interval';
+      'unlock:=interval ''0 days'';');
+    v_new := replace(v_new, 'now()+unlock', 'now()');
+    v_new := replace(v_new, '  unlock interval;'||E'\n', '');
+    v_new := replace(v_new, '  unlock:=interval ''0 days'';'||E'\n', '');
+    v_new := replace(v_new,
+      'investment_id,settlement_id,user_id,strategy_id,profit_amount,generated_at,unlock_at',
+      'investment_id,settlement_id,user_id,strategy_id,profit_amount,generated_at');
+    v_new := replace(v_new,
+      'values(inv.id,st.id,inv.user_id,s.id,investor_delta,now(),now());',
+      'values(inv.id,st.id,inv.user_id,s.id,investor_delta,now());');
+    if v_new ilike '%unlock_at%' or v_new ilike '%vault_profit_lock_days%' or v_new ilike '%now()+unlock%' then
+      raise exception 'Settlement still contains profit-lock behavior after patch';
+    end if;
+    if v_new <> v_def then execute v_new; end if;
   end if;
-  v_new := replace(v_new, 'now()+unlock', 'now()');
-  v_new := replace(v_new, '  unlock interval;'||E'\n', '');
-  v_new := replace(v_new, '  unlock:=interval ''0 days'';'||E'\n', '');
-  v_new := replace(v_new,
-    'investment_id,settlement_id,user_id,strategy_id,profit_amount,generated_at,unlock_at',
-    'investment_id,settlement_id,user_id,strategy_id,profit_amount,generated_at');
-  v_new := replace(v_new,
-    'values(inv.id,st.id,inv.user_id,s.id,investor_delta,now(),now());',
-    'values(inv.id,st.id,inv.user_id,s.id,investor_delta,now());');
-  if position('now()+unlock' in v_new) > 0 then
-    raise exception 'Settlement still contains delayed unlock timestamp';
-  end if;
-  execute v_new;
 
-  -- Preserve old RPC signatures for compatibility, but make the setting inert.
+  -- Keep legacy RPC signatures callable, but remove the setting from their behavior.
   for r in
     select p.oid, p.proname
     from pg_proc p join pg_namespace n on n.oid=p.pronamespace
@@ -53,75 +52,82 @@ begin
 
   v_sig := 'public.zynth_admin_settlement_preview(uuid,uuid)'::regprocedure;
   v_def := pg_get_functiondef(v_sig);
-  v_new := replace(v_def,
-    'select coalesce(v.vault_profit_lock_days,30) into unlock_days from public.system_settings v limit 1;',
-    'unlock_days:=0;');
-  if v_new <> v_def then execute v_new; end if;
+  if v_def ilike '%vault_profit_lock_days%' then
+    v_new := replace(v_def,
+      'select coalesce(v.vault_profit_lock_days,30) into unlock_days from public.system_settings v limit 1;',
+      'unlock_days:=0;');
+    if v_new ilike '%vault_profit_lock_days%' then
+      raise exception 'Settlement preview still reads profit-lock setting';
+    end if;
+    execute v_new;
+  end if;
 
-  -- Legacy profit/combined withdrawal paths are disabled by the source guard.
-  -- Remove their dormant date-based logic too.
+  -- Remove dormant date-based branches from legacy withdrawal rollback paths.
   v_sig := 'public.request_withdrawal_by_source(uuid,numeric,uuid,text)'::regprocedure;
   v_def := pg_get_functiondef(v_sig);
-  v_new := replace(v_def, 'l.unlock_at<=now() and ', '');
-  v_new := replace(v_new, 'unlock_at<=now() and ', '');
-  v_new := replace(v_new, 'order by unlock_at,created_at', 'order by created_at');
-  if v_new <> v_def then execute v_new; end if;
+  if v_def ilike '%unlock_at%' then
+    v_new := replace(v_def, 'l.unlock_at<=now() and ', '');
+    v_new := replace(v_new, 'unlock_at<=now() and ', '');
+    v_new := replace(v_new, 'order by unlock_at,created_at', 'order by created_at');
+    if v_new ilike '%unlock_at%' then raise exception 'Withdrawal path still references unlock dates'; end if;
+    execute v_new;
+  end if;
 
   v_sig := 'public.restore_profit_withdrawal_allocations(uuid)'::regprocedure;
   v_def := pg_get_functiondef(v_sig);
-  v_new := replace(v_def,
-    'status=case when unlock_at<=now() then ''paid'' else ''locked'' end',
-    'status=''paid''');
-  if v_new <> v_def then execute v_new; end if;
+  if v_def ilike '%unlock_at%' then
+    v_new := replace(v_def,
+      'status=case when unlock_at<=now() then ''paid'' else ''locked'' end',
+      'status=''paid''');
+    if v_new ilike '%unlock_at%' then raise exception 'Withdrawal restore path still references unlock dates'; end if;
+    execute v_new;
+  end if;
 
-  -- Admin investor history reports profit records, not unlock dates.
   v_sig := 'public.admin_get_user_detail(uuid,uuid)'::regprocedure;
   v_def := pg_get_functiondef(v_sig);
-  v_new := replace(v_def,
-    '''active_vaults',(select count(*) from public.zynth_profit_lots where user_id=p_user_id and status=''locked''),',
-    '''active_vaults',(select count(*) from public.zynth_profit_lots where user_id=p_user_id and status in (''paid'',''partially_withdrawn'',''locked'',''available'') and withdrawn_amount<profit_amount),');
-  v_new := replace(v_new,
-    '''profit_amount'',l.profit_amount,''generated_at'',l.generated_at,''unlock_at'',l.unlock_at,',
-    '''profit_amount'',l.profit_amount,''generated_at'',l.generated_at,');
-  if v_new <> v_def then execute v_new; end if;
+  if v_def ilike '%unlock_at%' then
+    v_new := replace(v_def,
+      '''active_vaults',(select count(*) from public.zynth_profit_lots where user_id=p_user_id and status=''locked''),',
+      '''active_vaults',(select count(*) from public.zynth_profit_lots where user_id=p_user_id and status in (''paid'',''partially_withdrawn'',''locked'',''available'') and withdrawn_amount<profit_amount),');
+    v_new := replace(v_new,
+      '''profit_amount'',l.profit_amount,''generated_at'',l.generated_at,''unlock_at'',l.unlock_at,',
+      '''profit_amount'',l.profit_amount,''generated_at'',l.generated_at,');
+    if v_new ilike '%unlock_at%' then raise exception 'Admin profit history still exposes unlock dates'; end if;
+    execute v_new;
+  end if;
 
-  -- Remove lock-only metrics from the investor summary contract.
   v_sig := 'public.zynth_investor_summary(uuid)'::regprocedure;
   v_def := pg_get_functiondef(v_sig);
-  v_new := regexp_replace(v_def,
-    '''withdrawable_profit'',least\(coalesce\(\(select sum\(profit_amount-withdrawn_amount\).*?''pending_redemptions''',
-    '''pending_redemptions''',
-    's');
-  if v_new = v_def
-     or position('''locked_profit''' in v_new) > 0
-     or position('''withdrawable_profit''' in v_new) > 0 then
-    raise exception 'Could not safely remove lock-profit summary fields';
+  if v_def ilike '%locked_profit%' or v_def ilike '%withdrawable_profit%' then
+    v_new := regexp_replace(v_def,
+      '''withdrawable_profit'',least\(coalesce\(\(select sum\(profit_amount-withdrawn_amount\).*?''pending_redemptions''',
+      '''pending_redemptions''',
+      's');
+    if v_new ilike '%locked_profit%' or v_new ilike '%withdrawable_profit%' then
+      raise exception 'Investor summary still contains lock-profit metrics';
+    end if;
+    execute v_new;
   end if;
-  execute v_new;
 
-  -- Compatibility shim: no date-based maturity behavior remains.
-  execute $fn$
-    create or replace function public.zynth_refresh_profit_lot_statuses()
-    returns void
-    language plpgsql
-    security definer
-    set search_path to 'public', 'pg_temp'
-    as $body$
-    begin
-      update public.zynth_profit_lots
-      set status = 'paid'
-      where status = 'locked'
-        and withdrawn_amount < profit_amount;
-    end;
-    $body$;
-  $fn$;
+  v_sig := 'public.zynth_refresh_profit_lot_statuses()'::regprocedure;
+  v_def := pg_get_functiondef(v_sig);
+  if v_def ilike '%unlock_at%' then
+    v_new := replace(v_def,
+      'set unlock_at = least(unlock_at, now()),'||E'\n          status = case when unlock_at <= now() then ''paid'' else ''locked'' end',
+      'set status = ''paid''');
+    v_new := replace(v_new,
+      'set unlock_at = least(unlock_at, now()),'||E'\n          status = ''paid''',
+      'set status = ''paid''');
+    if v_new ilike '%unlock_at%' then raise exception 'Profit-lot status refresh still uses unlock dates'; end if;
+    execute v_new;
+  end if;
 
   update public.zynth_profit_lots
   set status = case when withdrawn_amount >= profit_amount then 'withdrawn' else 'paid' end
   where status='locked';
 
-  -- These fields existed only to implement the retired lock policy.
-  alter table public.zynth_profit_lots drop column unlock_at;
-  alter table public.system_settings drop column vault_profit_lock_days;
+  -- Remove the retired policy's schema fields entirely.
+  alter table public.zynth_profit_lots drop column if exists unlock_at;
+  alter table public.system_settings drop column if exists vault_profit_lock_days;
 end
 $migration$;
