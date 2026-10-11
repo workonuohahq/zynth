@@ -87,11 +87,557 @@ begin
   v_def := pg_get_functiondef(v_sig);
   if v_def ilike '%unlock_at%' then
     v_new := replace(v_def,
-      '''active_vaults',(select count(*) from public.zynth_profit_lots where user_id=p_user_id and status=''locked''),',
-      '''active_vaults',(select count(*) from public.zynth_profit_lots where user_id=p_user_id and status in (''paid'',''partially_withdrawn'',''locked'',''available'') and withdrawn_amount<profit_amount),');
+      $old
+    if v_new ilike '%unlock_at%' then raise exception 'Admin profit history still exposes unlock dates'; end if;
+    execute v_new;
+  end if;
+
+  v_sig := 'public.zynth_investor_summary(uuid)'::regprocedure;
+  v_def := pg_get_functiondef(v_sig);
+  if v_def ilike '%locked_profit%' or v_def ilike '%withdrawable_profit%' then
+    v_new := regexp_replace(v_def,
+      $pattern
+    if v_new ilike '%locked_profit%' or v_new ilike '%withdrawable_profit%' then
+      raise exception 'Investor summary still contains lock-profit metrics';
+    end if;
+    execute v_new;
+  end if;
+
+  v_sig := 'public.zynth_refresh_profit_lot_statuses()'::regprocedure;
+  v_def := pg_get_functiondef(v_sig);
+  if v_def ilike '%unlock_at%' then
+    v_new := replace(v_def,
+      'set unlock_at = least(unlock_at, now()),'||E'\n          status = case when unlock_at <= now() then ''paid'' else ''locked'' end',
+      'set status = ''paid''');
     v_new := replace(v_new,
-      '''profit_amount'',l.profit_amount,''generated_at'',l.generated_at,''unlock_at'',l.unlock_at,',
-      '''profit_amount'',l.profit_amount,''generated_at'',l.generated_at,');
+      'set unlock_at = least(unlock_at, now()),'||E'\n          status = ''paid''',
+      'set status = ''paid''');
+    if v_new ilike '%unlock_at%' then raise exception 'Profit-lot status refresh still uses unlock dates'; end if;
+    execute v_new;
+  end if;
+
+  update public.zynth_profit_lots
+  set status = case when withdrawn_amount >= profit_amount then 'withdrawn' else 'paid' end
+  where status='locked';
+
+  -- Remove the retired policy's schema fields entirely.
+  alter table public.zynth_profit_lots drop column if exists unlock_at;
+  alter table public.system_settings drop column if exists vault_profit_lock_days;
+end
+$migration$;
+active_vaults',(select count(*) from public.zynth_profit_lots where user_id=p_user_id and status='locked'),$old$,
+      $new
+    if v_new ilike '%unlock_at%' then raise exception 'Admin profit history still exposes unlock dates'; end if;
+    execute v_new;
+  end if;
+
+  v_sig := 'public.zynth_investor_summary(uuid)'::regprocedure;
+  v_def := pg_get_functiondef(v_sig);
+  if v_def ilike '%locked_profit%' or v_def ilike '%withdrawable_profit%' then
+    v_new := regexp_replace(v_def,
+      '''withdrawable_profit'',least\(coalesce\(\(select sum\(profit_amount-withdrawn_amount\).*?''pending_redemptions''',
+      '''pending_redemptions''',
+      's');
+    if v_new ilike '%locked_profit%' or v_new ilike '%withdrawable_profit%' then
+      raise exception 'Investor summary still contains lock-profit metrics';
+    end if;
+    execute v_new;
+  end if;
+
+  v_sig := 'public.zynth_refresh_profit_lot_statuses()'::regprocedure;
+  v_def := pg_get_functiondef(v_sig);
+  if v_def ilike '%unlock_at%' then
+    v_new := replace(v_def,
+      'set unlock_at = least(unlock_at, now()),'||E'\n          status = case when unlock_at <= now() then ''paid'' else ''locked'' end',
+      'set status = ''paid''');
+    v_new := replace(v_new,
+      'set unlock_at = least(unlock_at, now()),'||E'\n          status = ''paid''',
+      'set status = ''paid''');
+    if v_new ilike '%unlock_at%' then raise exception 'Profit-lot status refresh still uses unlock dates'; end if;
+    execute v_new;
+  end if;
+
+  update public.zynth_profit_lots
+  set status = case when withdrawn_amount >= profit_amount then 'withdrawn' else 'paid' end
+  where status='locked';
+
+  -- Remove the retired policy's schema fields entirely.
+  alter table public.zynth_profit_lots drop column if exists unlock_at;
+  alter table public.system_settings drop column if exists vault_profit_lock_days;
+end
+$migration$;
+active_vaults',(select count(*) from public.zynth_profit_lots where user_id=p_user_id and status in ('paid','partially_withdrawn','locked','available') and withdrawn_amount<profit_amount),$new$);
+    v_new := replace(v_new,
+      $old
+    if v_new ilike '%unlock_at%' then raise exception 'Admin profit history still exposes unlock dates'; end if;
+    execute v_new;
+  end if;
+
+  v_sig := 'public.zynth_investor_summary(uuid)'::regprocedure;
+  v_def := pg_get_functiondef(v_sig);
+  if v_def ilike '%locked_profit%' or v_def ilike '%withdrawable_profit%' then
+    v_new := regexp_replace(v_def,
+      '''withdrawable_profit'',least\(coalesce\(\(select sum\(profit_amount-withdrawn_amount\).*?''pending_redemptions''',
+      '''pending_redemptions''',
+      's');
+    if v_new ilike '%locked_profit%' or v_new ilike '%withdrawable_profit%' then
+      raise exception 'Investor summary still contains lock-profit metrics';
+    end if;
+    execute v_new;
+  end if;
+
+  v_sig := 'public.zynth_refresh_profit_lot_statuses()'::regprocedure;
+  v_def := pg_get_functiondef(v_sig);
+  if v_def ilike '%unlock_at%' then
+    v_new := replace(v_def,
+      'set unlock_at = least(unlock_at, now()),'||E'\n          status = case when unlock_at <= now() then ''paid'' else ''locked'' end',
+      'set status = ''paid''');
+    v_new := replace(v_new,
+      'set unlock_at = least(unlock_at, now()),'||E'\n          status = ''paid''',
+      'set status = ''paid''');
+    if v_new ilike '%unlock_at%' then raise exception 'Profit-lot status refresh still uses unlock dates'; end if;
+    execute v_new;
+  end if;
+
+  update public.zynth_profit_lots
+  set status = case when withdrawn_amount >= profit_amount then 'withdrawn' else 'paid' end
+  where status='locked';
+
+  -- Remove the retired policy's schema fields entirely.
+  alter table public.zynth_profit_lots drop column if exists unlock_at;
+  alter table public.system_settings drop column if exists vault_profit_lock_days;
+end
+$migration$;
+profit_amount',l.profit_amount,'generated_at',l.generated_at,'unlock_at',l.unlock_at,$old$,
+      $new
+    if v_new ilike '%unlock_at%' then raise exception 'Admin profit history still exposes unlock dates'; end if;
+    execute v_new;
+  end if;
+
+  v_sig := 'public.zynth_investor_summary(uuid)'::regprocedure;
+  v_def := pg_get_functiondef(v_sig);
+  if v_def ilike '%locked_profit%' or v_def ilike '%withdrawable_profit%' then
+    v_new := regexp_replace(v_def,
+      '''withdrawable_profit'',least\(coalesce\(\(select sum\(profit_amount-withdrawn_amount\).*?''pending_redemptions''',
+      '''pending_redemptions''',
+      's');
+    if v_new ilike '%locked_profit%' or v_new ilike '%withdrawable_profit%' then
+      raise exception 'Investor summary still contains lock-profit metrics';
+    end if;
+    execute v_new;
+  end if;
+
+  v_sig := 'public.zynth_refresh_profit_lot_statuses()'::regprocedure;
+  v_def := pg_get_functiondef(v_sig);
+  if v_def ilike '%unlock_at%' then
+    v_new := replace(v_def,
+      'set unlock_at = least(unlock_at, now()),'||E'\n          status = case when unlock_at <= now() then ''paid'' else ''locked'' end',
+      'set status = ''paid''');
+    v_new := replace(v_new,
+      'set unlock_at = least(unlock_at, now()),'||E'\n          status = ''paid''',
+      'set status = ''paid''');
+    if v_new ilike '%unlock_at%' then raise exception 'Profit-lot status refresh still uses unlock dates'; end if;
+    execute v_new;
+  end if;
+
+  update public.zynth_profit_lots
+  set status = case when withdrawn_amount >= profit_amount then 'withdrawn' else 'paid' end
+  where status='locked';
+
+  -- Remove the retired policy's schema fields entirely.
+  alter table public.zynth_profit_lots drop column if exists unlock_at;
+  alter table public.system_settings drop column if exists vault_profit_lock_days;
+end
+$migration$;
+profit_amount',l.profit_amount,'generated_at',l.generated_at,$new$);
+    if v_new ilike '%unlock_at%' then raise exception 'Admin profit history still exposes unlock dates'; end if;
+    execute v_new;
+  end if;
+
+  v_sig := 'public.zynth_investor_summary(uuid)'::regprocedure;
+  v_def := pg_get_functiondef(v_sig);
+  if v_def ilike '%locked_profit%' or v_def ilike '%withdrawable_profit%' then
+    v_new := regexp_replace(v_def,
+      '''withdrawable_profit'',least\(coalesce\(\(select sum\(profit_amount-withdrawn_amount\).*?''pending_redemptions''',
+      '''pending_redemptions''',
+      's');
+    if v_new ilike '%locked_profit%' or v_new ilike '%withdrawable_profit%' then
+      raise exception 'Investor summary still contains lock-profit metrics';
+    end if;
+    execute v_new;
+  end if;
+
+  v_sig := 'public.zynth_refresh_profit_lot_statuses()'::regprocedure;
+  v_def := pg_get_functiondef(v_sig);
+  if v_def ilike '%unlock_at%' then
+    v_new := replace(v_def,
+      'set unlock_at = least(unlock_at, now()),'||E'\n          status = case when unlock_at <= now() then ''paid'' else ''locked'' end',
+      'set status = ''paid''');
+    v_new := replace(v_new,
+      'set unlock_at = least(unlock_at, now()),'||E'\n          status = ''paid''',
+      'set status = ''paid''');
+    if v_new ilike '%unlock_at%' then raise exception 'Profit-lot status refresh still uses unlock dates'; end if;
+    execute v_new;
+  end if;
+
+  update public.zynth_profit_lots
+  set status = case when withdrawn_amount >= profit_amount then 'withdrawn' else 'paid' end
+  where status='locked';
+
+  -- Remove the retired policy's schema fields entirely.
+  alter table public.zynth_profit_lots drop column if exists unlock_at;
+  alter table public.system_settings drop column if exists vault_profit_lock_days;
+end
+$migration$;
+withdrawable_profit',least\(coalesce\(\(select sum\(profit_amount-withdrawn_amount\).*?'pending_redemptions'$pattern$,
+      $replacement
+    if v_new ilike '%locked_profit%' or v_new ilike '%withdrawable_profit%' then
+      raise exception 'Investor summary still contains lock-profit metrics';
+    end if;
+    execute v_new;
+  end if;
+
+  v_sig := 'public.zynth_refresh_profit_lot_statuses()'::regprocedure;
+  v_def := pg_get_functiondef(v_sig);
+  if v_def ilike '%unlock_at%' then
+    v_new := replace(v_def,
+      'set unlock_at = least(unlock_at, now()),'||E'\n          status = case when unlock_at <= now() then ''paid'' else ''locked'' end',
+      'set status = ''paid''');
+    v_new := replace(v_new,
+      'set unlock_at = least(unlock_at, now()),'||E'\n          status = ''paid''',
+      'set status = ''paid''');
+    if v_new ilike '%unlock_at%' then raise exception 'Profit-lot status refresh still uses unlock dates'; end if;
+    execute v_new;
+  end if;
+
+  update public.zynth_profit_lots
+  set status = case when withdrawn_amount >= profit_amount then 'withdrawn' else 'paid' end
+  where status='locked';
+
+  -- Remove the retired policy's schema fields entirely.
+  alter table public.zynth_profit_lots drop column if exists unlock_at;
+  alter table public.system_settings drop column if exists vault_profit_lock_days;
+end
+$migration$;
+active_vaults',(select count(*) from public.zynth_profit_lots where user_id=p_user_id and status='locked'),$old$,
+      $new
+    if v_new ilike '%unlock_at%' then raise exception 'Admin profit history still exposes unlock dates'; end if;
+    execute v_new;
+  end if;
+
+  v_sig := 'public.zynth_investor_summary(uuid)'::regprocedure;
+  v_def := pg_get_functiondef(v_sig);
+  if v_def ilike '%locked_profit%' or v_def ilike '%withdrawable_profit%' then
+    v_new := regexp_replace(v_def,
+      '''withdrawable_profit'',least\(coalesce\(\(select sum\(profit_amount-withdrawn_amount\).*?''pending_redemptions''',
+      '''pending_redemptions''',
+      's');
+    if v_new ilike '%locked_profit%' or v_new ilike '%withdrawable_profit%' then
+      raise exception 'Investor summary still contains lock-profit metrics';
+    end if;
+    execute v_new;
+  end if;
+
+  v_sig := 'public.zynth_refresh_profit_lot_statuses()'::regprocedure;
+  v_def := pg_get_functiondef(v_sig);
+  if v_def ilike '%unlock_at%' then
+    v_new := replace(v_def,
+      'set unlock_at = least(unlock_at, now()),'||E'\n          status = case when unlock_at <= now() then ''paid'' else ''locked'' end',
+      'set status = ''paid''');
+    v_new := replace(v_new,
+      'set unlock_at = least(unlock_at, now()),'||E'\n          status = ''paid''',
+      'set status = ''paid''');
+    if v_new ilike '%unlock_at%' then raise exception 'Profit-lot status refresh still uses unlock dates'; end if;
+    execute v_new;
+  end if;
+
+  update public.zynth_profit_lots
+  set status = case when withdrawn_amount >= profit_amount then 'withdrawn' else 'paid' end
+  where status='locked';
+
+  -- Remove the retired policy's schema fields entirely.
+  alter table public.zynth_profit_lots drop column if exists unlock_at;
+  alter table public.system_settings drop column if exists vault_profit_lock_days;
+end
+$migration$;
+active_vaults',(select count(*) from public.zynth_profit_lots where user_id=p_user_id and status in ('paid','partially_withdrawn','locked','available') and withdrawn_amount<profit_amount),$new$);
+    v_new := replace(v_new,
+      $old
+    if v_new ilike '%unlock_at%' then raise exception 'Admin profit history still exposes unlock dates'; end if;
+    execute v_new;
+  end if;
+
+  v_sig := 'public.zynth_investor_summary(uuid)'::regprocedure;
+  v_def := pg_get_functiondef(v_sig);
+  if v_def ilike '%locked_profit%' or v_def ilike '%withdrawable_profit%' then
+    v_new := regexp_replace(v_def,
+      '''withdrawable_profit'',least\(coalesce\(\(select sum\(profit_amount-withdrawn_amount\).*?''pending_redemptions''',
+      '''pending_redemptions''',
+      's');
+    if v_new ilike '%locked_profit%' or v_new ilike '%withdrawable_profit%' then
+      raise exception 'Investor summary still contains lock-profit metrics';
+    end if;
+    execute v_new;
+  end if;
+
+  v_sig := 'public.zynth_refresh_profit_lot_statuses()'::regprocedure;
+  v_def := pg_get_functiondef(v_sig);
+  if v_def ilike '%unlock_at%' then
+    v_new := replace(v_def,
+      'set unlock_at = least(unlock_at, now()),'||E'\n          status = case when unlock_at <= now() then ''paid'' else ''locked'' end',
+      'set status = ''paid''');
+    v_new := replace(v_new,
+      'set unlock_at = least(unlock_at, now()),'||E'\n          status = ''paid''',
+      'set status = ''paid''');
+    if v_new ilike '%unlock_at%' then raise exception 'Profit-lot status refresh still uses unlock dates'; end if;
+    execute v_new;
+  end if;
+
+  update public.zynth_profit_lots
+  set status = case when withdrawn_amount >= profit_amount then 'withdrawn' else 'paid' end
+  where status='locked';
+
+  -- Remove the retired policy's schema fields entirely.
+  alter table public.zynth_profit_lots drop column if exists unlock_at;
+  alter table public.system_settings drop column if exists vault_profit_lock_days;
+end
+$migration$;
+profit_amount',l.profit_amount,'generated_at',l.generated_at,'unlock_at',l.unlock_at,$old$,
+      $new
+    if v_new ilike '%unlock_at%' then raise exception 'Admin profit history still exposes unlock dates'; end if;
+    execute v_new;
+  end if;
+
+  v_sig := 'public.zynth_investor_summary(uuid)'::regprocedure;
+  v_def := pg_get_functiondef(v_sig);
+  if v_def ilike '%locked_profit%' or v_def ilike '%withdrawable_profit%' then
+    v_new := regexp_replace(v_def,
+      '''withdrawable_profit'',least\(coalesce\(\(select sum\(profit_amount-withdrawn_amount\).*?''pending_redemptions''',
+      '''pending_redemptions''',
+      's');
+    if v_new ilike '%locked_profit%' or v_new ilike '%withdrawable_profit%' then
+      raise exception 'Investor summary still contains lock-profit metrics';
+    end if;
+    execute v_new;
+  end if;
+
+  v_sig := 'public.zynth_refresh_profit_lot_statuses()'::regprocedure;
+  v_def := pg_get_functiondef(v_sig);
+  if v_def ilike '%unlock_at%' then
+    v_new := replace(v_def,
+      'set unlock_at = least(unlock_at, now()),'||E'\n          status = case when unlock_at <= now() then ''paid'' else ''locked'' end',
+      'set status = ''paid''');
+    v_new := replace(v_new,
+      'set unlock_at = least(unlock_at, now()),'||E'\n          status = ''paid''',
+      'set status = ''paid''');
+    if v_new ilike '%unlock_at%' then raise exception 'Profit-lot status refresh still uses unlock dates'; end if;
+    execute v_new;
+  end if;
+
+  update public.zynth_profit_lots
+  set status = case when withdrawn_amount >= profit_amount then 'withdrawn' else 'paid' end
+  where status='locked';
+
+  -- Remove the retired policy's schema fields entirely.
+  alter table public.zynth_profit_lots drop column if exists unlock_at;
+  alter table public.system_settings drop column if exists vault_profit_lock_days;
+end
+$migration$;
+profit_amount',l.profit_amount,'generated_at',l.generated_at,$new$);
+    if v_new ilike '%unlock_at%' then raise exception 'Admin profit history still exposes unlock dates'; end if;
+    execute v_new;
+  end if;
+
+  v_sig := 'public.zynth_investor_summary(uuid)'::regprocedure;
+  v_def := pg_get_functiondef(v_sig);
+  if v_def ilike '%locked_profit%' or v_def ilike '%withdrawable_profit%' then
+    v_new := regexp_replace(v_def,
+      '''withdrawable_profit'',least\(coalesce\(\(select sum\(profit_amount-withdrawn_amount\).*?''pending_redemptions''',
+      '''pending_redemptions''',
+      's');
+    if v_new ilike '%locked_profit%' or v_new ilike '%withdrawable_profit%' then
+      raise exception 'Investor summary still contains lock-profit metrics';
+    end if;
+    execute v_new;
+  end if;
+
+  v_sig := 'public.zynth_refresh_profit_lot_statuses()'::regprocedure;
+  v_def := pg_get_functiondef(v_sig);
+  if v_def ilike '%unlock_at%' then
+    v_new := replace(v_def,
+      'set unlock_at = least(unlock_at, now()),'||E'\n          status = case when unlock_at <= now() then ''paid'' else ''locked'' end',
+      'set status = ''paid''');
+    v_new := replace(v_new,
+      'set unlock_at = least(unlock_at, now()),'||E'\n          status = ''paid''',
+      'set status = ''paid''');
+    if v_new ilike '%unlock_at%' then raise exception 'Profit-lot status refresh still uses unlock dates'; end if;
+    execute v_new;
+  end if;
+
+  update public.zynth_profit_lots
+  set status = case when withdrawn_amount >= profit_amount then 'withdrawn' else 'paid' end
+  where status='locked';
+
+  -- Remove the retired policy's schema fields entirely.
+  alter table public.zynth_profit_lots drop column if exists unlock_at;
+  alter table public.system_settings drop column if exists vault_profit_lock_days;
+end
+$migration$;
+pending_redemptions'$replacement$,
+      's');
+    if v_new ilike '%locked_profit%' or v_new ilike '%withdrawable_profit%' then
+      raise exception 'Investor summary still contains lock-profit metrics';
+    end if;
+    execute v_new;
+  end if;
+
+  v_sig := 'public.zynth_refresh_profit_lot_statuses()'::regprocedure;
+  v_def := pg_get_functiondef(v_sig);
+  if v_def ilike '%unlock_at%' then
+    v_new := replace(v_def,
+      'set unlock_at = least(unlock_at, now()),'||E'\n          status = case when unlock_at <= now() then ''paid'' else ''locked'' end',
+      'set status = ''paid''');
+    v_new := replace(v_new,
+      'set unlock_at = least(unlock_at, now()),'||E'\n          status = ''paid''',
+      'set status = ''paid''');
+    if v_new ilike '%unlock_at%' then raise exception 'Profit-lot status refresh still uses unlock dates'; end if;
+    execute v_new;
+  end if;
+
+  update public.zynth_profit_lots
+  set status = case when withdrawn_amount >= profit_amount then 'withdrawn' else 'paid' end
+  where status='locked';
+
+  -- Remove the retired policy's schema fields entirely.
+  alter table public.zynth_profit_lots drop column if exists unlock_at;
+  alter table public.system_settings drop column if exists vault_profit_lock_days;
+end
+$migration$;
+active_vaults',(select count(*) from public.zynth_profit_lots where user_id=p_user_id and status='locked'),$old$,
+      $new
+    if v_new ilike '%unlock_at%' then raise exception 'Admin profit history still exposes unlock dates'; end if;
+    execute v_new;
+  end if;
+
+  v_sig := 'public.zynth_investor_summary(uuid)'::regprocedure;
+  v_def := pg_get_functiondef(v_sig);
+  if v_def ilike '%locked_profit%' or v_def ilike '%withdrawable_profit%' then
+    v_new := regexp_replace(v_def,
+      '''withdrawable_profit'',least\(coalesce\(\(select sum\(profit_amount-withdrawn_amount\).*?''pending_redemptions''',
+      '''pending_redemptions''',
+      's');
+    if v_new ilike '%locked_profit%' or v_new ilike '%withdrawable_profit%' then
+      raise exception 'Investor summary still contains lock-profit metrics';
+    end if;
+    execute v_new;
+  end if;
+
+  v_sig := 'public.zynth_refresh_profit_lot_statuses()'::regprocedure;
+  v_def := pg_get_functiondef(v_sig);
+  if v_def ilike '%unlock_at%' then
+    v_new := replace(v_def,
+      'set unlock_at = least(unlock_at, now()),'||E'\n          status = case when unlock_at <= now() then ''paid'' else ''locked'' end',
+      'set status = ''paid''');
+    v_new := replace(v_new,
+      'set unlock_at = least(unlock_at, now()),'||E'\n          status = ''paid''',
+      'set status = ''paid''');
+    if v_new ilike '%unlock_at%' then raise exception 'Profit-lot status refresh still uses unlock dates'; end if;
+    execute v_new;
+  end if;
+
+  update public.zynth_profit_lots
+  set status = case when withdrawn_amount >= profit_amount then 'withdrawn' else 'paid' end
+  where status='locked';
+
+  -- Remove the retired policy's schema fields entirely.
+  alter table public.zynth_profit_lots drop column if exists unlock_at;
+  alter table public.system_settings drop column if exists vault_profit_lock_days;
+end
+$migration$;
+active_vaults',(select count(*) from public.zynth_profit_lots where user_id=p_user_id and status in ('paid','partially_withdrawn','locked','available') and withdrawn_amount<profit_amount),$new$);
+    v_new := replace(v_new,
+      $old
+    if v_new ilike '%unlock_at%' then raise exception 'Admin profit history still exposes unlock dates'; end if;
+    execute v_new;
+  end if;
+
+  v_sig := 'public.zynth_investor_summary(uuid)'::regprocedure;
+  v_def := pg_get_functiondef(v_sig);
+  if v_def ilike '%locked_profit%' or v_def ilike '%withdrawable_profit%' then
+    v_new := regexp_replace(v_def,
+      '''withdrawable_profit'',least\(coalesce\(\(select sum\(profit_amount-withdrawn_amount\).*?''pending_redemptions''',
+      '''pending_redemptions''',
+      's');
+    if v_new ilike '%locked_profit%' or v_new ilike '%withdrawable_profit%' then
+      raise exception 'Investor summary still contains lock-profit metrics';
+    end if;
+    execute v_new;
+  end if;
+
+  v_sig := 'public.zynth_refresh_profit_lot_statuses()'::regprocedure;
+  v_def := pg_get_functiondef(v_sig);
+  if v_def ilike '%unlock_at%' then
+    v_new := replace(v_def,
+      'set unlock_at = least(unlock_at, now()),'||E'\n          status = case when unlock_at <= now() then ''paid'' else ''locked'' end',
+      'set status = ''paid''');
+    v_new := replace(v_new,
+      'set unlock_at = least(unlock_at, now()),'||E'\n          status = ''paid''',
+      'set status = ''paid''');
+    if v_new ilike '%unlock_at%' then raise exception 'Profit-lot status refresh still uses unlock dates'; end if;
+    execute v_new;
+  end if;
+
+  update public.zynth_profit_lots
+  set status = case when withdrawn_amount >= profit_amount then 'withdrawn' else 'paid' end
+  where status='locked';
+
+  -- Remove the retired policy's schema fields entirely.
+  alter table public.zynth_profit_lots drop column if exists unlock_at;
+  alter table public.system_settings drop column if exists vault_profit_lock_days;
+end
+$migration$;
+profit_amount',l.profit_amount,'generated_at',l.generated_at,'unlock_at',l.unlock_at,$old$,
+      $new
+    if v_new ilike '%unlock_at%' then raise exception 'Admin profit history still exposes unlock dates'; end if;
+    execute v_new;
+  end if;
+
+  v_sig := 'public.zynth_investor_summary(uuid)'::regprocedure;
+  v_def := pg_get_functiondef(v_sig);
+  if v_def ilike '%locked_profit%' or v_def ilike '%withdrawable_profit%' then
+    v_new := regexp_replace(v_def,
+      '''withdrawable_profit'',least\(coalesce\(\(select sum\(profit_amount-withdrawn_amount\).*?''pending_redemptions''',
+      '''pending_redemptions''',
+      's');
+    if v_new ilike '%locked_profit%' or v_new ilike '%withdrawable_profit%' then
+      raise exception 'Investor summary still contains lock-profit metrics';
+    end if;
+    execute v_new;
+  end if;
+
+  v_sig := 'public.zynth_refresh_profit_lot_statuses()'::regprocedure;
+  v_def := pg_get_functiondef(v_sig);
+  if v_def ilike '%unlock_at%' then
+    v_new := replace(v_def,
+      'set unlock_at = least(unlock_at, now()),'||E'\n          status = case when unlock_at <= now() then ''paid'' else ''locked'' end',
+      'set status = ''paid''');
+    v_new := replace(v_new,
+      'set unlock_at = least(unlock_at, now()),'||E'\n          status = ''paid''',
+      'set status = ''paid''');
+    if v_new ilike '%unlock_at%' then raise exception 'Profit-lot status refresh still uses unlock dates'; end if;
+    execute v_new;
+  end if;
+
+  update public.zynth_profit_lots
+  set status = case when withdrawn_amount >= profit_amount then 'withdrawn' else 'paid' end
+  where status='locked';
+
+  -- Remove the retired policy's schema fields entirely.
+  alter table public.zynth_profit_lots drop column if exists unlock_at;
+  alter table public.system_settings drop column if exists vault_profit_lock_days;
+end
+$migration$;
+profit_amount',l.profit_amount,'generated_at',l.generated_at,$new$);
     if v_new ilike '%unlock_at%' then raise exception 'Admin profit history still exposes unlock dates'; end if;
     execute v_new;
   end if;
