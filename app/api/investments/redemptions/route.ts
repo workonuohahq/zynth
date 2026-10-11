@@ -3,7 +3,7 @@ import {createSupabaseServerClient} from "@/lib/supabase/server";
 export async function GET(){
  const s=await createSupabaseServerClient(); const {data:{user}}=await s.auth.getUser();
  if(!user)return NextResponse.json({error:"Authentication required."},{status:401});
- const {data,error}=await s.from("zynth_redemption_requests").select("id,investment_id,strategy_id,reference,requested_amount,requested_units,nav,gross_amount,fee_pct,fee_amount,net_amount,status,requested_at,approved_at,processing_at,release_at,released_at,failure_reason,zynth_strategies(name)").eq("user_id",user.id).order("requested_at",{ascending:false}).limit(20);
+ const {data,error}=await s.from("zynth_redemption_requests").select("id,investment_id,strategy_id,reference,requested_amount,requested_units,nav,gross_amount,fee_pct,fee_amount,net_amount,status,requested_at,approved_at,released_at,failure_reason,zynth_strategies(name)").eq("user_id",user.id).order("requested_at",{ascending:false}).limit(20);
  if(error)return NextResponse.json({error:error.message},{status:400});
  return NextResponse.json({redemptions:data||[]});
 }
