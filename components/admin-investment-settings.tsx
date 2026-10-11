@@ -87,7 +87,7 @@ const groups: any[] = [
   [
     "Investment liquidity",
     "Redemption fees, eligibility and top-up controls.",
-    LockKeyhole,
+    WalletCards,
     [
       ["n", "exit_fee_pct", "Redemption fee", "Percentage deducted from the requested amount; net proceeds become available when an administrator approves."],
       ["n", "exit_minimum_amount", "Minimum exit", "NGN. Partial/full redemption threshold."],
