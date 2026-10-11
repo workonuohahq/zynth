@@ -24,7 +24,7 @@ const money=(n:any)=>`₦${Number(n||0).toLocaleString("en-NG",{minimumFractionD
 const pct=(n:any)=>`${Number(n||0).toFixed(2)}%`;
 
 export default function AdminPanel({initialData,adminEmail}:{initialData:any;adminEmail:string}){
- const[data,setData]=useState(initialData||{}),[tab,setTab]=useState("overview"),[refreshing,setRefreshing]=useState(false),[refreshKey,setRefreshKey]=useState(0),[moneyOpen,setMoneyOpen]=useState(false),[reports,setReports]=useState<any[]>([]),[history,setHistory]=useState<any[]>([]),[strategies,setStrategies]=useState<any[]>([]),[traders,setTraders]=useState<any[]>([]),[editingStrategy,setEditingStrategy]=useState<any>(null),[notificationTemplates,setNotificationTemplates]=useState<any[]>([]),[busy,setBusy]=useState(""),[notice,setNotice]=useState(""),[preview,setPreview]=useState<any>(null),[previewBusy,setPreviewBusy]=useState(""),[mt5Loading,setMt5Loading]=useState(false),[mt5CopyState,setMt5CopyState]=useState("");
+ const[data,setData]=useState(initialData||{}),[tab,setTab]=useState("overview"),[refreshing,setRefreshing]=useState(false),[refreshKey,setRefreshKey]=useState(0),[openNav,setOpenNav]=useState(""),[reports,setReports]=useState<any[]>([]),[history,setHistory]=useState<any[]>([]),[strategies,setStrategies]=useState<any[]>([]),[traders,setTraders]=useState<any[]>([]),[editingStrategy,setEditingStrategy]=useState<any>(null),[notificationTemplates,setNotificationTemplates]=useState<any[]>([]),[busy,setBusy]=useState(""),[notice,setNotice]=useState(""),[preview,setPreview]=useState<any>(null),[previewBusy,setPreviewBusy]=useState(""),[mt5Loading,setMt5Loading]=useState(false),[mt5CopyState,setMt5CopyState]=useState("");
  async function load(){
   const [q,s,t,n,support]=await Promise.all([
    fetch("/api/admin/settlements").then(r=>r.json()),
@@ -80,36 +80,59 @@ const closePreview=()=>{setPreview(null);setMt5CopyState("");};
   <aside className="admin-sidebar">
    <Link href="/dashboard" className="admin-brand"><span className="brand-mark">Z</span><span>ZYNTH</span><small>ADMIN</small></Link>
    <div className="admin-nav-label">CONTROL CENTER</div>
-   <nav className="admin-list-nav">
+   <nav className="admin-list-nav" aria-label="Admin control center">
+    <button className={tab==="overview"?"admin-list-item active":"admin-list-item"} onClick={()=>{setTab("overview");setOpenNav("")}}><span className="admin-list-icon"><BarChart3 size={16}/></span><span className="admin-list-label">Overview</span>{Number(data.pending_reports||0)>0&&<em>{data.pending_reports}</em>}</button>
     {[
-      {k:"overview",l:"Overview",i:BarChart3,b:data.pending_reports},
-      {k:"settlements",l:"Settlements",i:Clock3,b:data.pending_reports},
-      {k:"strategies",l:"Strategies",i:TrendingUp,b:data.strategies},
-      {k:"investors",l:"Investors",i:Users,b:data.investors},
-      {k:"kyc",l:"KYC & AML",i:ShieldCheck,b:0},
-      {k:"traders",l:"Traders",i:ShieldCheck,b:data.mt5_pending_count||0},
-      {k:"trader-governance",l:"Trader Governance",i:ShieldCheck,b:0},
-      {k:"zynth-trade",l:"ZYNTH Trade",i:Zap,b:0},
-      {k:"notifications",l:"Notifications",i:Bell,b:0},
-      {k:"broadcasts",l:"Messaging Broadcast",i:Send,b:0},
-      {k:"support",l:"Customer Service",i:Headphones,b:Number(data.support_unread_count||0)},
-      {k:"referrals",l:"Referrals",i:Gift,b:0},
-      {k:"zpa",l:"ZPA",i:Target,b:0},
-      {k:"risk",l:"Risk & Compliance",i:ShieldCheck,b:0}
-    ].map(({k,l,i:Icon,b})=><button key={k} className={tab===k?"admin-list-item active":"admin-list-item"} onClick={()=>setTab(k)}><span className="admin-list-icon"><Icon size={16}/></span><span className="admin-list-label">{l}</span>{b>0&&<em className={k==="support"?"admin-support-badge":""}>{b}</em>}</button>)}
-    <div className={"admin-money-nav "+(moneyOpen||["deposits","withdrawals","redemptions","transactions"].includes(tab)?"open":"")}>
-      <button className={["deposits","withdrawals","redemptions","transactions"].includes(tab)?"admin-list-item active":"admin-list-item"} onClick={()=>setMoneyOpen(v=>!v)} aria-expanded={moneyOpen} aria-controls="admin-money-subnav">
-        <span className="admin-list-icon"><ArrowLeftRight size={16}/></span><span className="admin-list-label">Money Movement</span><span className="admin-money-meta">FLOW</span><span className="admin-money-chevron"><ChevronRight size={13}/></span>
-        {((Number(data.pending_deposits)||0)+(Number(data.withdrawals_pending)||0))>0&&<em>{(Number(data.pending_deposits)||0)+(Number(data.withdrawals_pending)||0)}</em>}
-      </button>
-      {moneyOpen&&<div className="admin-money-subnav" id="admin-money-subnav"><div className="admin-money-subnav-head"><span>MONEY MOVEMENT</span><small>Operational queues + master ledger</small></div>
-        <button className={tab==="deposits"?"active":""} onClick={()=>{setTab("deposits");setMoneyOpen(false)}}><span className="admin-money-subicon deposit"><ArrowDownLeft size={13}/></span><span><b>Deposits</b><small>Incoming funds</small></span>{Number(data.pending_deposits||0)>0&&<b>{data.pending_deposits}</b>}</button>
-        <button className={tab==="withdrawals"?"active":""} onClick={()=>{setTab("withdrawals");setMoneyOpen(false)}}><span className="admin-money-subicon withdrawal"><ArrowUpRight size={13}/></span><span><b>Withdrawals</b><small>Outgoing funds</small></span>{Number(data.withdrawals_pending||0)>0&&<b>{data.withdrawals_pending}</b>}</button>
-        <button className={tab==="redemptions"?"active":""} onClick={()=>{setTab("redemptions");setMoneyOpen(false)}}><span className="admin-money-subicon redemption"><ArrowLeftRight size={13}/></span><span><b>Redemptions</b><small>Investor exits</small></span></button>
-        <button className={tab==="transactions"?"active":""} onClick={()=>{setTab("transactions");setMoneyOpen(false)}}><span className="admin-money-subicon transaction"><Activity size={13}/></span><span><b>Transactions</b><small>Master ledger</small></span></button>
-      </div>}
-    </div>
-    <button className={tab==="settings"?"admin-list-item active":"admin-list-item"} onClick={()=>setTab("settings")}><span className="admin-list-icon"><Settings2 size={16}/></span><span className="admin-list-label">Settings</span></button>
+      {id:"money",label:"Money Movement",tag:"FLOW",Icon:ArrowLeftRight,active:["deposits","withdrawals","redemptions","transactions"].includes(tab),badge:(Number(data.pending_deposits)||0)+(Number(data.withdrawals_pending)||0),items:[
+        {k:"deposits",l:"Deposits",d:"Incoming funds",i:ArrowDownLeft,b:Number(data.pending_deposits||0),tone:"deposit"},
+        {k:"withdrawals",l:"Withdrawals",d:"Outgoing funds",i:ArrowUpRight,b:Number(data.withdrawals_pending||0),tone:"withdrawal"},
+        {k:"redemptions",l:"Redemptions",d:"Investor exits",i:ArrowLeftRight,tone:"redemption"},
+        {k:"transactions",l:"Transactions",d:"Master ledger",i:Activity,tone:"transaction"}
+      ]},
+      {id:"portfolio",label:"Portfolio Operations",tag:"PORTFOLIO",Icon:TrendingUp,active:["settlements","strategies"].includes(tab),badge:Number(data.pending_reports||0),items:[
+        {k:"settlements",l:"Settlements",d:"Verify trader reports",i:Clock3,b:Number(data.pending_reports||0),tone:"transaction"},
+        {k:"strategies",l:"Strategies",d:"Strategy book & setup",i:TrendingUp,b:Number(data.strategies||0),tone:"redemption"}
+      ]},
+      {id:"people",label:"People & Trading",tag:"ACCOUNTS",Icon:Users,active:["investors","traders","trader-governance","zynth-trade"].includes(tab),badge:Number(data.mt5_pending_count||0),items:[
+        {k:"investors",l:"Investors",d:"Investor accounts",i:Users,b:Number(data.investors||0),tone:"deposit"},
+        {k:"traders",l:"Traders",d:"Trader accounts",i:TrendingUp,b:Number(data.mt5_pending_count||0),tone:"withdrawal"},
+        {k:"trader-governance",l:"Trader Governance",d:"Approvals & oversight",i:ShieldCheck,tone:"redemption"},
+        {k:"zynth-trade",l:"ZYNTH Trade",d:"Automated reporting desk",i:Zap,tone:"transaction"}
+      ]},
+      {id:"trust",label:"Trust & Compliance",tag:"CONTROL",Icon:ShieldCheck,active:["kyc","risk"].includes(tab),items:[
+        {k:"kyc",l:"KYC & AML",d:"Identity & verification",i:ShieldCheck,tone:"deposit"},
+        {k:"risk",l:"Risk & Compliance",d:"Risk monitoring",i:Activity,tone:"withdrawal"}
+      ]},
+      {id:"communications",label:"Communications & Support",tag:"ENGAGE",Icon:Bell,active:["notifications","broadcasts","support"].includes(tab),badge:Number(data.support_unread_count||0),items:[
+        {k:"notifications",l:"Notifications",d:"Templates & delivery",i:Bell,tone:"deposit"},
+        {k:"broadcasts",l:"Messaging Broadcast",d:"Audience announcements",i:Send,tone:"transaction"},
+        {k:"support",l:"Customer Service",d:"Support inbox",i:Headphones,b:Number(data.support_unread_count||0),tone:"withdrawal"}
+      ]},
+      {id:"growth",label:"Growth & Referrals",tag:"GROWTH",Icon:Gift,active:["referrals","zpa"].includes(tab),items:[
+        {k:"referrals",l:"Referrals",d:"Referral programme",i:Gift,tone:"deposit"},
+        {k:"zpa",l:"ZPA",d:"Acquisition partners",i:Target,tone:"redemption"}
+      ]}
+    ].map((group:any)=>{
+      const GroupIcon=group.Icon;
+      const isOpen=openNav===group.id;
+      return <div key={group.id} className={"admin-money-nav "+(isOpen?"open":"")}>
+        <button className={group.active?"admin-list-item active":"admin-list-item"} onClick={()=>setOpenNav(isOpen?"":group.id)} aria-expanded={isOpen} aria-controls={"admin-subnav-"+group.id}>
+          <span className="admin-list-icon"><GroupIcon size={16}/></span><span className="admin-list-label">{group.label}</span><span className="admin-money-meta">{group.tag}</span><span className="admin-money-chevron"><ChevronRight size={13}/></span>
+          {Number(group.badge||0)>0&&<em>{group.badge}</em>}
+        </button>
+        {isOpen&&<div className="admin-money-subnav" id={"admin-subnav-"+group.id}>
+          <div className="admin-money-subnav-head"><span>{group.label.toUpperCase()}</span><small>{group.items.length} destinations</small></div>
+          {group.items.map((item:any)=>{
+            const ItemIcon=item.i;
+            return <button key={item.k} className={tab===item.k?"active":""} onClick={()=>{setTab(item.k);setOpenNav("")}}>
+              <span className={"admin-money-subicon "+(item.tone||"transaction")}><ItemIcon size={13}/></span><span><b>{item.l}</b><small>{item.d}</small></span>
+              {Number(item.b||0)>0&&<b>{item.b}</b>}
+            </button>
+          })}
+        </div>}
+      </div>
+    })}
+    <button className={tab==="settings"?"admin-list-item active":"admin-list-item"} onClick={()=>{setTab("settings");setOpenNav("")}}><span className="admin-list-icon"><Settings2 size={16}/></span><span className="admin-list-label">Settings</span></button>
    </nav>
    <div className="admin-sidebar-bottom"><span className="admin-session"><i/>Online</span><div className="admin-identity"><span className="avatar">A</span><span><b>Administrator</b><small>{adminEmail}</small></span></div><form action="/auth/signout" method="post" className="admin-signout-form"><button className="admin-signout" type="submit"><LogOut size={14}/><span>Sign out</span></button></form></div>
   </aside>
