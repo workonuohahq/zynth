@@ -136,7 +136,7 @@ export default function AdminRedemptions(){
 
    <footer className="redemption-drawer-actions">
     <button className="ghost" onClick={()=>setSelected(null)}>Close</button>
-    {selected.status==="pending"&&<button className="reject" disabled={busy===selected.id} onClick={()=>act(selected.id,"reject")}><XCircle size={14}/> Reject</button>}
+    {["pending","approved","processing"].includes(selected.status)&&<button className="reject" disabled={busy===selected.id} onClick={()=>act(selected.id,"reject")}><XCircle size={14}/> Reject</button>}
     {["pending","approved","processing"].includes(selected.status)&&<button className="approve" disabled={busy===selected.id} onClick={()=>act(selected.id,"approve")}><CheckCircle2 size={14}/> Approve & release</button>}
    </footer>
   </aside></div>}
