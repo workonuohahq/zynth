@@ -67,11 +67,9 @@ begin
   v_def := pg_get_functiondef(v_sig);
   v_new := regexp_replace(v_def,
     '''withdrawable_profit'',least\(coalesce\(\(select sum\(profit_amount-withdrawn_amount\).*?''pending_redemptions''',
-    '''withdrawable_profit'',0,
-  ''locked_profit'',0,
-  ''pending_redemptions''',
+    '''pending_redemptions''',
     's');
-  if v_new = v_def or position('''locked_profit'',greatest' in v_new) > 0 then
+  if v_new = v_def or position('''locked_profit''' in v_new) > 0 or position('''withdrawable_profit''' in v_new) > 0 then
     raise exception 'Could not safely remove locked-profit calculations from investor summary';
   end if;
   execute v_new;
