@@ -25,7 +25,7 @@ const DEF: any = {
   global_min_withdrawal: 100,
   deposit_fee_pct: 0,
   deposit_fee_fixed: 0,
-  withdrawal_fee_pct: 10,
+  withdrawal_fee_pct: 5,
   withdrawal_fee_fixed: 0,
   deposits_enabled: true,
   withdrawals_enabled: true,
