@@ -42,34 +42,14 @@ export default function VaultPage() {
 
   const vaultComposition = useMemo(() => {
     const principal = Math.max(0, Number(s.principal || 0));
-    const totalProfit = Math.max(0, Number(s.profit || 0));
-    const availableProfit = Math.min(
-      totalProfit,
-      Math.max(0, Number(s.withdrawable_profit || 0)),
-    );
-    const lockedProfit = Math.max(0, totalProfit - availableProfit);
-    const total = principal + availableProfit + lockedProfit;
-
-    if (total <= 0) {
-      return {
-        total: 0,
-        principal,
-        availableProfit,
-        lockedProfit,
-        principalPct: 0,
-        availablePct: 0,
-        lockedPct: 0,
-      };
-    }
-
+    const profit = Math.max(0, Number(s.profit || 0));
+    const total = principal + profit;
     return {
       total,
       principal,
-      availableProfit,
-      lockedProfit,
-      principalPct: (principal / total) * 100,
-      availablePct: (availableProfit / total) * 100,
-      lockedPct: (lockedProfit / total) * 100,
+      profit,
+      principalPct: total > 0 ? (principal / total) * 100 : 0,
+      profitPct: total > 0 ? (profit / total) * 100 : 0,
     };
   }, [s]);
 
@@ -179,9 +159,6 @@ export default function VaultPage() {
             <span>
               <i className="dot available" /> Ready to withdraw {money(s.cash)}
             </span>
-            <span>
-              <i className="dot locked" /> Locked profit {money(s.locked_profit)}
-            </span>
           </div>
         </div>
         <div className="wealth-side">
@@ -237,8 +214,7 @@ export default function VaultPage() {
                 margin: "0 auto",
                 background: `conic-gradient(
                   var(--zynth-gold, #d4af37) 0 ${vaultComposition.principalPct}%,
-                  #7b6b38 ${vaultComposition.principalPct}% ${vaultComposition.principalPct + vaultComposition.availablePct}%,
-                  #3d3d3d ${vaultComposition.principalPct + vaultComposition.availablePct}% 100%
+                  #7b6b38 ${vaultComposition.principalPct}% 100%
                 )`,
                 position: "relative",
                 boxShadow:
@@ -275,16 +251,10 @@ export default function VaultPage() {
                   dot: "var(--zynth-gold, #d4af37)",
                 },
                 {
-                  label: "Matured profit",
-                  value: vaultComposition.availableProfit,
-                  pct: vaultComposition.availablePct,
+                  label: "Total profit",
+                  value: vaultComposition.profit,
+                  pct: vaultComposition.profitPct,
                   dot: "#7b6b38",
-                },
-                {
-                  label: "Locked profit",
-                  value: vaultComposition.lockedProfit,
-                  pct: vaultComposition.lockedPct,
-                  dot: "#3d3d3d",
                 },
               ].map((item) => (
                 <div
