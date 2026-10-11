@@ -169,11 +169,13 @@ $function$;
 -- Legacy scheduler entry point retained for compatibility, but automatic date-based releases are disabled.
 CREATE OR REPLACE FUNCTION public.zynth_release_due_redemptions(p_user_id uuid DEFAULT NULL::uuid)
 RETURNS integer
-LANGUAGE sql
+LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path TO 'public', 'pg_temp'
 AS $function$
-  SELECT 0;
+BEGIN
+  RETURN 0;
+END;
 $function$;
 
 -- Queue reads must never cause money movement as a side effect.
