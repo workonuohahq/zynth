@@ -22,7 +22,7 @@ export async function PATCH(req: Request) {
     p_investment_enabled: Boolean(b.investment_enabled),
     p_strategy_entry_enabled: Boolean(b.strategy_entry_enabled),
     p_strategy_exit_enabled: Boolean(b.strategy_exit_enabled),
-    p_vault_profit_lock_days: Number(b.vault_profit_lock_days),
+    p_vault_profit_lock_days: 0,
     p_min_deposit: Number(b.global_min_deposit),
     p_min_withdrawal: Number(b.global_min_withdrawal),
     p_deposit_fee_pct: Number(b.deposit_fee_pct),
