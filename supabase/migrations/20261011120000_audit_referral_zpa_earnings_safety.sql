@@ -167,6 +167,8 @@ begin
       and status = 'qualifying'
       and qualifying_started_at is not null
       and new.created_at >= qualifying_started_at
+      and qualification_due_at is not null
+      and new.created_at < qualification_due_at
     for update
   loop
     update public.zynth_zpa_acquisitions
