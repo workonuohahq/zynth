@@ -176,9 +176,12 @@ export default function VaultPage() {
             Manage your investment positions, redemptions and settled cash in one place.
           </p>
         </div>
-        <Link className="fund-btn secondary-dark" href="/dashboard">
-          <ArrowLeft size={16} /> Overview
-        </Link>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <Link className="fund-btn" href="/dashboard/investments">Manage positions <ArrowUpRight size={14} /></Link>
+          <Link className="fund-btn secondary-dark" href="/dashboard">
+            <ArrowLeft size={16} /> Overview
+          </Link>
+        </div>
       </header>
 
       <section className="wealth-hero">
