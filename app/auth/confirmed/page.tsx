@@ -1,5 +1,8 @@
-import ConfirmedClient from "@/components/confirmed-client";
+import { redirect } from "next/navigation";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-export default function ConfirmedPage({ searchParams }: { searchParams?: { email?: string } }) {
-  return <ConfirmedClient email={searchParams?.email || ""} />;
+export default async function ConfirmedPage() {
+  const supabase = await createSupabaseServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  redirect(user ? "/dashboard" : "/login");
 }
