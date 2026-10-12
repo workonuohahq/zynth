@@ -21,7 +21,7 @@ export default function LoginForm({ initialMode = "login", referralCode = "", zp
 
   async function applyAttribution(sessionUser?: any) {
     const metadata = sessionUser?.user_metadata || {};
-    const code = refCode || localStorage.getItem("zynth_referral_code") || metadata.zynth_referral_code || "";
+    const code = partnerCode ? "" : (refCode || localStorage.getItem("zynth_referral_code") || metadata.zynth_referral_code || "");
     if (code) {
       const r = await fetch("/api/referral", { method: "POST", headers: {"content-type":"application/json"}, body: JSON.stringify({code}) }).catch(() => null);
       if (r?.ok) localStorage.removeItem("zynth_referral_code");
@@ -43,8 +43,8 @@ export default function LoginForm({ initialMode = "login", referralCode = "", zp
     setMessage("");
     try {
       const supabase = createSupabaseBrowserClient();
-      if (refCode) localStorage.setItem("zynth_referral_code", refCode);
-      if (partnerCode) localStorage.setItem("zynth_zpa_code", partnerCode);
+      if (partnerCode) { localStorage.removeItem("zynth_referral_code"); localStorage.setItem("zynth_zpa_code", partnerCode); }
+      else if (refCode) localStorage.setItem("zynth_referral_code", refCode);
       if (mode === "login") {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) setMessage(error.message);
@@ -53,7 +53,7 @@ export default function LoginForm({ initialMode = "login", referralCode = "", zp
         const response = await fetch("/api/register", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ email, password, fullName: name, referralCode: refCode || localStorage.getItem("zynth_referral_code") || "", zpaCode: partnerCode, challengeId, answer })
+          body: JSON.stringify({ email, password, fullName: name, referralCode: partnerCode ? "" : (refCode || localStorage.getItem("zynth_referral_code") || ""), zpaCode: partnerCode, challengeId, answer })
         });
         const result = await response.json().catch(() => ({}));
         if (!response.ok) {
