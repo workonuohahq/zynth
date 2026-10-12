@@ -17,8 +17,8 @@ export async function POST(request: Request) {
     const fullName = clean(body?.fullName, 120);
     const referralCode = clean(body?.referralCode, 80);
     const zpaCode = clean(body?.zpaCode, 80);
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || password.length < 8 || !fullName) {
-      return NextResponse.json({ error: "Enter a valid email, your full name, and a password of at least 8 characters." }, { status: 400 });
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || password.length < 8 || password.length > 128 || !fullName) {
+      return NextResponse.json({ error: "Enter a valid email, your full name, and a password between 8 and 128 characters." }, { status: 400 });
     }
     const db = createSupabaseAdminClient();
     const fp = fingerprint(request);
