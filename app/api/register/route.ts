@@ -29,6 +29,10 @@ export async function POST(request: Request) {
     const { count, error: countError } = await db.from("zynth_human_check_events").select("id", { count: "exact", head: true }).eq("fingerprint", fp).eq("event_type", "registration").gte("created_at", since);
     if (countError) throw countError;
     if ((count || 0) >= 8) return NextResponse.json({ error: "Too many registration attempts. Please try again later." }, { status: 429 });
+    const failedSince = new Date(Date.now() - 60 * 60_000).toISOString();
+    const { count: failedCount, error: failedCountError } = await db.from("zynth_human_check_events").select("id", { count: "exact", head: true }).eq("fingerprint", fp).eq("event_type", "failed").gte("created_at", failedSince);
+    if (failedCountError) throw failedCountError;
+    if ((failedCount || 0) >= 20) return NextResponse.json({ error: "Too many failed verification attempts. Please try again later." }, { status: 429 });
     if (enabled) {
       const challengeId = clean(body?.challengeId, 64);
       const answer = clean(body?.answer, 40).toLowerCase();
