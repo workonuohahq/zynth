@@ -1,90 +1,66 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ShieldCheck, ShieldAlert, RefreshCw } from "lucide-react";
 
 export default function AdminRegistrationSecurity() {
   const [enabled, setEnabled] = useState(true);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState("");
-  const [updatedAt, setUpdatedAt] = useState("");
+  const [error, setError] = useState("");
 
-  async function load() {
-    setLoading(true);
-    setMessage("");
-    try {
-      const response = await fetch("/api/admin/registration-security", { cache: "no-store" });
-      const json = await response.json();
-      if (!response.ok) throw new Error(json.error || "Could not load security settings.");
-      setEnabled(json.settings?.human_check_enabled !== false);
-      setUpdatedAt(json.settings?.updated_at || "");
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Could not load security settings.");
-    } finally {
-      setLoading(false);
-    }
-  }
+  useEffect(() => {
+    let active = true;
+    fetch("/api/admin/registration-security", { cache: "no-store" })
+      .then(async response => {
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Could not load Human Check.");
+        if (active) setEnabled(data.settings?.human_check_enabled !== false);
+      })
+      .catch(e => { if (active) setError(e instanceof Error ? e.message : "Could not load Human Check."); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, []);
 
-  useEffect(() => { void load(); }, []);
-
-  async function save(next: boolean) {
+  async function toggle() {
+    if (loading || saving || error) return;
+    const next = !enabled;
     setSaving(true);
-    setMessage("");
+    setError("");
     try {
       const response = await fetch("/api/admin/registration-security", {
         method: "PATCH",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ humanCheckEnabled: next }),
       });
-      const json = await response.json();
-      if (!response.ok) throw new Error(json.error || "Could not save security setting.");
-      setEnabled(json.settings.human_check_enabled);
-      setUpdatedAt(json.settings.updated_at || "");
-      setMessage(next
-        ? "Human Check enabled. New registrations must pass server verification."
-        : "Human Check disabled. Registration rate limits remain active.");
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Could not save security setting.");
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Could not save Human Check.");
+      setEnabled(data.settings?.human_check_enabled === true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not save Human Check.");
     } finally {
       setSaving(false);
     }
   }
 
   return (
-    <div className="admin-registration-security">
-      <div className="admin-card-head">
-        <div>
-          <span className="muted">REGISTRATION SECURITY</span>
-          <h3>ZYNTH Human Check</h3>
-          <p>Control the server-enforced human verification challenge used before new accounts are created.</p>
-        </div>
-        <ShieldCheck size={21} aria-hidden="true" />
+    <div className="admin-registration-security admin-registration-security-simple">
+      <div className="admin-registration-simple-copy">
+        <b>Human verification</b>
+        <span>{loading ? "Loading…" : error ? "Setting unavailable" : enabled ? "On — people must complete Human Check to register." : "Off — registration works without Human Check."}</span>
       </div>
-      <div className="admin-registration-security-row">
-        <div className="admin-registration-security-status">
-          <span className={enabled ? "admin-registration-security-icon is-enabled" : "admin-registration-security-icon"}>
-            {enabled ? <ShieldCheck size={19} /> : <ShieldAlert size={19} />}
-          </span>
-          <div>
-            <b>{loading ? "Checking setting…" : enabled ? "Human verification enabled" : "Human verification disabled"}</b>
-            <small>{enabled ? "Valid, unused challenge required for signup." : "Signup continues with server-side rate limits."}</small>
-          </div>
-        </div>
-        <div className="admin-registration-security-actions">
-          <button className="ghost" onClick={() => void load()} disabled={loading || saving} aria-label="Refresh Human Check settings">
-            <RefreshCw size={14} className={loading ? "spin" : ""} /> Refresh
-          </button>
-          <button className={enabled ? "reject" : "approve"} disabled={loading || saving} onClick={() => void save(!enabled)}>
-            {saving ? "Saving…" : enabled ? "Disable Human Check" : "Enable Human Check"}
-          </button>
-        </div>
-      </div>
-      {message && <p role="status" className={message.includes("enabled") || message.includes("disabled") ? "admin-registration-security-message success" : "admin-registration-security-message"}>{message}</p>}
-      {updatedAt && <small className="admin-registration-security-updated">Last changed {new Date(updatedAt).toLocaleString()}</small>}
-      <div className="zt-warning admin-registration-security-note">
-        Security rule: if the setting cannot be read, registration fails closed. Turning this off does not disable rate limiting or account security.
-      </div>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={enabled}
+        aria-label="Human verification"
+        className={`admin-human-check-switch ${enabled ? "is-on" : "is-off"}`}
+        disabled={loading || saving || Boolean(error)}
+        onClick={() => void toggle()}
+      >
+        <span className="admin-human-check-switch-knob" />
+        <span className="admin-human-check-switch-label">{saving ? "Saving…" : enabled ? "ON" : "OFF"}</span>
+      </button>
+      {error && <p className="admin-registration-security-message">{error}</p>}
     </div>
   );
 }
