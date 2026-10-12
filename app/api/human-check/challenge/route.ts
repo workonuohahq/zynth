@@ -1,0 +1,88 @@
+import { NextResponse } from "next/server";
+import { createHash, randomBytes, randomUUID } from "crypto";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+
+export const runtime = "nodejs";
+const SHAPES = [
+  { id: "circle", label: "Circle", glyph: "●" },
+  { id: "triangle", label: "Triangle", glyph: "▲" },
+  { id: "square", label: "Square", glyph: "■" },
+  { id: "diamond", label: "Diamond", glyph: "◆" },
+  { id: "star", label: "Star", glyph: "★" },
+  { id: "hexagon", label: "Hexagon", glyph: "⬡" },
+];
+function fingerprint(request: Request) {
+  const forwarded = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+  const ip = request.headers.get("x-real-ip") || forwarded || "unknown";
+  const agent = request.headers.get("user-agent") || "unknown";
+  return createHash("sha256").update(ip + "|" + agent).digest("hex");
+}
+function shuffled<T>(items: T[]): T[] {
+  const out = [...items];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = randomBytes(4).readUInt32BE(0) % (i + 1);
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+export async function GET(request: Request) {
+  try {
+    const db = createSupabaseAdminClient();
+    // Keep short-lived challenge and rate-limit tables bounded without a scheduler.
+    const pruneBefore = new Date(Date.now() - 48 * 60 * 60_000).toISOString();
+    await db.from("zynth_human_check_challenges").delete().lt("expires_at", pruneBefore);
+    await db.from("zynth_human_check_events").delete().lt("created_at", pruneBefore);
+    const { data: setting, error: settingsError } = await db.from("zynth_registration_security").select("human_check_enabled").eq("id", true).maybeSingle();
+    if (settingsError) throw settingsError;
+    if (setting?.human_check_enabled === false) return NextResponse.json({ enabled: false });
+    const fp = fingerprint(request);
+    const since = new Date(Date.now() - 10 * 60_000).toISOString();
+    const { count, error: countError } = await db.from("zynth_human_check_events").select("id", { count: "exact", head: true }).eq("fingerprint", fp).eq("event_type", "challenge").gte("created_at", since);
+    if (countError) throw countError;
+    if ((count || 0) >= 20) return NextResponse.json({ error: "Too many challenge requests. Please try again in a few minutes." }, { status: 429 });
+    const mode = new URL(request.url).searchParams.get("mode");
+    const kind = mode === "text" ? 3 : randomBytes(1)[0] % 3;
+    const all = shuffled(SHAPES);
+    let answer = all[0];
+    let sequence: typeof SHAPES = [];
+    let prompt = "";
+    let challengeType: "pattern" | "match" | "order" | "text" = "pattern";
+    if (kind === 0) {
+      challengeType = "pattern";
+      const offset = randomBytes(1)[0] % all.length;
+      const step = 1 + (randomBytes(1)[0] % (all.length - 1));
+      sequence = [0, 1, 2, 3].map(n => all[(offset + n * step) % all.length]);
+      answer = all[(offset + 4 * step) % all.length];
+      prompt = "Choose the next symbol in the sequence";
+    } else if (kind === 1) {
+      challengeType = "match";
+      answer = all[randomBytes(1)[0] % 3];
+      sequence = [answer];
+      prompt = "Find the exact symbol shown in the reference";
+    } else if (kind === 2) {
+      challengeType = "order";
+      sequence = shuffled(SHAPES).slice(0, 3);
+      answer = sequence[1];
+      prompt = "Which symbol is in the middle of the shown order?";
+    } else {
+      challengeType = "text";
+      const a = 2 + (randomBytes(1)[0] % 7);
+      const b = 1 + (randomBytes(1)[0] % 8);
+      const sum = a + b;
+      answer = { id: String(sum), label: String(sum), glyph: String(sum) };
+      sequence = [{ id: "math", label: "Quick maths", glyph: `${a} + ${b} = ?` }];
+    }
+    const options = challengeType === "text"
+      ? shuffled([answer, ...[Number(answer.id) - 2, Number(answer.id) - 1, Number(answer.id) + 1].map(n => ({ id: String(n), label: String(n), glyph: String(n) }))])
+      : shuffled([answer, ...all.filter(s => s.id !== answer.id).slice(0, 3)]);
+    const id = randomUUID();
+    const { error: insertError } = await db.from("zynth_human_check_challenges").insert({ id, answer: answer.id, challenge_type: challengeType, expires_at: new Date(Date.now() + 2 * 60_000).toISOString(), request_fingerprint: fp });
+    if (insertError) throw insertError;
+    const { error: eventError } = await db.from("zynth_human_check_events").insert({ event_type: "challenge", fingerprint: fp });
+    if (eventError) throw eventError;
+    return NextResponse.json({ enabled: true, id, type: challengeType, prompt, sequence: sequence.map(s => ({ id: s.id, label: s.label, glyph: s.glyph })), options: options.map(s => ({ id: s.id, label: s.label, glyph: s.glyph })), expiresIn: 120 });
+  } catch (error) {
+    console.error("Human Check challenge unavailable", error);
+    return NextResponse.json({ error: "Human verification is temporarily unavailable. Please try again shortly." }, { status: 503 });
+  }
+}

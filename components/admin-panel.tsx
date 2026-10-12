@@ -6,6 +6,7 @@ import AdminUsers from "@/components/admin-users";
 import AdminKyc from "@/components/admin-kyc";
 import ThemeSwitcher from "@/components/theme-switcher";
 import AdminInvestmentSettings from "@/components/admin-investment-settings";
+import AdminRegistrationSecurity from "@/components/admin-registration-security";
 import AdminStrategyForm from "@/components/admin-strategy-form";
 import AdminTraders from "@/components/admin-traders";
 import AdminNotificationCenter from "@/components/admin-notification-center";
@@ -182,7 +183,7 @@ const closePreview=()=>{setPreview(null);setMt5CopyState("");};
    {tab==="withdrawals"&&<section className="admin-section"><section className="admin-card"><div className="admin-card-head"><div><span className="muted">MONEY MOVEMENT</span><h2>Withdrawal operations</h2><p>Existing withdrawal controls remain available while profit eligibility is enforced by the Vault layer.</p></div><Link className="text-action" href="/admin/withdrawals">Open queue <ChevronRight size={13}/></Link></div></section></section>}
    {tab==="redemptions"&&<section className="admin-section"><section className="admin-card"><div className="admin-card-head"><div><span className="muted">INVESTMENT LIQUIDITY</span><h2>Investor exits</h2><p>Redemptions are unit-based, NAV-priced and released only after the configured approval and delay rules.</p></div><Link className="text-action" href="/admin/redemptions">Open redemption control <ChevronRight size={13}/></Link></div></section></section>}
 
-   {tab==="settings"&&<section className="admin-section"><section className="admin-card settings-card"><div className="admin-card-head"><div><span className="muted">SYSTEM RULES</span><h2>Settlement & Vault controls</h2><p>Configure the investor engine, profit lock and operating thresholds. Changes are audited.</p></div></div><AdminInvestmentSettings refreshKey={refreshKey}/><div className="rule-list" style={{marginTop:20}}><div><span>Settlement model</span><b>Trader report → admin confirm → NAV</b></div><div><span>MT5 automation</span><b>Removed</b></div></div></section></section>}
+   {tab==="settings"&&<section className="admin-section"><section className="admin-card settings-card"><div className="admin-card-head"><div><span className="muted">SYSTEM RULES</span><h2>Settlement & Vault controls</h2><p>Configure the investor engine, profit lock and operating thresholds. Changes are audited.</p></div></div><AdminInvestmentSettings refreshKey={refreshKey}/><AdminRegistrationSecurity/><div className="rule-list" style={{marginTop:20}}><div><span>Settlement model</span><b>Trader report → admin confirm → NAV</b></div><div><span>MT5 automation</span><b>Removed</b></div></div></section></section>}
    {tab==="notifications"&&<AdminNotificationCenter initialTemplates={notificationTemplates} refreshKey={refreshKey}/>}
    {tab==="broadcasts"&&<AdminBroadcastCenter/>}
    {tab==="support"&&<AdminSupportCenter refreshKey={refreshKey}/>}

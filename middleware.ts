@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from "@/lib/supabase/config";
 import { PWA_TOKEN_HEADER, validatePwaCredential } from "@/lib/pwa/server";
 
-const PUBLIC_API_PREFIXES=["/api/health","/api/pwa","/api/webhooks","/api/payments/nowpayments/ipn","/api/payments/nowpayments/reconcile"];
+const PUBLIC_API_PREFIXES=["/api/health","/api/pwa","/api/webhooks","/api/payments/nowpayments/ipn","/api/payments/nowpayments/reconcile","/api/human-check","/api/register"];
 const PUSH_API_PREFIXES=["/api/push"];
 const AUTH_ATTRIBUTION_API_PREFIXES=["/api/zpa/claim"];
 function isAuthAttributionApi(path:string){return startsWithAny(path,AUTH_ATTRIBUTION_API_PREFIXES);}
@@ -53,17 +53,6 @@ export async function middleware(request:NextRequest){
   }
   const isAdmin=roles.has("admin"),isTrader=roles.has("trader"),isInvestor=roles.has("investor");
   if(isAdminPage(path)){if(!isAdmin)return NextResponse.redirect(new URL("/dashboard",request.url));return response;}
-
-  // ZYNTH investor/trader workspace is unavailable until the email is genuinely
-  // confirmed. This is checked server-side on every protected request so a
-  // stale browser session or direct URL cannot bypass the gate.
-  if(isInvestorPage(path)||isTraderPage(path)||protectedApi){
-    const {data:emailStatus}=await supabase.rpc("zynth_get_email_verification_status",{p_user_id:user.id});
-    if(emailStatus?.verified===false){
-      if(protectedApi)return denied("EMAIL_VERIFICATION_REQUIRED","Email verification is required to access the ZYNTH workspace.");
-      return NextResponse.redirect(new URL("/auth/verification-required",request.url));
-    }
-  }
 
   if(isTraderPage(path)){if(!isTrader)return NextResponse.redirect(new URL("/dashboard",request.url));return response;}
   if(isInvestorPage(path)){
