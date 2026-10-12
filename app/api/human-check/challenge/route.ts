@@ -68,7 +68,7 @@ export async function GET(request: Request) {
       sequence = [{ id: "math", label: "Quick maths", glyph: `${a} + ${b} = ?` }];
     }
     const options = challengeType === "text"
-      ? shuffled([answer, ...[answer.id - 2, answer.id - 1, answer.id + 1].map(n => ({ id: String(n), label: String(n), glyph: String(n) }))])
+      ? shuffled([answer, ...[Number(answer.id) - 2, Number(answer.id) - 1, Number(answer.id) + 1].map(n => ({ id: String(n), label: String(n), glyph: String(n) }))])
       : shuffled([answer, ...all.filter(s => s.id !== answer.id).slice(0, 3)]);
     const id = randomUUID();
     const { error: insertError } = await db.from("zynth_human_check_challenges").insert({ id, answer: answer.id, challenge_type: challengeType, expires_at: new Date(Date.now() + 2 * 60_000).toISOString(), request_fingerprint: fp });
