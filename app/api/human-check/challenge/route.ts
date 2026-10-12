@@ -28,6 +28,10 @@ function shuffled<T>(items: T[]): T[] {
 export async function GET(request: Request) {
   try {
     const db = createSupabaseAdminClient();
+    // Keep short-lived challenge and rate-limit tables bounded without a scheduler.
+    const pruneBefore = new Date(Date.now() - 48 * 60 * 60_000).toISOString();
+    await db.from("zynth_human_check_challenges").delete().lt("expires_at", pruneBefore);
+    await db.from("zynth_human_check_events").delete().lt("created_at", pruneBefore);
     const { data: setting, error: settingsError } = await db.from("zynth_registration_security").select("human_check_enabled").eq("id", true).maybeSingle();
     if (settingsError) throw settingsError;
     if (setting?.human_check_enabled === false) return NextResponse.json({ enabled: false });
