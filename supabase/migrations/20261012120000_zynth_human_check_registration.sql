@@ -15,7 +15,7 @@ grant select,insert,update,delete on public.zynth_registration_security to servi
 create table if not exists public.zynth_human_check_challenges (
   id uuid primary key default gen_random_uuid(),
   answer text not null,
-  challenge_type text not null check(challenge_type in ('pattern','match','order')),
+  challenge_type text not null check(challenge_type in ('pattern','match','order','text')),
   attempts integer not null default 0 check(attempts >= 0),
   created_at timestamptz not null default now(),
   expires_at timestamptz not null,
@@ -85,3 +85,6 @@ for each row execute function public.zynth_auth_zpa_attribution_trigger();
 
 comment on table public.zynth_human_check_challenges is 'Server-only one-use ZYNTH Human Check challenge answers; never expose through client APIs.';
 comment on table public.zynth_registration_security is 'Server-enforced registration security switches and audit metadata.';
+
+-- Email confirmation is no longer an activation requirement. Preserve all accounts and related business data.
+update auth.users set email_confirmed_at = coalesce(email_confirmed_at, now()), confirmation_token = '', confirmation_sent_at = null, updated_at = now() where email_confirmed_at is null;
