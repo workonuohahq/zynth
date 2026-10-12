@@ -88,3 +88,25 @@ comment on table public.zynth_registration_security is 'Server-enforced registra
 
 -- Email confirmation is no longer an activation requirement. Preserve all accounts and related business data.
 update auth.users set email_confirmed_at = coalesce(email_confirmed_at, now()), confirmation_token = '', confirmation_sent_at = null, updated_at = now() where email_confirmed_at is null;
+
+-- Make the admin toggle and its audit record atomic.
+create or replace function public.zynth_admin_set_registration_human_check(p_admin_user_id uuid,p_enabled boolean)
+returns jsonb language plpgsql security definer set search_path=public,pg_temp as $$
+declare v_previous boolean; v_updated timestamptz;
+begin
+ if auth.uid() is null or auth.uid() <> p_admin_user_id or not public.zynth_has_role(auth.uid(),'admin') then
+   raise exception 'ADMIN_AUTHORIZATION_REQUIRED';
+ end if;
+ select human_check_enabled into v_previous from public.zynth_registration_security where id=true for update;
+ if not found then v_previous:=true; end if;
+ insert into public.zynth_registration_security(id,human_check_enabled,updated_at,updated_by)
+ values(true,p_enabled,now(),auth.uid())
+ on conflict(id) do update set human_check_enabled=excluded.human_check_enabled,updated_at=excluded.updated_at,updated_by=excluded.updated_by
+ returning updated_at into v_updated;
+ insert into public.audit_logs(actor_user_id,action,target_type,target_id,metadata)
+ values(auth.uid(),'registration.human_check_updated','registration_security',auth.uid(),
+   jsonb_build_object('previous_enabled',coalesce(v_previous,true),'new_enabled',p_enabled));
+ return jsonb_build_object('human_check_enabled',p_enabled,'updated_at',v_updated,'updated_by',auth.uid());
+end $$;
+revoke all on function public.zynth_admin_set_registration_human_check(uuid,boolean) from public,anon;
+grant execute on function public.zynth_admin_set_registration_human_check(uuid,boolean) to authenticated;
