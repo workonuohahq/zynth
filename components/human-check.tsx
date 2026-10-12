@@ -23,6 +23,7 @@ export default function HumanCheck({onAnswer}:{onAnswer:(challengeId:string,answ
   },[onAnswer,textMode]);
   useEffect(()=>{void load()},[load]);
   function choose(option:SymbolOption){setSelected(option.id);if(challenge)onAnswer(challenge.id,option.id)}
+  if(!loading && !error && !challenge) return null;
   return <section className="zhc-card" aria-label="ZYNTH Human Check">
     <div className="zhc-head"><span className="zhc-emblem"><ShieldCheck size={17}/></span><div><b>ZYNTH Human Check</b><small>HUMAN AUTHENTICATION PROTOCOL</small></div><span className="zhc-secure">SECURE</span></div>
     {loading?<div className="zhc-loading"><span className="zhc-spinner"/>Preparing your challenge…</div>:error?<div className="zhc-error" role="alert">{error}<button type="button" onClick={()=>void load()}><RefreshCw size={13}/> Try again</button></div>:challenge&&<>
