@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from "@/lib/supabase/config";
 import { PWA_TOKEN_HEADER, validatePwaCredential } from "@/lib/pwa/server";
 
-const PUBLIC_API_PREFIXES=["/api/health","/api/pwa","/api/webhooks","/api/payments/nowpayments/ipn","/api/payments/nowpayments/reconcile"];
+const PUBLIC_API_PREFIXES=["/api/health","/api/pwa","/api/webhooks","/api/payments/nowpayments/ipn","/api/payments/nowpayments/reconcile","/api/human-check","/api/register"];
 const PUSH_API_PREFIXES=["/api/push"];
 const AUTH_ATTRIBUTION_API_PREFIXES=["/api/zpa/claim"];
 function isAuthAttributionApi(path:string){return startsWithAny(path,AUTH_ATTRIBUTION_API_PREFIXES);}
