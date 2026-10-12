@@ -31,6 +31,6 @@ export default function HumanCheck({onAnswer}:{onAnswer:(challengeId:string,answ
       <div className="zhc-options" role="group" aria-label="Choose the correct answer">{challenge.options.map(s=><button type="button" key={s.id} className={"zhc-option"+(selected===s.id?" selected":"")} onClick={()=>choose(s)} aria-label={s.label} aria-pressed={selected===s.id}><span aria-hidden="true">{s.glyph}</span><small>{s.label}</small></button>)}</div>
       <div className="zhc-footer"><span>Challenge expires in 2 minutes · One use only</span><button type="button" onClick={()=>void load()} aria-label="Get a new challenge"><RefreshCw size={13}/> New challenge</button></div>
     </>}
-    <button className="zhc-mode" type="button" onClick={()=>{setTextMode(v=>!v);}}><{textMode?"Eye":"Type"} size={13}/>{textMode?"Use visual challenge":"Prefer a text challenge?"}</button>
+    <button className="zhc-mode" type="button" onClick={()=>{setTextMode(v=>!v);}}>{textMode?<Eye size={13}/>:<Type size={13}/>}{textMode?"Use visual challenge":"Prefer a text challenge?"}</button>
   </section>;
 }
