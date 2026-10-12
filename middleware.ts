@@ -6,7 +6,7 @@ import { PWA_TOKEN_HEADER, validatePwaCredential } from "@/lib/pwa/server";
 const PUBLIC_API_PREFIXES=["/api/health","/api/pwa","/api/webhooks","/api/payments/nowpayments/ipn","/api/payments/nowpayments/reconcile","/api/human-check","/api/register"];
 const PUSH_API_PREFIXES=["/api/push"];
 const AUTH_ATTRIBUTION_API_PREFIXES=["/api/zpa/claim"];
-function isAuthAttributionApi(path:string){return startsWithAny(path,AUTH_ATTRIBUTION_API_PREFIXES);}
+function isAuthAttributionApi(path:string,method:string){return startsWithAny(path,AUTH_ATTRIBUTION_API_PREFIXES)||(path==="/api/referral"&&method==="POST");}
 function isPath(path:string,prefix:string){return path===prefix||path.startsWith(`${prefix}/`);}
 function startsWithAny(path:string,prefixes:string[]){return prefixes.some(p=>isPath(path,p));}
 function isInvestorPage(path:string){return isPath(path,"/dashboard");}
@@ -14,7 +14,7 @@ function isAdminPage(path:string){return isPath(path,"/admin");}
 function isTraderPage(path:string){return isPath(path,"/trader");}
 function isPublicApi(path:string){return startsWithAny(path,PUBLIC_API_PREFIXES);}
 function isPushApi(path:string){return startsWithAny(path,PUSH_API_PREFIXES);}
-function isProtectedApi(path:string){return path.startsWith("/api/")&&!isPublicApi(path)&&!isPushApi(path)&&!isAuthAttributionApi(path)&&!isPath(path,"/api/admin");}
+function isProtectedApi(path:string,method:string){return path.startsWith("/api/")&&!isPublicApi(path)&&!isPushApi(path)&&!isAuthAttributionApi(path,method)&&!isPath(path,"/api/admin");}
 function getRoleKeys(rows:unknown){if(!Array.isArray(rows))return new Set<string>();return new Set(rows.map((r:any)=>typeof r==="string"?r:r?.role_key).filter((r):r is string=>typeof r==="string"));}
 function denied(code:string,message:string){return NextResponse.json({error:message,code,message},{status:403});}
 
@@ -37,7 +37,7 @@ export async function middleware(request:NextRequest){
   }});
   const {data:{user}}=await supabase.auth.getUser();
   const protectedPage=isInvestorPage(path)||isAdminPage(path)||isTraderPage(path);
-  const protectedApi=isProtectedApi(path);
+  const protectedApi=isProtectedApi(path,request.method);
 
   if(!user){
     if(protectedApi||isPushApi(path))return denied("AUTH_REQUIRED","Authentication required.");
