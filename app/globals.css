@@ -2698,3 +2698,26 @@ html[data-theme="light"] .risk-avatar{background:#f4ecdc;border-color:#e2d4b9}
 
 /* ZYNTH Human Check — premium, accessible registration challenge */
 .zhc-card{border:1px solid var(--border);border-radius:14px;padding:14px;background:var(--panel);display:grid;gap:12px;margin:12px 0}.zhc-head{display:flex;align-items:center;gap:10px}.zhc-emblem{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;color:var(--gold-bright,#b88b3e);background:var(--gold-surface,rgba(184,139,62,.1));border:1px solid var(--gold-line,rgba(184,139,62,.25))}.zhc-head b,.zhc-head small{display:block}.zhc-head b{font-size:12px}.zhc-head small{font-size:8px;color:var(--muted);letter-spacing:.1em;margin-top:3px}.zhc-secure{margin-left:auto;font-size:8px;color:var(--muted);border:1px solid var(--border);border-radius:99px;padding:5px 7px}.zhc-prompt{margin:0;font-size:11px;font-weight:650}.zhc-sequence{display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap;min-height:62px}.zhc-symbol{width:42px;height:48px;border:1px solid var(--border);background:var(--bg);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2px;color:var(--gold-bright,#b88b3e);font-size:23px}.zhc-symbol small{font-size:7px;color:var(--muted)}.zhc-unknown{border-style:dashed;color:var(--muted);font-size:19px}.zhc-options{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}.zhc-option{min-width:0;min-height:64px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:5px;border:1px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text);cursor:pointer}.zhc-option>span{font-size:23px;color:var(--gold-bright,#b88b3e)}.zhc-option small{font-size:9px;color:var(--muted)}.zhc-option.selected{border-color:var(--gold-bright,#b88b3e);box-shadow:0 0 0 2px rgba(184,139,62,.15);background:var(--gold-surface,rgba(184,139,62,.08))}.zhc-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;color:var(--muted);font-size:8px}.zhc-footer button,.zhc-error button,.zhc-mode{display:inline-flex;align-items:center;justify-content:center;gap:5px;border:0;background:transparent;color:var(--gold-bright,#b88b3e);font-size:9px;cursor:pointer;padding:5px}.zhc-mode{justify-self:start;padding:0}.zhc-loading{display:flex;align-items:center;gap:9px;font-size:10px;color:var(--muted);padding:14px 0}.zhc-spinner{width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--gold-bright,#b88b3e);border-radius:50%;animation:zhc-spin .7s linear infinite}@keyframes zhc-spin{to{transform:rotate(360deg)}}.zhc-error{font-size:10px;color:var(--danger,#c44);display:grid;gap:5px}.zhc-error button{justify-self:start}@media(max-width:420px){.zhc-card{padding:11px}.zhc-options{gap:5px}.zhc-option{min-height:58px}.zhc-symbol{width:35px;height:43px}.zhc-footer{align-items:flex-start;flex-direction:column}}
+
+
+/* Registration security is an embedded settings section, not a standalone settings card. */
+.admin-settings-subsection{margin-top:24px;padding-top:22px;border-top:1px solid var(--border,rgba(150,150,150,.2))}
+.admin-settings-subsection-head{margin-bottom:14px}
+.admin-settings-subsection-head h3{margin:6px 0;font-size:16px;font-weight:650}
+.admin-settings-subsection-head p{margin:0;color:var(--muted);font-size:13px;line-height:1.55}
+.admin-registration-security{padding:0;margin:0}
+.admin-registration-security .admin-card-head{align-items:flex-start;margin-bottom:4px}
+.admin-registration-security .admin-card-head h3{margin:6px 0;font-size:16px;font-weight:650}
+.admin-registration-security .admin-card-head p{max-width:620px}
+.admin-registration-security-row{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:16px 0}
+.admin-registration-security-status{display:flex;align-items:center;gap:12px;min-width:0;flex:1}
+.admin-registration-security-status b{display:block;font-size:13px}
+.admin-registration-security-status small,.admin-registration-security-updated{display:block;color:var(--muted);font-size:12px;line-height:1.5;margin-top:4px}
+.admin-registration-security-icon{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--panel2);color:var(--muted);flex-shrink:0}
+.admin-registration-security-icon.is-enabled{background:rgba(184,139,62,.12);color:var(--gold-bright,var(--gold))}
+.admin-registration-security-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.admin-registration-security-actions button{display:inline-flex;align-items:center;justify-content:center;gap:7px}
+.admin-registration-security-message{font-size:12px;margin:8px 0;color:var(--danger,var(--muted))}
+.admin-registration-security-message.success{color:var(--success,var(--gold-bright))}
+.admin-registration-security-note{margin-top:12px}
+@media(max-width:640px){.admin-registration-security-row{align-items:stretch}.admin-registration-security-status{align-items:flex-start}.admin-registration-security-actions{width:100%}.admin-registration-security-actions button{flex:1}}
