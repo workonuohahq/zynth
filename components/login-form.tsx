@@ -88,7 +88,7 @@ export default function LoginForm({ initialMode = "login", referralCode = "", zp
         <form onSubmit={submit}>
           {mode === "signup" && <input autoComplete="name" placeholder="Full name" value={name} onChange={e => setName(e.target.value)} required maxLength={120} />}
           <input autoComplete="email" type="email" placeholder="Email address" value={email} onChange={e => setEmail(e.target.value)} required maxLength={254} />
-          <input autoComplete={mode === "login" ? "current-password" : "new-password"} type="password" placeholder="Password (minimum 8 characters)" minLength={8} value={password} onChange={e => setPassword(e.target.value)} required />
+          <input autoComplete={mode === "login" ? "current-password" : "new-password"} type="password" placeholder="Password (minimum 8 characters)" minLength={8} maxLength={128} value={password} onChange={e => setPassword(e.target.value)} required />
           {mode === "signup" && <HumanCheck onAnswer={onChallengeAnswer} />}
           <button className="primary auth-submit" disabled={busy}>{busy ? "Please wait…" : mode === "login" ? "Sign in" : "Create secure account"}</button>
         </form>
