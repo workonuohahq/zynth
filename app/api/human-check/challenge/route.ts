@@ -49,9 +49,10 @@ export async function GET(request: Request) {
     let challengeType: "pattern" | "match" | "order" | "text" = "pattern";
     if (kind === 0) {
       challengeType = "pattern";
-      const offset = randomBytes(1)[0] % SHAPES.length;
-      sequence = [0, 1, 2, 3].map(n => SHAPES[(offset + n) % SHAPES.length]);
-      answer = SHAPES[(offset + 4) % SHAPES.length];
+      const offset = randomBytes(1)[0] % all.length;
+      const step = 1 + (randomBytes(1)[0] % (all.length - 1));
+      sequence = [0, 1, 2, 3].map(n => all[(offset + n * step) % all.length]);
+      answer = all[(offset + 4 * step) % all.length];
       prompt = "Choose the next symbol in the sequence";
     } else if (kind === 1) {
       challengeType = "match";
