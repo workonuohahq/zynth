@@ -15,7 +15,8 @@ export async function GET(_request:Request,{params}:{params:{id:string}}){
     ]);
     if(roles.error)throw roles.error;
     if(catalog.error)throw catalog.error;
-    return NextResponse.json({...data,roles:roles.data||[],role_catalog:catalog.data||[]});
+    const isProtectedAdmin=params.id==="22b36cb5-eada-4078-8458-c3abe80fb0cd";
+    return NextResponse.json({...data,roles:roles.data||[],role_catalog:catalog.data||[],isProtectedAdmin});
   }catch(error){
     console.error(error);
     return NextResponse.json({error:"Unable to load this user."},{status:500});
@@ -39,6 +40,22 @@ export async function PATCH(request:Request,{params}:{params:{id:string}}){
       ({data,error}=await supabase.rpc("admin_adjust_wallet",{p_admin_user_id:user.id,p_user_id:params.id,p_direction:String(body.direction),p_amount:Number(body.amount),p_reason:String(body.reason||"")}));
     }else if(body.action==="note"){
       ({data,error}=await supabase.rpc("admin_add_user_note",{p_admin_user_id:user.id,p_user_id:params.id,p_note:String(body.note||"")}));
+    }else if(body.action==="password"){
+      const currentAdminPassword=String(body.currentAdminPassword||"");
+      const newPassword=String(body.newPassword||"");
+      if(!currentAdminPassword||!newPassword){
+        return NextResponse.json({error:"Administrator password and new password are required."},{status:400});
+      }
+      const result=await supabase.functions.invoke("admin-change-user-password",{
+        body:{targetUserId:params.id,currentAdminPassword,newPassword}
+      });
+      if(result.error){
+        return NextResponse.json({error:result.data?.error||"Password management service unavailable."},{status:result.error.status||502});
+      }
+      if(result.data?.error){
+        return NextResponse.json({error:result.data.error},{status:400});
+      }
+      return NextResponse.json(result.data||{ok:true});
     }else{
       return NextResponse.json({error:"Unsupported user action."},{status:400});
     }
