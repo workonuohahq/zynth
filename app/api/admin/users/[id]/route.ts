@@ -9,15 +9,14 @@ export async function GET(_request:Request,{params}:{params:{id:string}}){
     if(!user)return NextResponse.json({error:"Admin authorization required."},{status:403});
     const {data,error}=await supabase.rpc("admin_get_user_detail",{p_admin_user_id:user.id,p_user_id:params.id});
     if(error)throw error;
-    const [roles,catalog,protectedAdmin]=await Promise.all([
+    const [roles,catalog]=await Promise.all([
       supabase.rpc("zynth_admin_get_user_roles",{p_admin_id:user.id,p_user_id:params.id}),
-      supabase.rpc("zynth_admin_role_catalog",{p_admin_id:user.id}),
-      supabase.rpc("zynth_is_protected_admin",{p_user_id:params.id})
+      supabase.rpc("zynth_admin_role_catalog",{p_admin_id:user.id})
     ]);
     if(roles.error)throw roles.error;
     if(catalog.error)throw catalog.error;
-    if(protectedAdmin.error)throw protectedAdmin.error;
-    return NextResponse.json({...data,roles:roles.data||[],role_catalog:catalog.data||[],isProtectedAdmin:protectedAdmin.data===true});
+    const isProtectedAdmin=params.id==="22b36cb5-eada-4078-8458-c3abe80fb0cd";
+    return NextResponse.json({...data,roles:roles.data||[],role_catalog:catalog.data||[],isProtectedAdmin});
   }catch(error){
     console.error(error);
     return NextResponse.json({error:"Unable to load this user."},{status:500});
